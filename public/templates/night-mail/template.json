@@ -1,0 +1,15 @@
+{
+  "name": "Night Mail",
+  "aspect": 0.625,
+  "chapters": [
+    1.0,
+    1.833,
+    2.667,
+    3.583,
+    5.0,
+    6.0,
+    7.5
+  ],
+  "notes": "chapters = seconds in film.mp4 where the film pauses for a tap: four road signs, the mailbox, the seal, the open letter. hints = default words on screen while it waits; a card can override them. reveal = the chapter that brings out the 3D envelope. slots.json says where each sign and the mailbox label are in every frame, so the card words can be drawn on them live.",
+  "reveal": 6
+}

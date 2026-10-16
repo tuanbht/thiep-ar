@@ -1,0 +1,19 @@
+{
+  "name": "Cuốn sách của mình",
+  "aspect": 0.625,
+  "chapters": [
+    0.01,
+    2.26,
+    3.344,
+    4.677,
+    6.052,
+    7.385,
+    8.719,
+    10.094,
+    11.885,
+    14.969
+  ],
+  "reveal": null,
+  "fonts": "fonts/fonts.css",
+  "notes": "chapters = seconds in film.mp4 where the film waits for a tap, taken from scene.html by stops.py: the closed book (the title frame), the dedication once the cover is open (PAUSE.extra), one stop in each of the six chapters (PAUSE.inBeat into its beat, after the page has turned), the climax (PAUSE.climax: the hollowed last page and the ring, just before it lifts), and the last frame (the veil over the book). Each sits a quarter of a frame into its frame, so a seek shows that frame and round(t * fps) finds its boxes. hints = the scene's own words at those stops (WORDS.cue, ui.next, WORDS.hint, ui.skip); a card can override them with \"chapters\". reveal = null: no 3D envelope; after the last stop a tap opens the letter. slots.json: cover-t and cover-by are the gold title and byline on the cover; plate-who her name on the bookplate; tp-t, tp-by and tp-ded the title, byline and dedication on the title page; ch0-t, ch0-x ... ch5-x the title and text of each chapter; fin-top and fin-bot the lines above and below the ring; ask the question when the ring lifts. Compromises: the pages turn in 3D but the card's words are painted flat over the film, so a page's words fade out as its leaf lifts and fade in once the turning leaf has passed (alpha, the 5th number of each box); the cover title is flat gold, not gold foil; the chapter text has no drop cap; the picture captions show only \"HÌNH n\" (the chapter title is on the facing page); the six drawings are the scene's demo choices (coffee, rain, motorbike, beach, home, cat) and a card cannot change them; \"Một cuốn sách nhỏ\", \"Sách này của\", \"Chương cuối\" and \"Chưa vẽ\" are printed in the film. The book title and byline appear twice (the cover and the title page), so a card gives them twice. fonts = the faces the player paints these slots in."
+}

@@ -1,0 +1,188 @@
+{
+  "label": "Hai khung cửa (two windows in two time zones; two clocks become one)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Ngày của em là đêm của anh. Để anh kể em nghe một ngày của mình.",
+    "to": "Gửi [Tên em] của anh,",
+    "body": [
+      "Mỗi sáng em thức dậy cũng là lúc ngày của anh vừa khép lại. Mình thương nhau qua hai khung cửa sổ, với hai chiếc đồng hồ chưa bao giờ chỉ cùng một giờ.",
+      "Anh quen dần với việc chúc em ngủ ngon lúc trời bên này vừa sáng, và với những tin nhắn đến khi anh đang ngủ.",
+      "Nhưng anh chưa bao giờ thấy mình ở xa em. Dù lệch nhau bao nhiêu tiếng, mình vẫn nhìn lên cùng một bầu trời.",
+      "Anh đang đếm từng ngày, cho đến khi mình chỉ cần một chiếc đồng hồ. Chờ anh nhé."
+    ],
+    "from": "Thương em, từ nửa vòng trái đất, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "One day, both windows",
+      "note": "Five moments of the same day: a note under her window and one under yours. The time line is the hour and the city (7:00 sáng · Toronto); about 80 letters fit in two lines under it. The clocks in the film keep the demo's day: Toronto, with Hà Nội 11 hours ahead.",
+      "rows": [
+        [
+          {
+            "slot": "hers0-k",
+            "label": "Her time 1",
+            "value": "7:00 sáng · Toronto",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "hers0-l",
+            "label": "Her note 1",
+            "value": "Em vừa dậy, pha cà phê, mắt còn nhắm một nửa.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mine0-k",
+            "label": "Your time 1",
+            "value": "6:00 tối · Hà Nội",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "mine0-l",
+            "label": "Your note 1",
+            "value": "Anh vừa tan làm, tắc đường ở Cầu Giấy, đoán em đã dậy chưa.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "hers1-k",
+            "label": "Her time 2",
+            "value": "9:40 sáng · Toronto",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "hers1-l",
+            "label": "Her note 2",
+            "value": "Em vào lớp, giấu điện thoại dưới bàn để nhắn anh.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mine1-k",
+            "label": "Your time 2",
+            "value": "8:40 tối · Hà Nội",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "mine1-l",
+            "label": "Your note 2",
+            "value": "Anh ăn tối một mình, đọc đi đọc lại tin nhắn ấy.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "hers2-k",
+            "label": "Her time 3",
+            "value": "12:20 trưa · Toronto",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "hers2-l",
+            "label": "Her note 3",
+            "value": "Em ăn trưa vội, kể anh nghe chuyện ở lớp.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mine2-k",
+            "label": "Your time 3",
+            "value": "11:20 đêm · Hà Nội",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "mine2-l",
+            "label": "Your note 3",
+            "value": "Anh đã nằm rồi, nhưng cố thức thêm để nghe em kể.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "hers3-k",
+            "label": "Her time 4",
+            "value": "3:30 chiều · Toronto",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "hers3-l",
+            "label": "Her note 4",
+            "value": "Em ghé quán quen, gọi đúng món anh hay gọi.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mine3-k",
+            "label": "Your time 4",
+            "value": "2:30 sáng · Hà Nội",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "mine3-l",
+            "label": "Your note 4",
+            "value": "Anh ngủ quên, điện thoại vẫn sáng bên gối.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "hers4-k",
+            "label": "Her time 5",
+            "value": "6:30 tối · Toronto",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "hers4-l",
+            "label": "Her note 5",
+            "value": "Trời chỗ em đang tắt nắng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mine4-k",
+            "label": "Your time 5",
+            "value": "5:30 sáng · Hà Nội",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "mine4-l",
+            "label": "Your note 5",
+            "value": "Trời chỗ anh vừa hửng sáng. Mình đang nhìn cùng một màu trời.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "On the joined window",
+      "rows": [
+        [
+          {
+            "slot": "note",
+            "label": "The shared note",
+            "value": "Rồi sẽ đến một ngày, mình chỉ cần một chiếc đồng hồ.",
+            "multiline": true,
+            "lines": 2,
+            "note": "Pinned to the window once the two rooms become one; two lines, about 60 letters."
+          }
+        ]
+      ]
+    }
+  ]
+}

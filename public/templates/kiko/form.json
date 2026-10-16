@@ -1,0 +1,20 @@
+{
+  "label": "Kiko (3D: a little idol twirls, dances and brings the letter)",
+  "preset": {
+    "title": "Kiko's Encore",
+    "intro": "Lay the card flat, point your phone at it, and give Kiko a stage.",
+    "to": "Dear you,",
+    "body": [
+      "A very small idol skipped all the way across this card to sing you one thing.",
+      "You are my favourite person in every crowd. Happy birthday, superstar."
+    ],
+    "from": "Your biggest fan"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that springs up while Kiko cheers. Up to about 40 letters; longer words get smaller.",
+      "rows": [[{ "slot": "board", "label": "Board", "value": "Cậu là ngôi sao của tớ!", "max": 40 }]]
+    }
+  ]
+}

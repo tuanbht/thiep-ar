@@ -1,0 +1,14 @@
+{
+  "name": "Samba",
+  "kind": "3d",
+  "scene": "../_acts/dancer.js",
+  "model": "model.glb",
+  "clips": { "dance": "SambaDance" },
+  "modelHeight": 0.62,
+  "scale": 0.85,
+  "aspect": 0.625,
+  "chapters": [0, 1],
+  "reveal": null,
+  "boardDefault": "Congratulations!",
+  "notes": "Michelle (Mixamo, via the three.js examples; check the licence before selling): a textured dancer with one clip, SambaDance. She keeps dancing; the board rises on a stand beside her. Uses the Party Monkey card for tracking."
+}

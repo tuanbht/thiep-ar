@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* "Night Mail": a post office that opens after dark. Night navy for the counter, cream paper for what you write,
+   post-office red for what you pay and stamp, gold for the lamp. Signage in Barlow Condensed, letters in Lora, a hand
+   in Dancing Script for the odd flourish. */
+@theme {
+  --color-night: #0b1030;
+  --color-night-2: #141b48;
+  --color-night-3: #222b66;
+  --color-dusk: #3b4790;
+  --color-paper: #f6eedb;
+  --color-paper-2: #ebdfc2;
+  --color-paper-3: #d9c9a3;
+  --color-ink: #231d33;
+  --color-ink-2: #4a4058;
+  --color-ink-3: #7a6f84;
+  --color-post: #c8372d;
+  --color-post-deep: #98261f;
+  --color-gold: #e9b949;
+  --color-gold-deep: #b98a1d;
+  --color-airmail: #2b4c9b;
+  --color-moss: #3d7a4f;
+
+  --font-sign: var(--font-barlow), "Arial Narrow", system-ui, sans-serif;
+  --font-letter: var(--font-lora), Georgia, serif;
+  --font-hand: var(--font-dancing), "Segoe Script", cursive;
+
+  --text-hero: clamp(3.25rem, 1.6rem + 7.4vw, 8.5rem);
+  --text-display: clamp(2.25rem, 1.5rem + 3.4vw, 4.25rem);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-paper: 0 1px 0 rgb(35 29 51 / 0.06), 0 18px 40px -22px rgb(11 16 48 / 0.55);
+  --shadow-lift: 0 2px 0 rgb(35 29 51 / 0.08), 0 30px 60px -28px rgb(11 16 48 / 0.7);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-night);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background:
+      radial-gradient(120% 70% at 85% -10%, rgb(59 71 144 / 0.55), transparent 60%),
+      radial-gradient(90% 60% at 0% 0%, rgb(34 43 102 / 0.6), transparent 55%),
+      var(--color-night);
+    color: var(--color-paper);
+    font-family: var(--font-letter);
+  }
+  ::selection { background: var(--color-gold); color: var(--color-night); }
+  :focus-visible { outline: 3px solid var(--color-gold); outline-offset: 3px; }
+}
+
+@layer components {
+  /* the airmail envelope's edge: red, cream, blue, cream */
+  .airmail {
+    background: repeating-linear-gradient(-45deg,
+      var(--color-post) 0 14px, var(--color-paper) 14px 22px, var(--color-airmail) 22px 36px, var(--color-paper) 36px 44px);
+  }
+
+  /* a postage stamp: perforated all round (two mask layers: holes on a grid, a solid middle over them) */
+  .stamp {
+    --perf: 5px;
+    padding: calc(2 * var(--perf));
+    -webkit-mask:
+      radial-gradient(var(--perf), #0000 97%, #000) round calc(-1.5 * var(--perf)) calc(-1.5 * var(--perf)) / calc(3 * var(--perf)) calc(3 * var(--perf)),
+      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--perf)) calc(100% - 3 * var(--perf));
+    mask:
+      radial-gradient(var(--perf), #0000 97%, #000) round calc(-1.5 * var(--perf)) calc(-1.5 * var(--perf)) / calc(3 * var(--perf)) calc(3 * var(--perf)),
+      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--perf)) calc(100% - 3 * var(--perf));
+  }
+
+  /* writing paper: faint rules every line */
+  .ruled {
+    background-image: repeating-linear-gradient(to bottom, transparent 0 calc(1.9rem - 1px), rgb(43 76 155 / 0.12) calc(1.9rem - 1px) 1.9rem);
+  }
+
+  /* paper grain, drawn once as an SVG noise */
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .45 0 0 0 0 .3 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .sign {
+    font-family: var(--font-sign);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  /* a slow lift on hover, only where the visitor is fine with motion */
+  .lift {
+    transition: transform 420ms var(--ease-out-expo), box-shadow 420ms var(--ease-out-expo);
+  }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .lift:hover { transform: translateY(-4px) rotate(-0.4deg); box-shadow: var(--shadow-lift); }
+  }
+
+  .rise {
+    animation: rise 700ms var(--ease-out-expo) both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rise { animation: none; }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "Soldier Twist",
+  "kind": "3d",
+  "scene": "../_acts/dancer.js",
+  "model": "model.glb",
+  "clips": {
+    "dance": "Dance",
+    "idle": "Idle"
+  },
+  "modelHeight": 0.62,
+  "scale": 0.85,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1
+  ],
+  "reveal": null,
+  "boardDefault": "Congratulations!",
+  "notes": "The three.js examples' Soldier (a Mixamo rig) dances the Twist from the CMU motion capture library (subject 141, free for commercial use), retargeted by tools/make-dancer.mjs, then stands at ease (its own Idle) while the mystery box opens. The board rises on a stand beside him. Sources and the exact command: scenes/soldier-twist/source/. The printed card (scenes/soldier-twist/card.html) is an off-duty Twist dance-hall poster: camo stencil type, a 45 record, dog tags, a drill-manual page and boot prints."
+}

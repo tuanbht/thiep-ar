@@ -1,0 +1,178 @@
+{
+  "label": "Cuốn sách của mình (a cloth book turning its pages, a ring in the last one)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Anh viết cho mình một cuốn sách nhỏ. Mỗi trang là một ngày có em.",
+    "to": "Gửi [Tên em] của anh,",
+    "body": [
+      "Mấy tháng nay anh viết lén. Viết mãi rồi thành một cuốn sách nhỏ, mỗi trang là một ngày có em.",
+      "Đọc lại, anh thấy chẳng trang nào đặc biệt cả: một ly cà phê, một cơn mưa, một con đèo. Chỉ là trang nào cũng có em, nên trang nào anh cũng muốn giữ.",
+      "Chương cuối anh để trống, vì anh không muốn viết một mình nữa. Anh muốn mình cùng viết, cả những trang dễ lẫn những trang khó, bằng hai nét chữ.",
+      "Câu này anh không viết vào sách. Anh muốn hỏi em, ngay bây giờ: em lấy anh nhé?"
+    ],
+    "from": "Mãi là của em, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The cover",
+      "rows": [
+        [
+          {
+            "slot": [
+              "cover-t",
+              "tp-t"
+            ],
+            "label": "Book title",
+            "value": "Chuyện\ncủa mình",
+            "multiline": true,
+            "lines": 2,
+            "note": "On the cover and the title page. A line break shows on the cover; the title page puts it on one line."
+          }
+        ],
+        [
+          {
+            "slot": [
+              "cover-by",
+              "tp-by"
+            ],
+            "label": "Byline",
+            "value": "[Tên anh] viết tặng [Tên em]",
+            "note": "On the cover and the title page."
+          }
+        ],
+        [
+          {
+            "slot": "plate-who",
+            "label": "Her name on the bookplate inside the cover",
+            "value": "[Tên em]",
+            "max": 30
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The title page",
+      "note": "The first page prints the title and the byline again (the title on one line), then a dedication.",
+      "rows": [
+        [
+          {
+            "slot": "tp-ded",
+            "label": "Dedication",
+            "value": "Tặng em, người biến những ngày bình thường của anh thành chuyện để kể.",
+            "multiline": true,
+            "note": "Up to three lines (about 100 letters)."
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The chapters",
+      "note": "One page a chapter: a short title and two or three sentences. About 140 letters fit; longer text gets smaller.",
+      "rows": [
+        [
+          {
+            "slot": "ch0-t",
+            "label": "Chapter 1 title",
+            "value": "Lần đầu gặp em"
+          },
+          {
+            "slot": "ch0-x",
+            "label": "Chapter 1",
+            "value": "Quán cà phê nhỏ đầu ngõ, em ngồi bàn bên cạnh. Anh cầm cuốn sách cả buổi mà không lật nổi một trang.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "ch1-t",
+            "label": "Chapter 2 title",
+            "value": "Cơn mưa đầu tiên"
+          },
+          {
+            "slot": "ch1-x",
+            "label": "Chapter 2",
+            "value": "Mưa to giữa đường, hai đứa trú dưới mái hiên một tiệm đã đóng cửa. Em run cầm cập, còn anh chỉ mong mưa đừng tạnh vội.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "ch2-t",
+            "label": "Chapter 3 title",
+            "value": "Chuyến đi xa đầu tiên"
+          },
+          {
+            "slot": "ch2-x",
+            "label": "Chapter 3",
+            "value": "Một chiếc xe máy, một con đèo dài. Em ngủ gật sau lưng anh, tay vẫn ôm chặt, và anh lái chậm nhất đời mình.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "ch3-t",
+            "label": "Chapter 4 title",
+            "value": "Biển buổi sáng"
+          },
+          {
+            "slot": "ch3-x",
+            "label": "Chapter 4",
+            "value": "Em kêu nước lạnh, rồi lại chạy xuống thêm lần nữa. Anh đứng trên bờ cầm dép cho em, thấy mình giàu có lạ lùng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "ch4-t",
+            "label": "Chapter 5 title",
+            "value": "Căn phòng nhỏ"
+          },
+          {
+            "slot": "ch4-x",
+            "label": "Chapter 5",
+            "value": "Cửa sổ nhìn ra mái nhà hàng xóm. Ở đó mình học nấu ăn, cãi nhau chuyện rửa bát, rồi làm lành trước giờ đi ngủ.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "ch5-t",
+            "label": "Chapter 6 title",
+            "value": "Con mèo nhà mình"
+          },
+          {
+            "slot": "ch5-x",
+            "label": "Chapter 6",
+            "value": "Em nhặt nó về vào một chiều mưa. Giờ nó ngủ đúng chỗ của anh, và anh cũng chẳng dám than.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The last page",
+      "rows": [
+        [
+          {
+            "slot": "fin-top",
+            "label": "Above the ring",
+            "value": "Chương này anh còn để trống."
+          },
+          {
+            "slot": "fin-bot",
+            "label": "Below the ring",
+            "value": "Mình cùng viết tiếp nhé?"
+          }
+        ],
+        [
+          {
+            "slot": "ask",
+            "label": "The question",
+            "value": "Em lấy anh nhé?",
+            "note": "Written on the page when the ring lifts; one line."
+          }
+        ]
+      ]
+    }
+  ]
+}

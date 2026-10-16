@@ -1,0 +1,132 @@
+{
+  "label": "Gặp nhau ở giữa (two paper planes meet halfway on an airmail map)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Giữa mình là 606 cây số. Mình đi mỗi người một nửa nhé.",
+    "to": "Gửi [Tên em],",
+    "body": [
+      "Giữa mình là 606 cây số. Anh thuộc con số ấy như thuộc giờ tàu, giờ bay, thuộc cả giọng em mỗi lần mạng chập chờn.",
+      "Có hôm nhớ em quá, anh chỉ muốn gấp một chiếc máy bay giấy, viết tên em lên cánh rồi thả qua cửa sổ, xem nó bay được đến đâu.",
+      "Anh biết yêu xa không dễ. Nhưng ngày nào mình cũng vẫn chọn nhau: em đi một nửa, anh đi một nửa, vậy là đủ để gặp nhau ở giữa.",
+      "Hẹn em ở nơi chẳng còn cây số nào nữa."
+    ],
+    "from": "Nhớ em nhiều, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The two cities",
+      "note": "Their names go under the two dots on the map. The map, the route and the distance stay the same for every card (Hà Nội to Đà Nẵng).",
+      "rows": [
+        [
+          {
+            "slot": "city-hers",
+            "label": "Her city",
+            "value": "Hà Nội",
+            "max": 24
+          },
+          {
+            "slot": "city-mine",
+            "label": "Your city",
+            "value": "Đà Nẵng",
+            "max": 24
+          }
+        ]
+      ]
+    },
+    {
+      "title": "On the way",
+      "note": "One airmail slip for each beat while the planes fly: a short title, then a line. About 70 letters fit in two lines; longer lines get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "cap0-k",
+            "label": "Title 1",
+            "value": "10 giờ tối",
+            "max": 28,
+            "narrow": true
+          },
+          {
+            "slot": "cap0-l",
+            "label": "Line 1",
+            "value": "Giờ của mình. Có hôm em ngủ quên giữa chừng, anh vẫn chưa nỡ tắt máy.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap1-k",
+            "label": "Title 2",
+            "value": "Chuyến tàu đêm",
+            "max": 28,
+            "narrow": true
+          },
+          {
+            "slot": "cap1-l",
+            "label": "Line 2",
+            "value": "Mười sáu tiếng ngồi tàu, đổi lấy hai ngày được ở cạnh em.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap2-k",
+            "label": "Title 3",
+            "value": "Sân bay",
+            "max": 28,
+            "narrow": true
+          },
+          {
+            "slot": "cap2-l",
+            "label": "Line 3",
+            "value": "Lần nào tiễn nhau cũng hứa không khóc. Lần nào cũng thua.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap3-k",
+            "label": "Title 4",
+            "value": "Hai cuốn lịch",
+            "max": 28,
+            "narrow": true
+          },
+          {
+            "slot": "cap3-l",
+            "label": "Line 4",
+            "value": "Em gạch một ngày ở Hà Nội, anh gạch một ngày ở Đà Nẵng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap4-k",
+            "label": "Title 5",
+            "value": "Gói quà qua bưu điện",
+            "max": 28,
+            "narrow": true
+          },
+          {
+            "slot": "cap4-l",
+            "label": "Line 5",
+            "value": "Hộp ô mai em gửi, anh ăn dè được cả tháng.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "Where they meet",
+      "rows": [
+        [
+          {
+            "slot": "middle",
+            "label": "The place under the postmark",
+            "value": "Đâu đó trên trời Hà Tĩnh",
+            "max": 40,
+            "note": "Printed under the postmark where the two planes touch. About 25 letters."
+          }
+        ]
+      ]
+    }
+  ]
+}

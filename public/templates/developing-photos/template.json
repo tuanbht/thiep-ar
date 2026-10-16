@@ -1,0 +1,18 @@
+{
+  "name": "Ảnh hiện dần",
+  "aspect": 0.625,
+  "chapters": [
+    0.01,
+    2.51,
+    4.844,
+    7.135,
+    9.427,
+    11.719,
+    14.01,
+    16.552,
+    19.969
+  ],
+  "reveal": null,
+  "fonts": "fonts/fonts.css",
+  "notes": "chapters = seconds in film.mp4 where the film waits for a tap, taken from scene.html by stops.py (it runs the scene's own rests code): the title frame, one stop in each of the six polaroids (PAUSE.inBeat into its beat: the print has developed, its caption is written and its note is up), the climax (PAUSE.climax: the last polaroid lies blank, waiting to be tapped), and the last frame (the table, the pile, the veil). Each sits a quarter of a frame into its frame, so a seek shows that frame and round(t * fps) finds its boxes. The film is 480 frames (20 s): the scene plays 30 s straight through, and fewer frames make the polaroids jump. hints = the scene's own words at those stops (WORDS.cue, ui.next, WORDS.hint, ui.skip); a card can override them with \"chapters\". reveal = null: no 3D envelope; after the last stop a tap opens the letter. slots.json: cap0 ... cap5 are the captions handwritten on the six polaroids' strips and last is the caption on the last polaroid (label, Patrick Hand); line0 ... line5 are the notes on the paper slips (caption, Vollkorn italic). Compromises: the photos are per card and the film is shared, so every polaroid shows the drawing the scene uses until a photo exists (coffee, rain, lanterns, pass, beach, pho, and \"us\" for the last one); a card cannot change them. The player paints words straight, so in the film the polaroid lying in the middle, the strip's handwriting and the slips are not tilted, and a caption shows only while its polaroid lies in the middle: it fades in while the marker would write it (no left-to-right writing) and fades out before the print slides into the pile, so the prints in the pile have blank strips; the last caption shows after the last print develops and fades as it turns over. Every slip is four lines tall, the note centred in it. fonts = the faces the player paints these slots in (latin, latin-ext and vietnamese)."
+}

@@ -1,0 +1,20 @@
+{
+  "label": "Pip (3D: a penguin chick waddles, belly-slides and brings the letter)",
+  "preset": {
+    "title": "Pip Slides In",
+    "intro": "Lay the card flat, point your phone at it, and wave to Pip.",
+    "to": "Dear you,",
+    "body": [
+      "I waddled all the way across the ice, slid the last bit on my tummy, and here I am, with this letter for you.",
+      "Happy birthday. Stay warm, stay silly, and save me a slice of cake."
+    ],
+    "from": "Love, Pip"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that springs up while Pip cheers. Up to about 40 letters; longer words get smaller.",
+      "rows": [[{ "slot": "board", "label": "Board", "value": "Chúc mừng sinh nhật!", "max": 40 }]]
+    }
+  ]
+}

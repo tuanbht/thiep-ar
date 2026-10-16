@@ -1,0 +1,113 @@
+{
+  "label": "Mưa tạnh (rain on the window, words left in the mist)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Đêm qua mưa suốt. Anh có vài điều muốn nói trước khi trời tạnh.",
+    "to": "[Tên em] của anh,",
+    "body": [
+      "Đêm qua mưa to, anh ngồi bên cửa sổ gần đến sáng. Nghĩ lại mọi chuyện, anh biết lần này là anh sai.",
+      "Anh xin lỗi vì đã nói những câu làm em buồn, và vì đã không chịu nghe em nói hết. Em xứng đáng được đối xử dịu dàng hơn, nhất là từ anh.",
+      "Anh không mong em quên ngay. Anh chỉ mong em cho anh cơ hội sửa sai, bằng việc làm chứ không chỉ bằng lời.",
+      "Giờ trời tạnh rồi. Nếu em muốn, chiều nay mình đi uống cà phê nhé? Anh qua đón em."
+    ],
+    "from": "Thương em nhiều, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The night",
+      "note": "One caption for each hour while the rain eases: the time, then a line or two. Up to about 110 letters fit; longer lines get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "cap0-k",
+            "label": "Hour 1",
+            "value": "9 giờ tối",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "cap0-l",
+            "label": "Caption 1",
+            "value": "Em về rồi. Mưa bắt đầu nặng hạt, còn anh ngồi lại với những câu mình vừa nói.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap1-k",
+            "label": "Hour 2",
+            "value": "11 giờ đêm",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "cap1-l",
+            "label": "Caption 2",
+            "value": "Anh nhớ lại từng lời. Câu nào cũng có cách nói nhẹ nhàng hơn, vậy mà anh đã không chọn.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap2-k",
+            "label": "Hour 3",
+            "value": "1 giờ sáng",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "cap2-l",
+            "label": "Caption 3",
+            "value": "Lúc ấy em đâu cần anh phải đúng. Em chỉ cần anh ở bên, vậy mà anh lại bỏ đi.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap3-k",
+            "label": "Hour 4",
+            "value": "3 giờ sáng",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "cap3-l",
+            "label": "Caption 4",
+            "value": "Lần sau mình giận nhau, anh sẽ ngồi lại nói cho xong. Không bỏ đi, không im lặng cả ngày nữa.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap4-k",
+            "label": "Hour 5",
+            "value": "5 giờ sáng",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "cap4-l",
+            "label": "Caption 5",
+            "value": "Mưa ngớt rồi. Còn một câu anh chưa nói, anh để lại trên ô kính cho em.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "On the glass",
+      "rows": [
+        [
+          {
+            "slot": "mist",
+            "label": "Words left in the mist",
+            "value": "Anh xin lỗi.\nMình làm lành nhé?",
+            "multiline": true,
+            "lines": 2,
+            "note": "Handwritten on the window, two lines at most; press Enter to start the second line. About 17 letters a line; longer lines get smaller."
+          }
+        ]
+      ]
+    }
+  ]
+}

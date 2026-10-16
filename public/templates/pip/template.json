@@ -1,0 +1,13 @@
+{
+  "name": "Pip",
+  "kind": "3d",
+  "scene": "../_acts/showtime.js",
+  "character": "character.js",
+  "height": 0.3,
+  "aspect": 0.625,
+  "chapters": [0],
+  "reveal": null,
+  "boardDefault": "Happy birthday!",
+  "boardColor": "#3fa9f5",
+  "notes": "Pip, a round penguin chick in a striped party hat, built from primitives in character.js (no model to download). The 15-second show is the shared templates/_acts/showtime.js: pops out of the card with a ta-da, waves, waddles a lap round the card, does the penguin shuffle, dives into a belly slide across the card (a spin on its tummy and back), cheers with confetti cannons and fireworks while the board with the card's words comes up, then turns to the letter as it rises, one flipper pointing at it and the other thrown up high. One stop: a tap opens the letter. Snowy birthday party on the ice; its print is scenes/pip/card.html."
+}

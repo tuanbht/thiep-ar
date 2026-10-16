@@ -1,0 +1,22 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+next-env.d.ts
+*.tmp
+.DS_Store
+*.pem
+# secrets: commit .env.example only
+.env*
+!.env.example
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+# tool state
+.omc/
+# real customers' cards from the old kit (letters, photos): kept locally, never in git
+.archive/

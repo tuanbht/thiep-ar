@@ -1,0 +1,147 @@
+{
+  "label": "Mỗi năm một ga (a night train that stops at one station a year)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Mình đi chung một chuyến tàu đêm. Mỗi năm, tàu dừng lại một ga.",
+    "to": "Gửi [Tên em] của anh,",
+    "body": [
+      "5 năm trước, anh lên chuyến tàu này mà chẳng biết nó sẽ đi đến đâu. Chỉ biết ghế bên cạnh có em.",
+      "Có năm tàu chạy êm, có năm xóc nảy. Có ga mình dừng lâu, có ga chỉ kịp nhìn qua ô cửa. Nhưng chưa ga nào anh muốn xuống một mình.",
+      "Cảm ơn em đã ngồi cạnh anh suốt chặng đường, cả những đêm dài không ngủ, cả những lúc anh lạc hướng.",
+      "Ga tiếp theo tên gì, anh chưa biết. Anh chỉ biết mình vẫn sẽ mua vé cho hai người."
+    ],
+    "from": "Vẫn ngồi cạnh em, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The stations",
+      "note": "One station a year: its name on the hanging sign and over its caption (usually Ga and the year), then a line or two. About 90 letters fit in two lines; longer lines get smaller.",
+      "rows": [
+        [
+          {
+            "slot": [
+              "sign0",
+              "cap0-k"
+            ],
+            "label": "Station 1",
+            "value": "Ga 2021",
+            "max": 16,
+            "narrow": true,
+            "note": "On its sign and over its line."
+          },
+          {
+            "slot": "cap0-l",
+            "label": "Line 1",
+            "value": "Năm mình gặp nhau: một chiều mưa, chung một mái hiên.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": [
+              "sign1",
+              "cap1-k"
+            ],
+            "label": "Station 2",
+            "value": "Ga 2022",
+            "max": 16,
+            "narrow": true
+          },
+          {
+            "slot": "cap1-l",
+            "label": "Line 2",
+            "value": "Lần đầu đi xa cùng nhau. Đà Lạt lạnh, áo khoác của anh thành của em.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": [
+              "sign2",
+              "cap2-k"
+            ],
+            "label": "Station 3",
+            "value": "Ga 2023",
+            "max": 16,
+            "narrow": true
+          },
+          {
+            "slot": "cap2-l",
+            "label": "Line 3",
+            "value": "Năm mình cãi nhau nhiều nhất, và cũng làm lành nhanh nhất.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": [
+              "sign3",
+              "cap3-k"
+            ],
+            "label": "Station 4",
+            "value": "Ga 2024",
+            "max": 16,
+            "narrow": true
+          },
+          {
+            "slot": "cap3-l",
+            "label": "Line 4",
+            "value": "Em đổi việc mới. Anh tập thói quen đợi em về rồi mới ăn cơm.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": [
+              "sign4",
+              "cap4-k"
+            ],
+            "label": "Station 5",
+            "value": "Ga 2025",
+            "max": 16,
+            "narrow": true
+          },
+          {
+            "slot": "cap4-l",
+            "label": "Line 5",
+            "value": "Mình về chung một nhà, thêm một chậu cây và một con mèo lười.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "Ga Hôm Nay",
+      "note": "The last stop. The years together are on the lit board and on the ticket; the ticket also carries your two names.",
+      "rows": [
+        [
+          {
+            "slot": "cap5-l",
+            "label": "Arrival line",
+            "value": "Tròn 5 năm. Anh có một tấm vé cho em.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": [
+              "board",
+              "ticket-years"
+            ],
+            "label": "Years together",
+            "value": "5",
+            "max": 3,
+            "narrow": true,
+            "note": "On the Ga Hôm Nay board and the ticket."
+          },
+          {
+            "slot": "ticket-names",
+            "label": "Names on the ticket",
+            "value": "[Tên em] & [Tên anh]",
+            "max": 40
+          }
+        ]
+      ]
+    }
+  ]
+}

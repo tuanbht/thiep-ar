@@ -1,0 +1,100 @@
+{
+  "label": "Từng lớp quà (a birthday present unwrapped one layer at a time, a reason under each)",
+  "preset": {
+    "title": "Sinh nhật vui nhé, [Tên em]!",
+    "intro": "Quà năm nay anh gói hơi kỹ. Mỗi lớp giấy giấu một lý do anh thương em.",
+    "to": "Chúc mừng sinh nhật, [Tên em]!",
+    "body": [
+      "Anh biết gói nhiều lớp thế này là hơi lắm chuyện. Nhưng mỗi lớp là một lý do, mà lý do nào anh cũng không nỡ bỏ.",
+      "Thật ra danh sách còn dài lắm. Anh chỉ chọn ra vài điều thôi, phần còn lại để dành cho những lần sinh nhật sau, và sau nữa.",
+      "Tuổi mới, anh mong em vẫn cười to như thế, vẫn ăn ngon ngủ yên, và vẫn để anh ở bên cạnh, cả những ngày vui lẫn những ngày mệt."
+    ],
+    "from": "Thương em nhiều, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The layers",
+      "note": "Six layers, outermost first. Under each one a card: a reason (about 40 letters, two lines) and a note (about 65 letters, two lines). Longer words get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "card0-r",
+            "label": "Reason 1",
+            "value": "Vì em cười to nhất phòng"
+          },
+          {
+            "slot": "card0-n",
+            "label": "Note 1",
+            "value": "Kể cả khi câu chuyện chẳng buồn cười lắm.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "card1-r",
+            "label": "Reason 2",
+            "value": "Vì em nhớ cả những điều nhỏ xíu"
+          },
+          {
+            "slot": "card1-n",
+            "label": "Note 2",
+            "value": "Phở của anh bao giờ cũng không hành. Em chưa quên lần nào.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "card2-r",
+            "label": "Reason 3",
+            "value": "Vì em dám thử cái mới"
+          },
+          {
+            "slot": "card2-n",
+            "label": "Note 3",
+            "value": "Món lạ, đường lạ, cả những chuyến đi chẳng có kế hoạch gì.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "card3-r",
+            "label": "Reason 4",
+            "value": "Vì em hát sai lời mà vẫn rất tự tin"
+          },
+          {
+            "slot": "card3-n",
+            "label": "Note 4",
+            "value": "Giờ anh thuộc luôn cả phiên bản lời sai của em.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "card4-r",
+            "label": "Reason 5",
+            "value": "Vì em ở cạnh anh những ngày khó nhất"
+          },
+          {
+            "slot": "card4-n",
+            "label": "Note 5",
+            "value": "Chẳng cần nói gì nhiều, chỉ cần ngồi cạnh thôi.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "card5-r",
+            "label": "Reason 6",
+            "value": "Vì em là em"
+          },
+          {
+            "slot": "card5-n",
+            "label": "Note 6",
+            "value": "Riêng lý do này thôi đã đủ cho cả trăm năm.",
+            "multiline": true
+          }
+        ]
+      ]
+    }
+  ]
+}

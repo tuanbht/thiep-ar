@@ -1,0 +1,127 @@
+{
+  "label": "Ảnh hiện dần (polaroids develop on a table, a note beside each)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Anh có mấy tấm ảnh muốn cho em xem. Ảnh sẽ hiện dần, đừng vội nhé.",
+    "to": "Gửi [Tên em],",
+    "body": [
+      "Ba năm rồi đấy em. Anh lục lại điện thoại, chọn mãi mới được mấy tấm để in ra, vì tấm nào anh cũng tiếc.",
+      "Có tấm bị mờ, có tấm rung tay, có tấm em nhắm mắt. Nhưng tấm nào anh cũng nhớ cảm giác lúc bấm máy: anh đang rất hạnh phúc.",
+      "Ảnh phải đợi một lúc mới hiện rõ. Mình cũng vậy: càng ở cạnh em lâu, anh càng thấy rõ mình may mắn thế nào.",
+      "Cảm ơn em vì ba năm qua. Mình còn nhiều ảnh chưa chụp lắm, anh muốn chụp hết, cùng em."
+    ],
+    "from": "Thương em nhiều, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The polaroids",
+      "note": "Six photos, one at a time: a caption handwritten on its strip (about 20 letters fit on one line; longer ones wrap to two), and the note on the slip beside it (up to about 110 letters; longer notes get smaller). The pictures are the scene's drawings; a card cannot change them.",
+      "rows": [
+        [
+          {
+            "slot": "cap0",
+            "label": "Photo 1",
+            "value": "Buổi hẹn đầu",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line0",
+            "label": "Note 1",
+            "value": "Em gọi cà phê trứng, rồi để nó nguội ngắt vì mải nói chuyện.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap1",
+            "label": "Photo 2",
+            "value": "Mưa phố cổ",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line1",
+            "label": "Note 2",
+            "value": "Một chiếc áo mưa, hai người chui chung, ướt hết mà vẫn cười.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap2",
+            "label": "Photo 3",
+            "value": "Hội An",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line2",
+            "label": "Note 3",
+            "value": "Mình thả một chiếc hoa đăng. Em ước gì, đến giờ vẫn chưa chịu kể.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap3",
+            "label": "Photo 4",
+            "value": "Hà Giang",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line3",
+            "label": "Note 4",
+            "value": "Em ôm anh chặt nhất ở mấy khúc cua trên đèo Mã Pí Lèng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap4",
+            "label": "Photo 5",
+            "value": "Biển · tròn một năm",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line4",
+            "label": "Note 5",
+            "value": "Em bảo sóng to quá, thế mà em lại là người kéo anh xuống trước.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap5",
+            "label": "Photo 6",
+            "value": "Sáng chủ nhật",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line5",
+            "label": "Note 6",
+            "value": "Quán phở quen, bà chủ chẳng cần hỏi cũng biết hai đứa ăn gì. Anh thương nhất những sáng bình thường như thế.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The last photo",
+      "rows": [
+        [
+          {
+            "slot": "last",
+            "label": "Caption on the last photo",
+            "value": "Mình · hôm nay",
+            "max": 40,
+            "note": "Written on its strip after the last tap, when it has developed."
+          }
+        ]
+      ]
+    }
+  ]
+}

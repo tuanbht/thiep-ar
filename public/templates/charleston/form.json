@@ -1,0 +1,29 @@
+{
+  "label": "Charleston (3D: a character dances on the card)",
+  "preset": {
+    "title": "The Charleston",
+    "intro": "Lay the card flat, point your phone at it and keep it in view. The band strikes up.",
+    "to": "My darling,",
+    "body": [
+      "Pearls on, shoes polished, champagne poured: tonight the whole floor is yours, and I have saved you every dance.",
+      "Happy birthday. Here's to another year of laughing too loud and dancing till the lights come up."
+    ],
+    "from": "Yours, with a twirl and a toast"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that comes up when the dance ends. Up to about 40 letters; longer words get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "board",
+            "label": "Board",
+            "value": "Chúc mừng sinh nhật!",
+            "max": 40
+          }
+        ]
+      ]
+    }
+  ]
+}

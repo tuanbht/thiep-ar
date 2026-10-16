@@ -1,0 +1,29 @@
+{
+  "label": "Thư hoa / Flower Letter (3D: an envelope opens, carnations bloom, a note and your photo rise)",
+  "preset": {
+    "title": "Thư hoa",
+    "intro": "Lay the card flat, point your phone at it and wait a moment.",
+    "to": "Dear you,",
+    "body": [
+      "Some flowers that will never wilt, and a few words I wanted you to keep.",
+      "Happy Women's Day."
+    ],
+    "from": "With love"
+  },
+  "groups": [
+    {
+      "title": "The note",
+      "note": "The words on the note that rises out of the envelope, in handwriting. Up to about 40 letters; longer words get smaller. Add a photo too: it pops up in a polaroid at the second stop.",
+      "rows": [
+        [
+          {
+            "slot": "board",
+            "label": "Note",
+            "value": "Happy Women's Day!",
+            "max": 40
+          }
+        ]
+      ]
+    }
+  ]
+}

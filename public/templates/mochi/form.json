@@ -1,0 +1,20 @@
+{
+  "label": "Mochi (3D: a little rice cake runs, dances and brings the letter)",
+  "preset": {
+    "title": "Mochi Says Hi",
+    "intro": "Lay the card flat, point your phone at it, and say hi to Mochi.",
+    "to": "Dear you,",
+    "body": [
+      "A very small, very round friend ran all the way here to bring you this.",
+      "Happy birthday. You make every day a little sweeter."
+    ],
+    "from": "With love"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that springs up while Mochi cheers. Up to about 40 letters; longer words get smaller.",
+      "rows": [[{ "slot": "board", "label": "Board", "value": "Chúc mừng sinh nhật!", "max": 40 }]]
+    }
+  ]
+}

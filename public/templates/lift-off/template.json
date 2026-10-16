@@ -1,0 +1,22 @@
+{
+  "name": "Cất cánh",
+  "aspect": 0.625,
+  "chapters": [
+    0.01,
+    1.76,
+    2.677,
+    3.594,
+    4.51,
+    5.427,
+    6.344,
+    7.26,
+    8.177,
+    9.094,
+    10.01,
+    12.51,
+    19.969
+  ],
+  "reveal": null,
+  "fonts": "fonts/fonts.css",
+  "notes": "chapters = seconds in film.mp4 where the film waits for a tap, taken from scene.html by stops.py: the title frame (the rocket on the pad at dawn), one stop in each of the ten countdown numbers T-10 ... T-01 (PAUSE.inBeat into its beat), the climax (PAUSE.climax: T-00, the launch desk with its checks lit and the PHONG button armed), and the last frame (the capsule in orbit, hatch open). Each sits a quarter of a frame into its frame, so a seek shows that frame and round(t * fps) finds its boxes. hints = the scene's own words at those stops (WORDS.cue, ui.next, WORDS.hint, ui.skip); a card can override them with \"chapters\". reveal = null: no 3D envelope; after the last stop a tap opens the letter. slots.json: cap0 ... cap9 are the countdown lines under each number (caption), ready the line after T-00 (caption, amber), chk0-k ... chk3-k and chk0-v ... chk3-v the labels and values of the last checks on the launch desk (label, text; each value lights from 20% to full as it is ticked, carried in the alpha), orbit the line in orbit before the hatch opens (caption); all fade with the scene (alpha is the 5th number of each box). Compromise: the rocket's name ({her}-1 in the scene) is painted up the side of the rocket, turned on its side and riding a moving, tilting rocket; a slot can only carry level text, so the film's rocket has no name. The flight-phase pills, the countdown numbers and labels and the PHONG button are the scene's own words, baked in. fonts = the faces the player paints these slots in (latin, latin-ext and vietnamese)."
+}

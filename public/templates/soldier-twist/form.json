@@ -1,0 +1,29 @@
+{
+  "label": "Soldier Twist (3D: a character dances on the card)",
+  "preset": {
+    "title": "Off Duty",
+    "intro": "Lay the card flat and point your phone at it. At ease: the sergeant is about to dance.",
+    "to": "At ease, soldier,",
+    "body": [
+      "New orders from Birthday Command: boots stay on, rank comes off, and you twist until the cake arrives.",
+      "You are the toughest person I know and the softest when it counts. Happy birthday. Take the night off. That is an order."
+    ],
+    "from": "With love, your most loyal private"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that comes up when the dance ends. Up to about 40 letters; longer words get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "board",
+            "label": "Board",
+            "value": "Chúc mừng sinh nhật, Trung sĩ!",
+            "max": 40
+          }
+        ]
+      ]
+    }
+  ]
+}

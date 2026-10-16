@@ -1,0 +1,13 @@
+{
+  "name": "Mochi",
+  "kind": "3d",
+  "scene": "../_acts/showtime.js",
+  "character": "character.js",
+  "height": 0.3,
+  "aspect": 0.625,
+  "chapters": [0],
+  "reveal": null,
+  "boardDefault": "Happy birthday!",
+  "boardColor": "#ff8fb0",
+  "notes": "A round strawberry mochi, built from primitives in character.js (no model to download). The 15-second show is the shared templates/_acts/showtime.js: pop out of the card, hello, a lap round the card, a squishy dance, a somersault roll, cheering with confetti cannons and fireworks while the board with the card's words comes up, then the letter rises. One stop: a tap opens the letter."
+}

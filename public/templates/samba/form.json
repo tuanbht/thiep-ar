@@ -1,0 +1,30 @@
+{
+  "label": "Samba (3D: a dancer, your words on a board beside them, a mystery box)",
+  "preset": {
+    "title": "Samba",
+    "intro": "Lay the card flat, point your phone at it, and watch the dance.",
+    "to": "Dear you,",
+    "body": [
+      "Someone learned the samba just to say this properly.",
+      "Happy birthday. You make everything more fun."
+    ],
+    "from": "With love"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "A dancer dances the samba while a board with these words rises on a stand beside them. Then a mystery box drops in and the letter floats out of it.",
+      "rows": [
+        [
+          {
+            "slot": "board",
+            "label": "Words on the board",
+            "value": "Happy birthday!",
+            "max": 40,
+            "note": "About 40 letters at most. It is painted in capitals on up to three lines; longer words get smaller. Left empty, the board says \"Congratulations!\"."
+          }
+        ]
+      ]
+    }
+  ]
+}

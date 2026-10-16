@@ -1,0 +1,18 @@
+{
+  "name": "Từng lớp quà",
+  "aspect": 0.625,
+  "chapters": [
+    0.01,
+    2.719,
+    5.177,
+    7.635,
+    10.135,
+    12.594,
+    15.052,
+    17.01,
+    19.969
+  ],
+  "reveal": null,
+  "fonts": "fonts/fonts.css",
+  "notes": "chapters = seconds in film.mp4 where the film waits for a tap, taken from scene.html by stops.py: the title frame, one stop in each of the six layers, when its card has popped out of the opened paper (PAUSE.inBeat into its beat), the climax (PAUSE.climax: the last little box, waiting to be tapped), and the last frame (the butter-yellow page the letter opens on). Each sits a quarter of a frame into its frame, so a seek shows that frame and round(t * fps) finds its boxes. The film runs at the scene's own pace (PAUSE.pace / PAUSE.speed = 20 s, 480 frames), because each layer packs a ribbon, a lid, four walls, a card and a zoom into it. hints = the scene's own words at those stops (WORDS.cue, ui.next, WORDS.hint, ui.skip); a card can override them with \"chapters\". reveal = null: no 3D envelope (the scene ends with the box's lid popping off and confetti, which are in the film); after the last stop a tap opens the letter. slots.json: card0-r ... card5-r are the six reasons (caption), card0-n ... card5-n the six notes under them (text); they ride on the cards as they pop out, wait, and shrink into the fan, fading with the scene (alpha is the 5th number of each box). Compromises: the cards stay level in the film (the scene tilts each one a little and turns it as it flies), because the player paints words level; the \"Lý do #n\" tags, the \"#n\" chips and the papers (polka, stripes, kraft, news, tet, foil) are part of the film, so every card has six reasons and the same papers. fonts = the faces the player paints these slots in (latin, latin-ext and vietnamese)."
+}

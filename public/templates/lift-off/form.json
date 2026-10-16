@@ -1,0 +1,191 @@
+{
+  "label": "Cất cánh (a rocket counts down on the pad and takes the letter into orbit)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Hôm nay em cất cánh. Cả trạm mặt đất đang chờ lệnh của em.",
+    "to": "Gửi [Tên em], phi hành gia của anh,",
+    "body": [
+      "Anh đã thấy hết: những đêm em thức trắng, những lần em suýt bỏ cuộc rồi lại tự đứng dậy. Chặng đường tới hôm nay không dễ chút nào.",
+      "Người ta sẽ bảo em may mắn. Anh thì biết nhiên liệu của chuyến bay này là gì: từng ngày em cố gắng, kể cả những ngày chẳng ai nhìn thấy.",
+      "Phía trước có thể còn những chặng khó hơn. Em cứ bay thật xa nhé. Anh vẫn ở trạm mặt đất, tối nào cũng chờ nghe em kể chuyện.",
+      "Chúc mừng em. Anh tự hào về em lắm."
+    ],
+    "from": "Luôn dõi theo em, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The countdown",
+      "note": "One line under each number, from T-10 down to T-01: something she did to get here. About 90 letters fit in three lines; longer lines get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "cap0",
+            "label": "T-10",
+            "value": "Những sáng em dậy từ 5 giờ, khi cả nhà còn ngủ.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap1",
+            "label": "T-09",
+            "value": "Những đêm em ngủ gục trên bàn, laptop vẫn sáng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap2",
+            "label": "T-08",
+            "value": "Bộ hồ sơ em sửa đi sửa lại cả chục lần.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap3",
+            "label": "T-07",
+            "value": "Lần đầu bị từ chối, em khóc một tối rồi làm lại.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap4",
+            "label": "T-06",
+            "value": "Những cuối tuần em ở thư viện thay vì đi chơi.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap5",
+            "label": "T-05",
+            "value": "Cà phê nguội, giấy nhớ dán kín cả bức tường.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap6",
+            "label": "T-04",
+            "value": "Buổi phỏng vấn em run đến nói lắp, mà vẫn cười.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap7",
+            "label": "T-03",
+            "value": "Những lúc em muốn bỏ cuộc, mà rồi vẫn không bỏ.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap8",
+            "label": "T-02",
+            "value": "Cuộc gọi lúc nửa đêm: “Anh ơi, em được nhận rồi!”",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "cap9",
+            "label": "T-01",
+            "value": "Tất cả những ngày ấy đã đưa em đến hôm nay.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "At T-00",
+      "rows": [
+        [
+          {
+            "slot": "ready",
+            "label": "The line at T-00",
+            "value": "Mọi thứ đã sẵn sàng. Lệnh phóng là của em.",
+            "multiline": true,
+            "note": "Shown in amber above the launch desk while she waits to press the button."
+          }
+        ],
+        [
+          {
+            "slot": "chk0-k",
+            "label": "Check 1",
+            "value": "Thời tiết",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "chk0-v",
+            "label": "Check 1: ticked",
+            "value": "quang đãng",
+            "max": 28
+          }
+        ],
+        [
+          {
+            "slot": "chk1-k",
+            "label": "Check 2",
+            "value": "Nhiên liệu",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "chk1-v",
+            "label": "Check 2: ticked",
+            "value": "đầy bình",
+            "max": 28
+          }
+        ],
+        [
+          {
+            "slot": "chk2-k",
+            "label": "Check 3",
+            "value": "Hành trang",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "chk2-v",
+            "label": "Check 3: ticked",
+            "value": "đủ cả rồi",
+            "max": 28
+          }
+        ],
+        [
+          {
+            "slot": "chk3-k",
+            "label": "Check 4",
+            "value": "Trạm mặt đất",
+            "max": 24,
+            "narrow": true
+          },
+          {
+            "slot": "chk3-v",
+            "label": "Check 4: ticked",
+            "value": "luôn bên em",
+            "max": 28
+          }
+        ]
+      ]
+    },
+    {
+      "title": "In orbit",
+      "rows": [
+        [
+          {
+            "slot": "orbit",
+            "label": "The line in orbit",
+            "value": "Trên này có một lá thư đã chờ em từ lâu.",
+            "multiline": true,
+            "note": "Shown above the capsule just before its hatch opens on the letter."
+          }
+        ]
+      ]
+    }
+  ]
+}

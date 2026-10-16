@@ -1,0 +1,29 @@
+{
+  "label": "Macarena (3D: a character dances on the card)",
+  "preset": {
+    "title": "¡Hey, Macarena!",
+    "intro": "Lay the card flat, point your phone at it and keep it in view: someone is about to dance.",
+    "to": "Dear birthday star,",
+    "body": [
+      "Somebody practised the Macarena in the kitchen all week, just to say this properly.",
+      "Arms out, palms up, a wiggle and a jump: happy birthday! May this year be loud, silly and full of dancing."
+    ],
+    "from": "With love, your dance partner"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that comes up when the dance ends. Up to about 40 letters; longer words get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "board",
+            "label": "Board",
+            "value": "Chúc mừng sinh nhật!",
+            "max": 40
+          }
+        ]
+      ]
+    }
+  ]
+}

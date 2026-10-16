@@ -1,0 +1,20 @@
+{
+  "label": "Astro Bun (3D: a bunny astronaut bounds round the card, flips on its jetpack and brings the letter)",
+  "preset": {
+    "title": "Astro Bun Lands",
+    "intro": "Lay the card flat, point your phone at it, and watch for a landing.",
+    "to": "Dear you,",
+    "body": [
+      "Mission control, this is Astro Bun. I flew past three moons and one very confused comet to bring you this.",
+      "Happy birthday. Of all the planets out there, yours is my favourite place to land."
+    ],
+    "from": "Over and out, with love"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that springs up while Astro Bun cheers. Up to about 40 letters; longer words get smaller.",
+      "rows": [[{ "slot": "board", "label": "Board", "value": "Sinh nhật vui vẻ, phi hành gia!", "max": 40 }]]
+    }
+  ]
+}

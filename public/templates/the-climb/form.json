@@ -1,0 +1,133 @@
+{
+  "label": "Đường lên đỉnh (a climb past six trail signs to a flag on the summit at sunrise)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Mấy năm qua, em đã leo một ngọn núi rất cao. Hôm nay, mình cùng đi lại từng chặng nhé.",
+    "to": "Gửi [Tên em] của anh,",
+    "body": [
+      "Anh vẫn nhớ những đêm em ngồi bên bàn học đến hai giờ sáng, mắt đỏ hoe mà vẫn bảo “em ổn”. Anh chẳng giúp được gì nhiều, chỉ pha cho em cốc sữa nóng rồi ngồi cạnh.",
+      "Có lúc em muốn bỏ cuộc. Anh biết, vì em im lặng rất lâu. Nhưng sáng hôm sau, em lại mở máy ra và làm tiếp.",
+      "Hôm nay em đứng trên đỉnh rồi. Không phải nhờ may mắn, mà nhờ từng bước nhỏ em tự bước, kể cả những bước em tưởng mình không bước nổi.",
+      "Anh tự hào về em lắm. Ngọn núi tiếp theo là gì cũng được, anh vẫn đi cùng em."
+    ],
+    "from": "Thương em nhiều, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The trail",
+      "note": "Six yellow signs she passes on the way up, each with a caption card beside the mountain. A sign takes two lines of about 18 letters; a caption about 65 letters. Longer words get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "plank0",
+            "label": "Sign 1",
+            "value": "Học kỳ đầu tiên",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line0",
+            "label": "Caption 1",
+            "value": "Lạ trường, lạ lớp, lạ cả thành phố. Em vẫn đi học đủ từng buổi.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "plank1",
+            "label": "Sign 2",
+            "value": "Những đêm chạy deadline",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line1",
+            "label": "Caption 2",
+            "value": "Ba giờ sáng, đèn bàn còn sáng, cốc cà phê thứ ba đã nguội.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "plank2",
+            "label": "Sign 3",
+            "value": "Lần trượt đầu tiên",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line2",
+            "label": "Caption 3",
+            "value": "Em buồn đúng một buổi tối. Sáng hôm sau lại mở sách ra.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "plank3",
+            "label": "Sign 4",
+            "value": "Kỳ thực tập xa nhà",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line3",
+            "label": "Caption 4",
+            "value": "Ba tháng, một chiếc vali và những cuộc gọi lúc nửa đêm.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "plank4",
+            "label": "Sign 5",
+            "value": "Đồ án tốt nghiệp",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line4",
+            "label": "Caption 5",
+            "value": "Sửa đến bản thứ mười một mà em vẫn chưa ưng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "plank5",
+            "label": "Sign 6",
+            "value": "Ngày bảo vệ",
+            "max": 40,
+            "narrow": true
+          },
+          {
+            "slot": "line5",
+            "label": "Caption 6",
+            "value": "Anh đứng ngoài cửa phòng, run hơn cả em. Rồi em bước ra, cười.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "At the summit",
+      "note": "Shown when the flag goes up at sunrise: a small line in a pill, then the big words (one line of about 25 letters).",
+      "rows": [
+        [
+          {
+            "slot": "cheer",
+            "label": "Small line",
+            "value": "Chúc mừng em",
+            "max": 30
+          },
+          {
+            "slot": "achievement",
+            "label": "Big words",
+            "value": "Tốt nghiệp rồi!",
+            "max": 40
+          }
+        ]
+      ]
+    }
+  ]
+}

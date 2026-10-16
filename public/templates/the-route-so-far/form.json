@@ -1,0 +1,142 @@
+{
+  "label": "Chặng đường của mình (a hand-drawn map of your places, a ring box at the X)",
+  "preset": {
+    "title": "Chặng đường của mình",
+    "intro": "Gửi [Tên em], đây là tấm bản đồ anh vẽ lại những nơi mình đã cùng đi.",
+    "to": "Gửi [Tên em] của anh,",
+    "body": [
+      "Anh vẽ tấm bản đồ này mất mấy buổi tối. Vẽ xong mới nhận ra: chỗ nào trên đó cũng có em.",
+      "Quán cà phê anh giả vờ thích đồ ngọt. Hai cái áo len giống hệt nhau ở chợ đêm Đà Lạt. Cả những tối bình thường trong căn phòng nhỏ của mình.",
+      "Phần còn lại của tấm bản đồ anh để trống, vì anh muốn vẽ tiếp cùng em, từng chặng một.",
+      "Nên ở chỗ đánh dấu X này, anh hỏi em một câu: em lấy anh nhé?"
+    ],
+    "from": "Người muốn đi cùng em cả đời, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The places",
+      "note": "Six places on the map, in the order you went: a name for each tag, then a line. Up to about 80 letters fit in a line's three rows; longer lines get smaller. The map, the route and the landmarks stay as drawn.",
+      "rows": [
+        [
+          {
+            "slot": "tag0-n",
+            "label": "Place 1",
+            "value": "Quán cà phê đầu tiên",
+            "max": 40
+          },
+          {
+            "slot": "tag0-l",
+            "label": "Line 1",
+            "value": "Em gọi bạc xỉu, anh gọi y hệt em, dù anh chẳng uống được ngọt.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "tag1-n",
+            "label": "Place 2",
+            "value": "Hồ Tây lộng gió",
+            "max": 40
+          },
+          {
+            "slot": "tag1-l",
+            "label": "Line 2",
+            "value": "Ngồi tới lúc đèn đường bật hết mà chưa ai chịu đứng dậy về.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "tag2-n",
+            "label": "Place 3",
+            "value": "Rạp phim hôm mưa",
+            "max": 40
+          },
+          {
+            "slot": "tag2-l",
+            "label": "Line 3",
+            "value": "Phim dở tệ, nhưng từ giữa phim em đã tựa vào vai anh.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "tag3-n",
+            "label": "Place 4",
+            "value": "Đà Lạt, chuyến đi đầu",
+            "max": 40
+          },
+          {
+            "slot": "tag3-l",
+            "label": "Line 4",
+            "value": "Mua hai cái áo len giống hệt nhau ở chợ đêm, rồi ngại không dám mặc cùng lúc.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "tag4-n",
+            "label": "Place 5",
+            "value": "Biển Quy Nhơn",
+            "max": 40
+          },
+          {
+            "slot": "tag4-l",
+            "label": "Line 5",
+            "value": "Em viết tên hai đứa lên cát. Sóng xóa, em lại viết.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "tag5-n",
+            "label": "Place 6",
+            "value": "Căn phòng nhỏ của mình",
+            "max": 40
+          },
+          {
+            "slot": "tag5-l",
+            "label": "Line 6",
+            "value": "Hai cái cốc, một cái bếp, và rất nhiều buổi tối bình thường anh thương.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "On the map",
+      "rows": [
+        [
+          {
+            "slot": "names",
+            "label": "Your two names",
+            "value": "[Tên em] & [Tên anh]",
+            "max": 40,
+            "note": "Lettered in the corner box of the map."
+          },
+          {
+            "slot": "spot",
+            "label": "Under the X",
+            "value": "Những ngày chưa tới",
+            "max": 40,
+            "note": "What the blank land at the X is called."
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The question",
+      "rows": [
+        [
+          {
+            "slot": "question",
+            "label": "The question",
+            "value": "Em lấy anh nhé?",
+            "max": 40,
+            "note": "Written in red ink on a paper strip above the map as the ring box opens. One line; about 16 letters at full size."
+          }
+        ]
+      ]
+    }
+  ]
+}

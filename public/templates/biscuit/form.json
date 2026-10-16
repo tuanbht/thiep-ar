@@ -1,0 +1,20 @@
+{
+  "label": "Biscuit (3D: a corgi pup does zoomies, chases its tail and brings the letter)",
+  "preset": {
+    "title": "Biscuit Says Woof",
+    "intro": "Lay the card flat, point your phone at it, and call Biscuit.",
+    "to": "Dear you,",
+    "body": [
+      "A very small dog with very short legs ran all the way round the park to bring you this.",
+      "Happy birthday. Every walk is better with you."
+    ],
+    "from": "With love and a wagging tail"
+  },
+  "groups": [
+    {
+      "title": "The board",
+      "note": "The words on the board that springs up while Biscuit howls. Up to about 40 letters; longer words get smaller.",
+      "rows": [[{ "slot": "board", "label": "Board", "value": "Chúc mừng sinh nhật!", "max": 40 }]]
+    }
+  ]
+}

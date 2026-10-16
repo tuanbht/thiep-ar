@@ -1,0 +1,13 @@
+{
+  "name": "Kiko",
+  "kind": "3d",
+  "scene": "../_acts/showtime.js",
+  "character": "character.js",
+  "height": 0.36,
+  "aspect": 0.625,
+  "chapters": [0],
+  "reveal": null,
+  "boardDefault": "You're my star!",
+  "boardColor": "#b98cf0",
+  "notes": "Kiko, an original chibi magical idol built from primitives in character.js (no model to download): lilac twin tails with gold star clips, a mint-and-white stage dress with a big pink bow, and a star wand. Her face is one painted decal with eight expressions; her twin tails and skirt swing on springs driven by how she really moves. The 15-second show is the shared templates/_acts/showtime.js: she pops out of the card with a ta-da, waves and winks, skips a lap round the card, dances an idol routine (step-touch with heart hands, arms waving, a point to the sky), twirls a double pirouette, cheers with confetti cannons and fireworks while the board with the card's words comes up, then shows the letter with both hands and makes a heart. One stop: a tap opens the letter."
+}

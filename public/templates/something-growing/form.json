@@ -1,0 +1,71 @@
+{
+  "label": "Một điều đang lớn (a seed grows past the window, a tag on every leaf)",
+  "preset": {
+    "title": "Một điều đang lớn",
+    "intro": "Anh gieo một hạt mầm. Mỗi chiếc lá mọc lên là một điều anh thương ở em.",
+    "to": "Gửi [Tên em],",
+    "body": [
+      "Hôm nay chẳng phải dịp gì đặc biệt. Anh chỉ muốn kể em nghe về cái cây này.",
+      "Nó bắt đầu từ một hạt mầm bé tí, chẳng ai để ý. Rồi mỗi ngày có em, nó lại mọc thêm một chiếc lá: một nụ cười, một bữa cơm, một câu “về đến nhà chưa?”.",
+      "Anh không biết nó sẽ cao đến đâu. Anh chỉ biết anh muốn chăm nó mỗi ngày, cả những hôm trời mưa, cả những hôm mình giận nhau.",
+      "Còn bông hoa vừa nở, tất nhiên là của em."
+    ],
+    "from": "Thương em, chẳng cần lý do, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "The leaves",
+      "note": "Six leaves grow, one at a time, and each drops a kraft tag with one thing you love about her, hand-lettered. About 45 letters fit on a tag; longer lines get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "love0",
+            "label": "Leaf 1",
+            "value": "Cách em cười tít cả mắt lại.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "love1",
+            "label": "Leaf 2",
+            "value": "Em đặt tên cho từng chậu cây ngoài ban công.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "love2",
+            "label": "Leaf 3",
+            "value": "Giọng em ngái ngủ mỗi sáng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "love3",
+            "label": "Leaf 4",
+            "value": "Tay em lúc nào cũng lạnh, để anh có cớ nắm.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "love4",
+            "label": "Leaf 5",
+            "value": "Miếng cuối cùng, bao giờ em cũng phần anh.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "love5",
+            "label": "Leaf 6",
+            "value": "Em tin anh, cả những lúc anh chưa tin mình.",
+            "multiline": true
+          }
+        ]
+      ]
+    }
+  ]
+}

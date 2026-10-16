@@ -1,0 +1,141 @@
+{
+  "label": "Mỗi tuổi một ngọn nến (birthday cake, a candle for every year)",
+  "preset": {
+    "title": "Gửi [Tên em],",
+    "intro": "Hôm nay em tròn 25 tuổi. Để anh thắp cho em từng ngọn nến một.",
+    "to": "Gửi [Tên em] của anh,",
+    "body": [
+      "Chúc mừng sinh nhật em. 25 ngọn nến, anh thắp từng ngọn một, vì năm nào của em cũng đáng để anh dừng lại nhìn cho thật kỹ.",
+      "Có những năm anh chưa có mặt, anh chỉ biết qua lời em kể: cô bé khóc ngày khai giảng, cô học trò giấu truyện dưới gầm bàn, cô sinh viên thức trắng mùa thi. Anh thương cả những năm ấy, vì nhờ chúng mới có em của bây giờ.",
+      "Năm nay anh không mong gì to tát. Chỉ mong em ngủ đủ giấc, ăn đúng bữa, cười nhiều hơn buồn, và sang năm anh vẫn được ngồi cạnh lúc em thổi nến."
+    ],
+    "from": "Thương em nhiều, [Tên anh]"
+  },
+  "groups": [
+    {
+      "title": "On the cake",
+      "rows": [
+        [
+          {
+            "slot": "name",
+            "label": "Her name on the cake",
+            "value": "[Tên em]",
+            "max": 24,
+            "note": "Piped in icing on the front of the cake. Short names read best."
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The years",
+      "note": "The film lights 25 candles and stops at six of them: one caption for each, the age and a line or two. Keep the ages rising, the last one her age today. Up to about 110 letters fit; longer lines get smaller.",
+      "rows": [
+        [
+          {
+            "slot": "mem0-n",
+            "label": "Age 1",
+            "value": "1",
+            "max": 3,
+            "narrow": true
+          },
+          {
+            "slot": "mem0-l",
+            "label": "Memory 1",
+            "value": "Lễ thôi nôi, em bốc được cây bút. Mẹ em bảo lớn lên em sẽ học giỏi.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mem1-n",
+            "label": "Age 2",
+            "value": "6",
+            "max": 3,
+            "narrow": true
+          },
+          {
+            "slot": "mem1-l",
+            "label": "Memory 2",
+            "value": "Ngày khai giảng lớp Một, em khóc ướt cả vai áo vì không chịu buông tay mẹ.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mem2-n",
+            "label": "Age 3",
+            "value": "12",
+            "max": 3,
+            "narrow": true
+          },
+          {
+            "slot": "mem2-l",
+            "label": "Memory 3",
+            "value": "Em giấu truyện Doraemon dưới gầm bàn, bị cô giáo bắt được mà vẫn cười.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mem3-n",
+            "label": "Age 4",
+            "value": "18",
+            "max": 3,
+            "narrow": true
+          },
+          {
+            "slot": "mem3-l",
+            "label": "Memory 4",
+            "value": "Mùa thi đại học, đêm nào em cũng học tới 2 giờ sáng.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mem4-n",
+            "label": "Age 5",
+            "value": "22",
+            "max": 3,
+            "narrow": true
+          },
+          {
+            "slot": "mem4-l",
+            "label": "Memory 5",
+            "value": "Năm anh gặp em. Em cười một cái, anh quên mất mình định nói gì.",
+            "multiline": true
+          }
+        ],
+        [
+          {
+            "slot": "mem5-n",
+            "label": "Age 6",
+            "value": "25",
+            "max": 3,
+            "narrow": true
+          },
+          {
+            "slot": "mem5-l",
+            "label": "Memory 6",
+            "value": "Hôm nay. Ngọn nến này, anh được thắp ngay bên cạnh em.",
+            "multiline": true
+          }
+        ]
+      ]
+    },
+    {
+      "title": "The wish",
+      "rows": [
+        [
+          {
+            "slot": "wish",
+            "label": "Before she blows the candles out",
+            "value": "Nhắm mắt lại, ước một điều đi em.",
+            "multiline": true,
+            "lines": 2,
+            "note": "Over the cake when every candle burns. One or two short lines."
+          }
+        ]
+      ]
+    }
+  ]
+}
