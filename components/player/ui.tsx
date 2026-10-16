@@ -45,7 +45,7 @@ const IN_APP = /Zalo|FBAN|FBAV|Instagram|Line\/|MicroMessenger|TikTok|musical_ly
 export function Intro(p: { title: string; lead: string; ready: boolean; onStart(): void; onNoCamera(): void }) {
   const inApp = typeof navigator !== 'undefined' && IN_APP.test(navigator.userAgent);
   return (
-    <section className={cx(s.ui, s.intro)} aria-label={p.title} data-ui>
+    <section className={s.ui} aria-label={p.title} data-ui>
       <p className={s.eyebrow}>{T.eyebrow}</p>
       <h1 className={s.title} id="title">{p.title}</h1>
       {p.lead && <p className={s.lead} id="lead">{p.lead}</p>}

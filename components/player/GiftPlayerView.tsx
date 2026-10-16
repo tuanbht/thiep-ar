@@ -15,6 +15,7 @@ import type { GiftPlayerProps } from './types';
 import { cx, Dots, ErrorView, Fallback, Hint, Intro, ReadView, ScanFrame, TopBar } from './ui';
 import { isAct3d, useActFlow } from './useActFlow';
 import { useGestures } from './useGestures';
+import Image from 'next/image';
 
 declare global {
   interface Window {
@@ -179,6 +180,14 @@ export default function GiftPlayerView({ card, initialMode = 'ar', onEvent }: Gi
     <div ref={setRoot} className={cx(s.root, fontVars, mode === 'preview' && running && s.preview)} data-player-state={view?.state ?? 'loading'}>
       <div className={s.stage} ref={stageRef} />
       <div className={s.filmDom} ref={setDomRoot} aria-hidden="true" />
+      {!running && <Image
+        src={`/thumbs/${card.template}.jpg`}
+        alt=""
+        width={960}
+        height={600}
+        sizes={"(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+        className="aspect-[16/10] mt-50 mb-10 h-auto w-full max-w-240 object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] motion-safe:group-hover:scale-[1.04]"
+      />}
       {message && <ErrorView message={message} />}
       {!message && intro && (
         <Intro title={title} lead={card.intro} ready={!!flow && phase === 'idle'} onStart={() => void start()}

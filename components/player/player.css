@@ -38,7 +38,6 @@
   pointer-events: none;
 }
 .gp-ui > * { pointer-events: auto; }
-.gp-intro { background: linear-gradient(to top, rgba(6, 10, 34, .96), rgba(6, 10, 34, .75) 70%, rgba(6, 10, 34, 0)); }
 .gp-eyebrow { font: 700 .8rem/1 var(--f-sign); letter-spacing: .24em; text-transform: uppercase; opacity: .75; }
 .gp-title { font: 800 clamp(3rem, 16vw, 5.5rem)/.9 var(--f-sign); text-transform: uppercase; margin: .3em 0 .25em !important; text-wrap: balance; overflow-wrap: anywhere; }
 .gp-title-small { font-size: clamp(2.4rem, 12vw, 4rem); }
