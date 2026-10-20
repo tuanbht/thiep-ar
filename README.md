@@ -83,9 +83,12 @@ Vietcombank, VietinBank, Shinhan or Sacombank; this shop's account is a personal
 
 ## Love story cards
 
-Five 3D cards (`starry-date`, `bouquet-surprise`, `candlelight-dinner`, `our-little-home`, `robots-in-love`) are short love
-stories told by one shared act, `public/templates/_acts/lovestory.js`, and each card's own `story.js`: about eighteen
-seconds in three chapters, each ending at a stop that holds the card's words or photo until a tap. The act's header
+Eleven 3D cards are short love stories told by one shared act, `public/templates/_acts/lovestory.js`, and each card's
+own `story.js`: about eighteen seconds in three chapters, each ending at a stop that holds the card's words or photo until
+a tap. `starry-date`, `bouquet-surprise`, `candlelight-dinner`, `our-little-home` and `robots-in-love`; then
+`build-our-house`, `sunset-beach`, `moon-meteors`, and three that borrow the mood of famous animated-film moments (a
+rainy bus stop, petals at a railway crossing, a witch's delivery flight) with our own characters and designs only:
+`rain-umbrella`, `sakura-crossing`, `broom-delivery`. Painted skies stand at the card's back edge (`kit.backdrop`). The act's header
 comment is its API (models and their clips, `hold`, `aim` and `bend` for gestures the clips lack, signs, the polaroid,
 particles, glows, lights).
 

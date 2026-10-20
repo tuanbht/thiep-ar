@@ -1,0 +1,27 @@
+{
+  "name": "Chung ô ngày mưa",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A rainy afternoon at a little country bus stop (KayKit Adventurers, CC0: the Barbarian with his bear hat recoloured into a yellow rain hood and a dark beard, and the hooded Rogue in lavender with a cream tunic, weapons dropped by scripts/pack-models.mjs; everything else is built in story.js: the umbrella, the bus stop, the lamp, hydrangeas, puddles, the painted sky, the rainbow and the bus). Stop 1: rain falls on a painted country sky; she waits with no umbrella, hugging herself, looks up and sneezes; he walks in under a big red umbrella and holds it out over her, out in the rain himself, and a note with the card's first words (slot note1) comes up out of the timetable board. Stop 2: she beckons him in; side by side he tilts the umbrella towards her, she leans on his shoulder with her hand on the handle under his, and the card's photo rises out of a glowing puddle with its caption (slot caption). Stop 3: the rain stops, the clouds part, the sun comes out and a rainbow draws itself across the sky; he shakes the umbrella shut and shoulders it, the photo is pinned on the bus stop, they jump into the big puddle arm in arm with a splash, a little bus pulls up with warm round headlights and a banner with the last words (slot note2) rises among petals. The rain keeps falling (and splashing on the umbrella, the hoods and the puddles) while the act waits at the first two stops. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

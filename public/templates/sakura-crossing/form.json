@@ -1,0 +1,24 @@
+{
+  "label": "Mưa hoa anh đào (3D: hai bạn nhỏ gặp lại nhau ở chắn tàu dưới mưa hoa)",
+  "preset": {
+    "title": "Mưa hoa anh đào",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Mỗi mùa hoa nở, anh lại nhớ lần đầu thấy em bên kia đường ray.",
+      "Bao nhiêu chuyến tàu đi qua, anh vẫn ở đây, chờ em."
+    ],
+    "from": "Người đợi em bên kia đường ray"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi hai bạn nhìn thấy nhau)", "value": "Mùa hoa năm ấy, anh gặp em", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Mùa anh đào của mình", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Lần này, anh sẽ không để lỡ em!", "max": 32 }]
+      ]
+    }
+  ]
+}

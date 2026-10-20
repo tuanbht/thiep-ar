@@ -33,3 +33,16 @@ describe('withLock', () => {
     expect(await withLock(file, async () => 'mine', { wait: 5, stale: 60_000 })).toBe('mine');
   });
 });
+
+describe('differingPixels', () => {
+  it('counts the pixels two pictures differ in, and calls different sizes wholly different', async () => {
+    const { default: sharp } = await import('sharp');
+    const { differingPixels } = await import('../print-card.mjs');
+    const plain = await sharp({ create: { width: 10, height: 10, channels: 3, background: '#ffffff' } }).png().toBuffer();
+    const dotted = await sharp(plain).composite([{ input: { create: { width: 2, height: 1, channels: 3, background: '#000000' } }, left: 3, top: 3 }]).png().toBuffer();
+    const bigger = await sharp({ create: { width: 11, height: 10, channels: 3, background: '#ffffff' } }).png().toBuffer();
+    expect(await differingPixels(plain, plain)).toBe(0);
+    expect(await differingPixels(plain, dotted)).toBe(2);
+    expect(await differingPixels(plain, bigger)).toBe(Infinity);
+  });
+});

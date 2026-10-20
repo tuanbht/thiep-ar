@@ -1,0 +1,24 @@
+{
+  "label": "Cùng nhau xây nhà (3D: hai bạn nhỏ cùng dựng một mái nhà)",
+  "preset": {
+    "title": "Cùng nhau xây nhà",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Mình chưa cần một ngôi nhà to, chỉ cần mỗi ngày được cùng em đặt thêm một viên gạch.",
+      "Cảm ơn em đã cùng anh vẽ nên tổ ấm này."
+    ],
+    "from": "Người cùng em xây nhà"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên bản vẽ ngôi nhà)", "value": "Từng viên gạch, mình cùng nhau xây", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Nhà của hai đứa mình", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Về chung một nhà nhé em!", "max": 32 }]
+      ]
+    }
+  ]
+}

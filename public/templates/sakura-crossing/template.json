@@ -1,0 +1,27 @@
+{
+  "name": "Mưa hoa anh đào",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "Two chibi sweethearts at a little railway crossing in cherry blossom rain (KayKit Adventurers, CC0: the Knight without his helmet and cape in a navy school jacket, the Rogue without her cape in a white top and pink scarf, both dark-haired; outfits recoloured through the palette texture). The crossing, the barriers, the signals, the trees, the train and the spring sky are built in code. Stop 1: a painted spring sky folds up behind the card and petals start to fall; she walks up on the far side, he on the near side, they see each other across the tracks, the lamps blink, the barriers come down, she waves shyly and he waves back; a note with the card's first words (slot note1) comes up. Stop 2: the arrow lights and a little train of our own rushes through between them in a gust of petals; in its wake the petals whirl up and the card's photo flutters down out of the whirl with its caption (slot caption). Stop 3: the lamps go dark and the barriers lift, they are both still there; they run to each other and he swings her round in a hug in the middle of the crossing, petals rise round them and gather into a heart, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

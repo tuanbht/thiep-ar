@@ -25,6 +25,8 @@ function args(argv) {
 
 export async function shootCard(template, o = {}, log = console.log) {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(template)) throw new Error('usage: node scripts/shoot-card.mjs <template> [--base url] [--every s] [--photo url]');
+  const form = path.join(ROOT, 'public', 'templates', template, 'form.json');
+  if (!(await fs.stat(form).catch(() => null))) throw new Error(`public/templates/${template}/form.json is missing: the dev player builds its card from it`);
   const [w, h] = String(o.size ?? '430x860').split('x').map(Number);
   const out = path.join(ROOT, '.cache', 'shots', template);
   await fs.rm(out, { recursive: true, force: true }); await fs.mkdir(out, { recursive: true });
@@ -42,7 +44,7 @@ export async function shootCard(template, o = {}, log = console.log) {
     const state = () => page.evaluate(() => window.__state || '');
     const until = async (re, ms) => { const end = Date.now() + ms; while (Date.now() < end) { const s = await state(); if (re.test(s)) return s; await page.waitForTimeout(100); } return state(); };
     const first = await until(/^playing:0$|^error|^fallback/, 60_000);
-    if (!/^playing:0$/.test(first)) throw new Error(`the card did not start (state "${first}")`);
+    if (!/^playing:0$/.test(first)) throw new Error(`the card did not start (state "${first}")${errors.length ? `; the page said: ${[...new Set(errors)].slice(0, 3).join(' | ')}` : ''}`);
     const shots = [];
     for (let i = 0; ; i++) {
       const t0 = Date.now();

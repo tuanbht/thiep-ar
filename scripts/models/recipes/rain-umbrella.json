@@ -1,0 +1,12 @@
+{
+  "boy": {
+    "from": "kaykit/Barbarian",
+    "drop": ["1H_Axe_Offhand", "Barbarian_Round_Shield", "1H_Axe", "2H_Axe", "Mug"],
+    "clips": ["Idle", "Walking_A", "Jump_Full_Short", "Cheer"]
+  },
+  "girl": {
+    "from": "kaykit/Rogue_Hooded",
+    "drop": ["Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Knife", "Throwable"],
+    "clips": ["Idle", "Jump_Full_Short", "Cheer"]
+  }
+}

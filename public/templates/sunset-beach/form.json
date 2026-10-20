@@ -1,0 +1,24 @@
+{
+  "label": "Dạo biển hoàng hôn (3D: hai bạn nhỏ nắm tay dạo biển và ngắm mặt trời lặn)",
+  "preset": {
+    "title": "Dạo biển hoàng hôn",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Chỉ cần nắm tay em đi dọc bờ biển, hoàng hôn nào cũng đẹp hơn.",
+      "Mình cùng nhau ngắm thật nhiều hoàng hôn nữa, em nhé."
+    ],
+    "from": "Người đi cùng em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi hai bạn dạo biển)", "value": "Đi cùng em đến cuối bờ biển", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Biển, hoàng hôn và em", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Mỗi hoàng hôn đều muốn có em!", "max": 32 }]
+      ]
+    }
+  ]
+}

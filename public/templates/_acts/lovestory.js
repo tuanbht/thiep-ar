@@ -5,7 +5,8 @@
    ready, modelError, dispose}. The card lies flat: the act stands up out of it (local +y is the card's +z) and faces the
    card's bottom edge (local +z), where a phone usually looks from. One unit is the card's width.
 
-   template.json: "chapters": [0, 1, …] (one per stop), "story": the template's own script, "models": { name: "models/x.glb" }
+   template.json: "chapters": [0, 1, …] (one per stop), "story": the template's own script, or a list of scripts loaded in
+   order whose last one registers the story (helpers first: ["scenery.js", "story.js"]), "models": { name: "models/x.glb" }
    (the same file under two names gives two independent copies), "credits": [{ model, author, license, url }].
 
    The story registers itself, loaded once by URL:
@@ -18,11 +19,22 @@
                                still at a stop), T seconds since the act began (idle motion), held: waiting at the stop
      })
    Feet that do not slide: KayKit's Walking_A covers about .1 card widths a second at speed 1 for a .3-tall character
-   (Walking_C about .07, Running_Strafe_Right about .47), so speed = distance / seconds / .1. A headless browser renders
-   slowly and dt is clamped to .05 s, so there the story runs slower than the wall clock.
+   (Walking_C about .07, Running_A about .6, Running_Strafe_Right about .47), so speed = distance / seconds / .1 for an
+   even pace (/ .6 for Running_A); an eased
+   walk (ease.inOut peaks at three times its average) wants the pace of its even middle, set every frame. A drop particle
+   moving (vx, vy) on screen points along rot = Math.atan2(vx, -vy). A headless browser renders slowly and dt is clamped
+   to .05 s, so there the story runs slower than the wall clock.
    kit: THREE, stage, card ({ width, depth }), clamp, lerp, seg, ease, rng, tween(t, keys), hop(t, every, height),
-     words(slot, fallback), model(name), sign(opts), polaroid(opts), particles(opts), glow(opts), picture(draw, opts),
-     lights ({ hemi, sun }: dim them for a night), heartPath(ctx, x, y, size), once(key), keep(x). */
+     words(slot, fallback), model(name), sign(opts), polaroid(opts), particles(opts: shapes heart, petal, glow, sparkle,
+     drop, star, leaf, note), glow(opts), picture(draw, opts), canvasTexture(w, h, draw), backdrop(draw, opts),
+     lights ({ hemi, sun }: dim them for a night), heartPath(ctx, x, y, size), once(key), keep(x).
+     model(name).play(clip, { once, fade, speed, key }): called every frame; a new key plays the same clip again.
+     Every draw callback (sign, polaroid, picture, canvasTexture, backdrop) runs again when the handwriting face arrives:
+     make its random choices outside it, or the picture changes when it repaints. fitText(ctx, text, { x, y, w, h },
+     { maxLines, max, font, weight }) writes words as big as they fit, lines evened out; HAND is the handwriting font.
+     model.hold(prop, slot) sets only its size: set its position and turn in the hand yourself; stage.attach(prop) puts a
+     held prop back on the stage where it is, at its stage size. A packed model's vertices are interleaved (positions,
+     normals and skin data in one buffer): to bend a mesh, read and write through getX/setXYZ, never .array[i * 3]. */
 window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -59,7 +71,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   sun.shadow.mapSize.set(1024, 1024); sun.shadow.camera.near = .1; sun.shadow.camera.far = 4; sun.shadow.bias = -.0005;
   sun.shadow.camera.left = sun.shadow.camera.bottom = -.8; sun.shadow.camera.right = sun.shadow.camera.top = .8;
   root.add(sun, sun.target); sun.target.position.set(0, .1, 0);
-  const catcher = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.2, .8)), keep(new THREE.ShadowMaterial({ opacity: .3 })));
+  const catcher = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.2, .8)), keep(new THREE.ShadowMaterial({ opacity: .3, depthWrite: false })));   // decals on the card stay visible
   catcher.rotation.x = -Math.PI / 2; catcher.position.y = .002; catcher.receiveShadow = true; spin.add(catcher);
 
   const envCanvas = document.createElement('canvas'); envCanvas.width = 256; envCanvas.height = 128;
@@ -225,8 +237,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     const root = new THREE.Group(); root.add(box);
     let halo = null;                                                   // { halo: true }: a flat glow just behind the photo (set its opacity)
     if (o.halo) {
-      const ht = keep(atlasTex.clone()); ht.repeat.set(.25, 1); ht.offset.set(.5, 0); ht.needsUpdate = true;
-      halo = new THREE.Mesh(keep(new THREE.PlaneGeometry(width * 2.1, width * 2.1)), keep(new THREE.MeshBasicMaterial({ map: ht,
+      halo = new THREE.Mesh(keep(new THREE.PlaneGeometry(width * 2.1, width * 2.1)), keep(new THREE.MeshBasicMaterial({ map: glowCell(),
         color: o.haloColor ?? 0xffd9a0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })));
       halo.position.set(0, width * 620 / 512 / 2, -.012); halo.renderOrder = 3; root.add(halo);
     }
@@ -234,7 +245,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   }
 
   /* ── particles: hearts, petals, glows and sparkles, as points that face the phone ── */
-  const atlas = document.createElement('canvas'); atlas.width = 512; atlas.height = 128;
+  const atlas = document.createElement('canvas'); atlas.width = 1024; atlas.height = 128;
   (c => {
     c.fillStyle = '#fff'; heartPath(c, 64, 66, 112); c.fill();                                    // 0 heart
     c.save(); c.translate(192, 64); c.rotate(.6); const pg = c.createLinearGradient(0, -50, 0, 50);
@@ -247,9 +258,20 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     c.fillStyle = sg; c.fillRect(384, 0, 128, 128); c.fillStyle = '#fff';                          // 3 sparkle: a glow and four points
     c.beginPath(); c.moveTo(448, 6); c.quadraticCurveTo(452, 60, 506, 64); c.quadraticCurveTo(452, 68, 448, 122);
     c.quadraticCurveTo(444, 68, 390, 64); c.quadraticCurveTo(444, 60, 448, 6); c.fill();
+    const dg = c.createLinearGradient(0, 4, 0, 124);                                               // 4 drop: a falling streak of rain
+    dg.addColorStop(0, 'rgba(255,255,255,0)'); dg.addColorStop(.7, 'rgba(255,255,255,.75)'); dg.addColorStop(1, 'rgba(255,255,255,1)');
+    c.fillStyle = dg; c.beginPath(); c.moveTo(574, 6); c.lineTo(578, 6); c.quadraticCurveTo(586, 110, 576, 122); c.quadraticCurveTo(566, 110, 574, 6); c.fill();
+    c.fillStyle = '#fff'; c.beginPath();                                                           // 5 star: five points
+    for (let i = 0; i < 10; i++) { const r = i % 2 ? 24 : 58, a = -Math.PI / 2 + i * Math.PI / 5; c[i ? 'lineTo' : 'moveTo'](704 + Math.cos(a) * r, 66 + Math.sin(a) * r); }
+    c.fill();
+    c.beginPath(); c.moveTo(832, 8); c.bezierCurveTo(892, 34, 878, 98, 832, 122); c.bezierCurveTo(786, 98, 772, 34, 832, 8); c.fill();   // 6 leaf
+    c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 4; c.beginPath(); c.moveTo(832, 14); c.lineTo(832, 116); c.stroke();
+    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(944, 98, 22, 16, -.4, 0, 7); c.fill(); c.fillRect(960, 20, 8, 80);   // 7 note: ♪
+    c.beginPath(); c.moveTo(960, 20); c.quadraticCurveTo(1000, 30, 1004, 64); c.quadraticCurveTo(990, 44, 968, 44); c.fill();
   })(atlas.getContext('2d'));
   const atlasTex = keep(new THREE.CanvasTexture(atlas));
-  const SHAPES = { heart: 0, petal: 1, glow: 2, sparkle: 3 };
+  const SHAPES = { heart: 0, petal: 1, glow: 2, sparkle: 3, drop: 4, star: 5, leaf: 6, note: 7 };
+  const glowCell = () => { const t = keep(atlasTex.clone()); t.repeat.set(1 / 8, 1); t.offset.set(2 / 8, 0); t.needsUpdate = true; return t; };
   function particles(o = {}) {
     const n = o.max ?? 200, g = keep(new THREE.BufferGeometry());
     const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), alpha = new Float32Array(n), size = new Float32Array(n),
@@ -272,7 +294,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
         void main() { vec2 p = gl_PointCoord - 0.5; float c = cos(vRot), s = sin(vRot);
           p = vec2(c * p.x - s * p.y, s * p.x + c * p.y) + 0.5;
           if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) discard;
-          vec4 t = texture2D(uAtlas, vec2((vShape + p.x) / 4.0, 1.0 - p.y));
+          vec4 t = texture2D(uAtlas, vec2((vShape + p.x) / 8.0, 1.0 - p.y));
           float a = t.a * vAlpha; if (a < 0.01) discard;
           gl_FragColor = vec4(vColor * t.rgb, a); }`,
       transparent: true, depthWrite: false, blending: o.additive ? THREE.AdditiveBlending : THREE.NormalBlending
@@ -315,7 +337,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   }
   /** a soft light that always faces the phone: lanterns, a ring's shine */
   function glow(o = {}) {
-    const tex = keep(atlasTex.clone()); tex.repeat.set(.25, 1); tex.offset.set(.5, 0); tex.needsUpdate = true;      // the glow cell
+    const tex = glowCell();
     const m = keep(new THREE.SpriteMaterial({ map: tex, color: o.color ?? 0xffe2a8, transparent: true, depthWrite: false,
       depthTest: o.depthTest ?? true, blending: THREE.AdditiveBlending, opacity: o.opacity ?? 1 }));   // depthTest false: not cut by the card
     const s = new THREE.Sprite(m); s.scale.setScalar(o.size ?? .2); s.renderOrder = 6;
@@ -331,6 +353,32 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     const s = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: o.opacity ?? 1 })));
     s.scale.setScalar(o.size ?? .1); s.renderOrder = 4;
     return s;
+  }
+
+  /** a canvas the story paints (words included): draw(context, w, h) runs now and again when the handwriting face arrives */
+  function canvasTexture(w, h, draw) {
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const tex = keep(new THREE.CanvasTexture(cv)); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    const paint = () => { const c = cv.getContext('2d'); c.clearRect(0, 0, w, h); draw(c, w, h); tex.needsUpdate = true; };
+    painters.add(paint); paint();
+    return tex;
+  }
+  /** a painted backdrop standing at the card's back edge, curved like a pop-up page (a sky, a sea, a skyline); unlit, so
+      it shows its colours whatever the lights. draw(context, w, h) paints it; opts: width (1.1), height (.75), curve (.18:
+      how far its ends come forward), z (-.3), px (canvas width, 1024), alphaTest (0: give a layer with clear sky .5 so
+      what is behind shows through), order (render order, -1: stack layers with -4, -3, …). It writes depth: keep things
+      in front of it, z > page.userData.zAt(x) */
+  function backdrop(draw, o = {}) {
+    const width = o.width ?? 1.1, height = o.height ?? .75, curve = o.curve ?? .18, px = o.px ?? 1024;
+    const tex = canvasTexture(px, Math.round(px * height / width), draw);
+    const geo = keep(new THREE.PlaneGeometry(width, height, 32, 1)), pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) { const k = pos.getX(i) / (width / 2); pos.setZ(i, curve * k * k); pos.setY(i, pos.getY(i) + height / 2); }
+    geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, keep(new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: true,
+      alphaTest: o.alphaTest ?? 0, toneMapped: false })));              // a painted sky keeps the colours it was painted in
+    mesh.position.z = o.z ?? -.3; mesh.renderOrder = o.order ?? -1;
+    mesh.userData.zAt = x => (o.z ?? -.3) + curve * (x / (width / 2)) ** 2;   // where the page stands at x: its ends come forward
+    return mesh;
   }
 
   /* ── models: the template's glTF binaries, each with its own animation mixer ── */
@@ -365,7 +413,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     const inner = g.scene; root.add(inner); dress(inner);
     const mixer = g.animations.length ? new THREE.AnimationMixer(inner) : null;
     if (mixer) mixers.add(mixer);
-    let current = null;
+    let current = null, currentKey;
     /** a part by its name in the file: the loader drops the dots ("upperarm.r" is upperarmr), so either works */
     const part = q => inner.getObjectByName(q) || inner.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(q)) || null;
     const find = q => typeof q === 'number' ? g.animations[q]
@@ -375,8 +423,10 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       play(q, o = {}) {
         const clip = mixer && find(q); if (!clip) return null;
         const a = mixer.clipAction(clip);
-        if (current === a && a.isScheduled() && !o.restart) { if (!a.paused) a.setEffectiveTimeScale(o.speed ?? 1); return a; }   // a played-once clip stays on its last frame
-        const prev = current; current = a;
+        if (current === a && a.isScheduled() && !o.restart && (o.key === undefined || o.key === currentKey)) {   // a played-once clip stays on its last frame
+          if (!a.paused) a.setEffectiveTimeScale(o.speed ?? 1); return a;
+        }
+        const prev = current; current = a; currentKey = o.key;            // a new key plays the same clip again from its start
         a.reset(); a.setLoop(o.once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!o.once;
         a.setEffectiveTimeScale(o.speed ?? 1); a.setEffectiveWeight(1); a.play();
         if (prev && prev !== a) prev.crossFadeTo(a, o.fade ?? .35, false);
@@ -403,7 +453,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
         b.getWorldQuaternion(qBone); root.getWorldQuaternion(qRoot); b.parent.getWorldQuaternion(qParent);
         vNow.copy(UP).applyQuaternion(qBone).normalize();
         vWant.set(dir[0], dir[1], dir[2]).normalize().applyQuaternion(qRoot);
-        qTurn.setFromUnitVectors(vNow, vWant); if (k < 1) qTurn.slerpQuaternions(qNone, qTurn, k);
+        qTurn.setFromUnitVectors(vNow, vWant); if (k < 1) qTurn.slerp(qNone, 1 - k);   // k of the way (slerpQuaternions would overwrite qTurn first)
         b.quaternion.copy(qParent.invert().multiply(qTurn.multiply(qBone)));
         b.updateMatrixWorld(true);
       },
@@ -445,19 +495,23 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   const fired = new Set();
   const kit = {
     THREE, stage, card: { width: 1, depth: tpl.aspect || .625 }, clamp, lerp, seg, ease, rng, tween, hop, keep, words,
-    model, sign, polaroid, particles, glow, picture, env, lights: { hemi, sun }, heartPath,
+    model, sign, polaroid, particles, glow, picture, canvasTexture, backdrop, env, lights: { hemi, sun }, heartPath, fitText, HAND,
     /** true the first time it is asked after the story (re)starts */
     once: key => (fired.has(key) ? false : (fired.add(key), true))
   };
   let story = null, seconds = [], starts = [];
   const reg = window.NM_STORIES = window.NM_STORIES || {};
-  const storyUrl = new URL(tpl.story || 'story.js', base).href;
-  const storyReady = new Promise(res => {
-    if (reg[storyUrl]) return res();
-    const s = document.createElement('script'); s.src = storyUrl;
-    s.onload = () => res(); s.onerror = () => { errors.push(`${tpl.story || 'story.js'} could not be loaded`); res(); };
+  const storyFiles = [].concat(tpl.story || 'story.js');               // helpers first; the last file registers the story
+  const storyUrl = new URL(storyFiles[storyFiles.length - 1], base).href;
+  const loaded = window.NM_STORY_FILES = window.NM_STORY_FILES || new Set();
+  const loadScript = file => new Promise(res => {
+    const url = new URL(file, base).href;
+    if (loaded.has(url)) return res();
+    const s = document.createElement('script'); s.src = url;
+    s.onload = () => { loaded.add(url); res(); }; s.onerror = () => { errors.push(`${file} could not be loaded`); res(); };
     document.head.appendChild(s);
   });
+  const storyReady = reg[storyUrl] ? Promise.resolve() : storyFiles.reduce((p, f) => p.then(() => loadScript(f)), Promise.resolve());
   const ready = Promise.all([storyReady, modelsReady, photoReady]).then(async () => {
     await Promise.race([fontsReady, new Promise(r => setTimeout(r, 1500))]);
     try {
@@ -475,7 +529,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   const state = { chapter: -1, t: 0, T: 0, paused: true, stopped: true };
   let raf = 0, disposed = false, last = performance.now();
   function tick(now) {
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now;   // a frame stamped before play() would step back
     if (!state.paused && story) { state.t += dt; state.T += dt; }   // the clock waits for the story (models on a slow phone)
     if (story) {
       const ch = Math.max(0, state.chapter), t = state.chapter < 0 ? 0 : state.t;

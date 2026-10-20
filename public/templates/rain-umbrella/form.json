@@ -1,0 +1,24 @@
+{
+  "label": "Chung ô ngày mưa (3D: chàng trai mang ô đến che mưa cho nàng ở trạm xe buýt)",
+  "preset": {
+    "title": "Chung ô ngày mưa",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Có những ngày mưa, chỉ cần đứng cạnh em dưới một chiếc ô là đủ ấm.",
+      "Mưa rồi sẽ tạnh, còn anh vẫn ở đây, bên em."
+    ],
+    "from": "Người che ô cho em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi chàng che ô cho nàng)", "value": "Mưa thì mình chung ô", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Ngày mưa có em", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Che mưa cho em cả đời nhé!", "max": 32 }]
+      ]
+    }
+  ]
+}

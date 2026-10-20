@@ -1,0 +1,30 @@
+{
+  "name": "Dạo biển hoàng hôn",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "scenery.js",
+    "story.js"
+  ],
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A sunset walk on the beach (KayKit Adventurers, CC0: the Barbarian bare-headed under a straw hat built in code, recoloured into an aqua beach shirt, rolled-up navy trousers and bare feet, his beard tinted brown; the Rogue without her cape, recoloured into a coral sundress with bare arms and legs, a hibiscus in her hair; weapons, the bear hat and the capes dropped by scripts/pack-models.mjs). The rest is built in code: a sky page that folds up like a pop-up card (a sunset, a dusk painted over it that fades in, the sun sinking behind the far sea), a strip of sea whose waves move its corners, with foam and wet sand, the sand, a palm, shells, a starfish, two crabs, gulls, a driftwood stick and a bottle with a message. Stop 1: she leads him by the hand along the waterline, footprints pressing into the sand; a big wave runs up the beach, they hop away from it hand in hand and laugh, and a note with the card's first words (slot note1) comes up. Stop 2: he picks up a driftwood stick and draws a glowing heart in the sand; a wave rolls a bottle to her feet, she picks it up, the cork pops and the card's photo flies out of it, unrolling into a polaroid with its caption (slot caption). Stop 3: they sit facing the sunset as dusk falls; she traces a heart in the air, sparkles rise off the sun's path into a heart round the setting sun, she leans on his shoulder, his arm goes round her, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

@@ -19,6 +19,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'http://print.local';
 const LOCK = path.join(ROOT, '.cache', 'compile.lock');
 const STALE_MS = 40 * 60_000;
+const STILL_PIXELS = 200;                                              // big text can rasterise a few pixels differently each time
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.woff2': 'font/woff2',
   '.woff': 'font/woff', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.json': 'application/json' };
 
@@ -38,6 +39,15 @@ window.compileDone = null;
   window.compileDone = btoa(s);
 })().catch(e => { window.compileDone = 'ERR ' + e.message; });
 </script></body></html>`;
+
+/** How many pixels two same-sized screenshots differ in. */
+export async function differingPixels(a, b) {
+  const [x, y] = await Promise.all([a, b].map(p => sharp(p).removeAlpha().raw().toBuffer({ resolveWithObject: true })));   // both RGB
+  if (x.info.width !== y.info.width || x.info.height !== y.info.height) return Infinity;
+  const ch = x.info.channels; let n = 0;
+  for (let i = 0; i < x.data.length; i += ch) if (x.data[i] !== y.data[i] || x.data[i + 1] !== y.data[i + 1] || x.data[i + 2] !== y.data[i + 2]) n++;
+  return n;
+}
 
 /** "how many points the tracker has": matching points (finding the card) and tracking points (holding on to it) */
 export function features(buf) {
@@ -98,7 +108,7 @@ export async function printCard(template, { compile = true, log = console.log } 
     for (let i = 0; i < 25 && !still; i++) {                          // a busy machine may still be drawing: wait until it holds still
       await page.waitForTimeout(400);
       const again = await page.screenshot();
-      still = again.equals(shot); shot = again;
+      still = again.equals(shot) || (await differingPixels(shot, again)) < STILL_PIXELS; shot = again;
     }
     if (!still) throw new Error('the design never stopped changing: a print cannot move');
     if (errors.length) throw new Error(`the design has errors: ${errors.slice(0, 3).join(' | ')}`);

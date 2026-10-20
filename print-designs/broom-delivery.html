@@ -1,0 +1,397 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Thư tình bay qua phố biển: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/900.css">
+<style>
+/* The printed card = the tracking image. "Thư tình bay qua phố biển" (a love letter flies over the sea town) as an airmail
+   envelope with a hand-drawn map of a harbour town on it: red and blue airmail stripes round the edge (each stripe its own
+   width), the sea and the quay along the top (the act's sea stands behind that edge), the lighthouse on its rocks, the
+   night post office, the boy's roof terrace and the rooftops where the act's own houses stand (the act's centre is the
+   card's centre: the stage's x is 640 + 1280x, its z is 400 + 1280z), a dotted flight path that spirals up from the post
+   office and loops over the roofs to his house, a little dotted heart over the sea, stamps and a postmark by the post
+   office, the title as the envelope's handwritten address, a delivery slip, gulls and boats. The cobbled square in the
+   lower middle is where the act swoops low. Every shape is inked in navy so the tracker finds edges
+   everywhere; nothing is mirrored or tiled, and all randomness is seeded, so every render is the same picture. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#fff8ec}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(2010);
+const C = { ink: '#1d2a4d', paper: '#fff6e6', cream: '#fffdf6', kraft: '#e8cf9f', kraft2: '#c9a36d', red: '#d8343f', blue: '#2f5fa8',
+  sea: '#7fc1e8', sea2: '#4f97d1', deep: '#2f6fae', foam: '#e9f7ff', sand: '#f6dfb0', stone: '#c9c2b6', stone2: '#a89f92',
+  teal: '#2a9d8f', mint: '#bfe8df', coral: '#ff7a5c', rose: '#e5484d', pink: '#ff9fb4', blush: '#ffe1e6', gold: '#f2b84b', butter: '#ffe08a',
+  terra: '#d9643a', mustard: '#f0b43c', berry: '#e2566d', roofBlue: '#3f6fbf', wall1: '#fff1c8', wall2: '#f8d9c9', wall3: '#d4e8f2',
+  wall4: '#fff8ee', wall5: '#d9efe0', leaf: '#6fbf73', moss: '#3f8a52', lilac: '#c9b3f2', street: '#f3e6cc', cobble: '#e9dcc2' };
+const F = { hand: 'Dancing Script', sans: 'Be Vietnam Pro', round: 'Pacifico', note: 'Patrick Hand', serif: 'Playfair Display' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.ink) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+const fit = (str, weight, family, size, w) => Math.min(size, n1(w / measure(str, `${weight} 100px "${family}"`) * 100));
+
+/* what the scatter keeps clear of */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m);
+
+/* ---- small shapes ---- */
+const heart = (z, fill, sw = 1.8) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw)}/>`;
+const sparkle = (z, fill, sw = 1.4) => `<path d="M0 ${n1(-z)} Q${n1(z * .14)} ${n1(-z * .14)} ${n1(z)} 0 Q${n1(z * .14)} ${n1(z * .14)} 0 ${n1(z)} Q${n1(-z * .14)} ${n1(z * .14)} ${n1(-z)} 0 Q${n1(-z * .14)} ${n1(-z * .14)} 0 ${n1(-z)}Z" fill="${fill}" ${ink(sw)}/>`;
+const star5 = (z, fill, sw = 1.4) => { let d = ''; for (let i = 0; i < 10; i++) { const rr = i % 2 ? z * .45 * (.9 + r() * .2) : z * (.9 + r() * .18), [x, y] = pt(0, 0, rr, -90 + i * 36); d += `${i ? 'L' : 'M'}${x} ${y}`; } return `<path d="${d}Z" fill="${fill}" ${ink(sw)}/>`; };
+const gull = (z, sw = 2.2) => `<path d="M${n1(-z)} ${n1(-z * .1)} Q${n1(-z * .5)} ${n1(-z * .62)} 0 0 Q${n1(z * .48)} ${n1(-z * .6)} ${n1(z * 1.05)} ${n1(-z * .16)}" fill="none" ${ink(sw)}/>`;
+const envelope = (w, h, fill = C.cream, sw = 1.6) => `<rect x="${n1(-w / 2)}" y="${n1(-h / 2)}" width="${n1(w)}" height="${n1(h)}" rx="2" fill="${fill}" ${ink(sw)}/>` +
+  `<path d="M${n1(-w / 2)} ${n1(-h / 2)} L0 ${n1(h * .1)} L${n1(w / 2)} ${n1(-h / 2)}" fill="none" ${ink(sw * .8)}/>` + g(0, h * .12, 0, 1, heart(Math.min(w, h) * .32, C.rose, sw * .7));
+const leaf = (len, w, fill = C.leaf) => `<path d="M0 0 C${n1(w)} ${n1(-len * .3)} ${n1(w * .6)} ${n1(-len * .82)} 0 ${n1(-len)} C${n1(-w * .7)} ${n1(-len * .78)} ${n1(-w)} ${n1(-len * .28)} 0 0Z" fill="${fill}" ${ink(1.6)}/>`;
+
+/* ---- the envelope: airmail stripes all round (no two the same width), words on cream plaques, a cream sheet inside ---- */
+function sheet() {
+  let s = `<defs><clipPath id="frame"><path d="M0 0H1280V800H0Z M32 32V768H1248V32Z" clip-rule="evenodd"/></clipPath></defs>`;
+  s += `<rect width="1280" height="800" fill="${C.cream}"/>`;
+  let st = '';
+  for (let x = -820, i = 0; x < 1300; i++) {                         // slanted bars along a line round the edge, unwrapped
+    const w = 13 + r() * 15, col = [C.red, C.cream, C.blue, C.cream][i % 4];
+    if (col !== C.cream) st += `<path d="M${n1(x)} 0 L${n1(x + w)} 0 L${n1(x + w + 820)} 800 L${n1(x + 820)} 800Z" fill="${col}"/>`;
+    x += w + (col === C.cream ? 0 : 0);
+  }
+  s += `<g clip-path="url(#frame)">${st}</g>`;
+  s += `<rect x="32" y="32" width="1216" height="736" fill="${C.paper}" ${ink(2.4)}/>`;
+  s += `<rect x="45" y="45" width="1190" height="710" rx="10" fill="none" stroke="${C.blue}" stroke-width="1.5" stroke-dasharray="12 5 3 5"/>`;
+  const plaque = (x, y, a, str, size = 11) => {
+    const w = measure(str, `800 ${size}px "${F.sans}"`) + str.length * 2.2 + 26;
+    return g(x, y, a, 1, `<rect x="${n1(-w / 2)}" y="-11" width="${n1(w)}" height="22" rx="11" fill="${C.cream}" ${ink(1.8)}/>` + T(0, 4, str, { s: size, ls: 2.2, anchor: 'middle', fill: C.ink }));
+  };
+  s += plaque(640, 16, 0, 'BƯU CỤC ĐÊM  ·  THƯ HỎA TỐC  ·  SPECIAL DELIVERY  ·  PHỐ BIỂN');
+  s += plaque(640, 784, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  AIR MAIL  ·  No. 2010  ·  GIAO TẬN TAY');
+  s += plaque(16, 420, -90, 'GIAO TẬN TAY  ·  BY HAND');
+  s += plaque(1264, 380, 90, 'HẢI ĐĂNG  ·  BY THE SEA');
+  return s;
+}
+
+/* ---- the sea along the top edge: waves, foam, the quay and its bollards, boats ---- */
+const COAST = x => 140 + 12 * Math.sin(x / 97) + 8 * Math.sin(x / 41 + 1.3);
+function sea() {
+  let d = `M46 46 H1234 V${n1(COAST(1234))}`;
+  for (let x = 1234; x >= 46; x -= 12) d += ` L${x} ${n1(COAST(x))}`;
+  let s = `<path d="${d}Z" fill="${C.sea}" ${ink(2.4)}/>`;
+  for (let i = 0; i < 260; i++) {                                    // waves, each its own size
+    const x = 56 + r() * 1170, y = 54 + r() * (COAST(x) - 66), w = 8 + r() * 18;
+    if (y > COAST(x) - 10) continue;
+    s += `<path d="M${n1(x)} ${n1(y)} q${n1(w / 4)} ${n1(-4 - r() * 3)} ${n1(w / 2)} 0 t${n1(w / 2)} 0" fill="none" stroke="${pick([C.foam, C.deep, C.sea2, C.foam])}" stroke-width="${n1(1.4 + r() * 1.4)}" stroke-linecap="round"/>`;
+  }
+  let q = `M46 ${n1(COAST(46) + 2)}`;                                  // the quay: a sandy rim, stones, bollards
+  for (let x = 46; x <= 1234; x += 12) q += ` L${x} ${n1(COAST(x) + 2)}`;
+  for (let x = 1234; x >= 46; x -= 12) q += ` L${x} ${n1(COAST(x) + 16 + 3 * Math.sin(x / 23))}`;
+  s += `<path d="${q}Z" fill="${C.sand}" ${ink(2)}/>`;
+  for (let x = 54; x < 1226; x += 18 + r() * 16) s += `<path d="M${n1(x)} ${n1(COAST(x) + 5)} q${n1(4 + r() * 4)} ${n1(4 + r() * 3)} ${n1(9 + r() * 6)} ${n1(r() * 3)}" fill="none" ${ink(1.1, C.kraft2)}/>`;
+  for (let x = 120; x < 1180; x += 70 + r() * 70) s += `<rect x="${n1(x)}" y="${n1(COAST(x) + 1)}" width="9" height="11" rx="3" fill="${C.stone2}" ${ink(1.6)}/>`;
+  const boat = (x, y, k, sail, a) => g(x, y, a, k, `<path d="M-24 0 L24 0 L16 11 L-16 11Z" fill="${pick([C.red, C.teal, C.mustard])}" ${ink(2)}/>` +
+    `<path d="M0 -2 V-46" ${ink(2)}/><path d="M2 -44 L26 -6 L2 -6Z" fill="${sail}" ${ink(1.8)}/><path d="M-2 -38 L-20 -6 L-2 -6Z" fill="${C.cream}" ${ink(1.8)}/>` +
+    `<path d="M-30 13 q8 -4 16 0 t16 0 t16 0 t16 0" fill="none" ${ink(1.4, C.foam)}/>`);
+  s += boat(612, 92, .9, C.coral, -4) + boat(830, 78, .7, C.butter, 3) + boat(392, 70, .62, C.mint, -2);
+  return s;
+}
+
+/* ---- the harbour front between the quay and the houses: cobbles, crates, barrels, nets, an anchor, boats on the sand ---- */
+function harbour() {
+  let s = '';
+  for (let i = 0; i < 520; i++) {                                    // cobbles on the harbour front, each its own shape
+    const x = 50 + r() * 1180, y = COAST(x) + 20 + r() * (242 - COAST(x) - 20);
+    if (y > 250 || blocked(x, y, 2)) continue;
+    const w = 6 + r() * 9, h = 4 + r() * 5;
+    s += `<rect x="${n1(x - w / 2)}" y="${n1(y - h / 2)}" width="${n1(w)}" height="${n1(h)}" rx="2" fill="${pick([C.paper, C.cobble, '#f2e3c6', C.sand, C.stone])}" ${ink(1.1, '#8f7f6a')} transform="rotate(${n1(r() * 50 - 25)} ${n1(x)} ${n1(y)})"/>`;
+  }
+  const crate = (x, y, k, a) => g(x, y, a, k, `<rect x="-13" y="-13" width="26" height="26" fill="${C.kraft}" ${ink(1.8)}/><path d="M-13 -13 L13 13 M-13 -4 H13 M-13 4 H13" ${ink(1.2, C.kraft2)}/>` + T(0, 4, 'BƯU', { s: 6.5, ls: 1, anchor: 'middle', fill: C.red }));
+  const barrel = (x, y, k) => g(x, y, 0, k, `<path d="M-11 -14 Q-15 0 -11 14 H11 Q15 0 11 -14Z" fill="#b5804f" ${ink(1.8)}/><path d="M-13 -6 H13 M-13 6 H13" ${ink(2, C.ink)}/>`);
+  const net = (x, y, k) => { let d = ''; for (let i = 0; i < 6; i++) d += `M${-24 + i * 9} -10 Q${-20 + i * 9} 4 ${-24 + i * 9} 16 `; for (let j = 0; j < 4; j++) d += `M-28 ${-8 + j * 7} Q0 ${-4 + j * 7} 28 ${-8 + j * 7} `; return g(x, y, -8, k, `<path d="${d}" fill="none" ${ink(1, C.teal)}/><circle cx="-26" cy="-10" r="4" fill="${C.coral}" ${ink(1.2)}/><circle cx="24" cy="-8" r="3.4" fill="${C.butter}" ${ink(1.2)}/>`); };
+  const anchor = (x, y, k) => g(x, y, 12, k, `<circle cx="0" cy="-15" r="4" fill="none" ${ink(2.4)}/><path d="M0 -11 V14 M-9 -4 H9 M-14 6 Q-12 16 0 16 Q12 16 14 6" fill="none" ${ink(2.6)}/>`);
+  const dinghy = (x, y, k, col, a) => g(x, y, a, k, `<path d="M-26 -6 Q0 14 26 -6 L20 -12 H-20Z" fill="${col}" ${ink(2)}/><path d="M-18 -9 H18" ${ink(1.2, C.cream)}/><path d="M-8 -12 L-30 -24 M6 -12 L28 -22" ${ink(2.2, '#8a5a35')}/>`);
+  const bench = (x, y) => g(x, y, 0, 1, `<rect x="-20" y="-10" width="40" height="6" rx="2" fill="#8a5a35" ${ink(1.6)}/><rect x="-20" y="-18" width="40" height="5" rx="2" fill="#a5703f" ${ink(1.4)}/><path d="M-16 -4 V4 M16 -4 V4" ${ink(2)}/>`);
+  s += crate(330, 220, 1, 6) + crate(352, 238, .8, -10) + barrel(318, 246, .9) + net(706, 216, .9) + anchor(1112, 196, 1) + dinghy(500, 190, .9, C.teal, -4) + dinghy(880, 194, .8, C.coral, 6) + barrel(808, 236, .8) + crate(1006, 222, .85, 4) + bench(150, 178);
+  return s;
+}
+
+/* ---- buildings, drawn from the front like a picture map ---- */
+function windows(x0, y0, w, h, cols, rows, lit = C.butter) {
+  let s = '';
+  for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+    const ww = w / cols * .46, hh = h / rows * .5, x = x0 + (i + .5) * w / cols - ww / 2, y = y0 + (j + .4) * h / rows - hh / 2;
+    s += `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(ww)}" height="${n1(hh)}" fill="${r() < .3 ? lit : '#4b6390'}" ${ink(1.4)}/>`;
+    s += `<path d="M${n1(x + ww / 2)} ${n1(y)} V${n1(y + hh)} M${n1(x)} ${n1(y + hh / 2)} H${n1(x + ww)}" ${ink(.9, C.cream)}/>`;
+    if (r() < .5) s += `<rect x="${n1(x - 2)}" y="${n1(y + hh)}" width="${n1(ww + 4)}" height="3.5" fill="${C.terra}" ${ink(.9)}/>` + [0, 1, 2].map(k => `<circle cx="${n1(x + ww * (.15 + k * .35))}" cy="${n1(y + hh - .5)}" r="2" fill="${pick([C.pink, C.rose, C.butter])}"/>`).join('');
+  }
+  return s;
+}
+function house(x, y, w, h, wall, roof, o = {}) {                    // (x, y): the middle of its ground line
+  const rh = o.rh ?? w * .48;
+  let s = `<rect x="${n1(x - w / 2)}" y="${n1(y - h)}" width="${n1(w)}" height="${n1(h)}" fill="${wall}" ${ink(2.2)}/>`;
+  s += `<path d="M${n1(x - w / 2 - 7)} ${n1(y - h + 1)} L${n1(x)} ${n1(y - h - rh)} L${n1(x + w / 2 + 7)} ${n1(y - h + 1)}Z" fill="${roof}" ${ink(2.2)}/>`;
+  for (let k = 1; k < 4; k++) s += `<path d="M${n1(x - w / 2 - 7 + k * 5)} ${n1(y - h + 1 - k * rh / 4.2)} L${n1(x + w / 2 + 7 - k * 5)} ${n1(y - h + 1 - k * rh / 4.2)}" ${ink(1, 'rgba(29,42,77,.45)')}/>`;
+  s += `<circle cx="${n1(x)}" cy="${n1(y - h - rh * .42)}" r="${n1(rh * .14)}" fill="${C.butter}" ${ink(1.4)}/>`;
+  if (o.chimney) s += `<rect x="${n1(x + w * .2)}" y="${n1(y - h - rh * .9)}" width="9" height="${n1(rh * .5)}" fill="${C.terra}" ${ink(1.8)}/>`;
+  s += windows(x - w / 2 + 4, y - h + 4, w - 8, h - 24, o.cols || 2, o.rows || Math.max(1, Math.round(h / 34)));
+  const dw = Math.min(16, w * .26);
+  s += `<path d="M${n1(x + (o.door || 0) - dw / 2)} ${n1(y)} V${n1(y - 18)} Q${n1(x + (o.door || 0))} ${n1(y - 26)} ${n1(x + (o.door || 0) + dw / 2)} ${n1(y - 18)} V${n1(y)}Z" fill="${o.doorColor || C.roofBlue}" ${ink(1.6)}/>`;
+  return s;
+}
+/* his house: a flat roof terrace with a little wall, pots of flowers and a washing line */
+function terrace() {
+  const x = 979, y = 470, w = 300, h = 96;
+  keep(x - w / 2 - 10, y - h - 70, x + w / 2 + 10, y + 6);
+  let s = `<rect x="${x - w / 2}" y="${y - h}" width="${w}" height="${h}" fill="${C.wall4}" ${ink(2.4)}/>`;
+  s += `<rect x="${x - w / 2 - 6}" y="${y - h - 16}" width="${w + 12}" height="18" fill="${C.cream}" ${ink(2.2)}/><rect x="${x - w / 2 - 8}" y="${y - h - 20}" width="${w + 16}" height="6" fill="${C.roofBlue}" ${ink(1.8)}/>`;
+  for (let k = 0; k < 9; k++) s += `<path d="M${n1(x - w / 2 + 14 + k * 33)} ${y - h - 14} v12" ${ink(1, C.stone2)}/>`;
+  s += windows(x - w / 2 + 70, y - h + 10, w - 80, h - 30, 4, 1);
+  s += `<path d="M${x - w / 2 + 34} ${y} V${y - 46} Q${x - w / 2 + 48} ${y - 62} ${x - w / 2 + 62} ${y - 46} V${y}Z" fill="${C.roofBlue}" ${ink(1.8)}/><circle cx="${x - w / 2 + 56}" cy="${y - 22}" r="2.4" fill="${C.gold}"/>`;
+  const lx0 = x - 70, lx1 = x + 130, ly = y - h - 58;                 // the washing line, things pegged on it
+  s += `<path d="M${lx0} ${y - h - 18} V${ly} M${lx1} ${y - h - 18} V${ly}" ${ink(2.4, '#6b4a33')}/><path d="M${lx0} ${ly} Q${(lx0 + lx1) / 2} ${ly + 12} ${lx1} ${ly}" fill="none" ${ink(1.4)}/>`;
+  [[lx0 + 26, C.teal, 'shirt'], [lx0 + 62, C.butter, 'towel'], [lx0 + 100, C.cream, 'photo'], [lx0 + 140, C.pink, 'dress'], [lx0 + 176, C.cream, 'sock']].forEach(([px, col, kind]) => {
+    const py = ly + 6 + 10 * Math.sin(Math.PI * (px - lx0) / (lx1 - lx0));
+    let p = '';
+    if (kind === 'shirt') p = `<path d="M-12 0 L-20 7 L-15 13 L-10 9 V30 H10 V9 L15 13 L20 7 L12 0 L5 0 Q0 5 -5 0Z" fill="${col}" ${ink(1.6)}/>`;
+    else if (kind === 'dress') p = `<path d="M-6 0 L-8 8 L-17 32 H17 L8 8 L6 0 Q0 4 -6 0Z" fill="${col}" ${ink(1.6)}/>`;
+    else if (kind === 'towel') p = `<rect x="-11" y="0" width="22" height="30" fill="${col}" ${ink(1.6)}/><path d="M-11 24 H11" ${ink(1, C.terra)}/>`;
+    else if (kind === 'photo') p = `<rect x="-14" y="0" width="28" height="34" fill="${C.cream}" ${ink(1.6)}/><rect x="-10" y="4" width="20" height="20" fill="${C.blush}" ${ink(1)}/>` + g(0, 15, 0, 1, heart(10, C.rose, 1)) + `<path d="M-6 29 q6 -3 12 0" fill="none" ${ink(1)}/>`;
+    else p = `<path d="M-4 0 V16 Q-4 22 4 22 H8 V16 H3 V0Z" fill="${C.red}" ${ink(1.4)}/>`;
+    s += g(px, py, (r() - .5) * 8, 1, p + `<rect x="-3" y="-4" width="6" height="8" rx="1" fill="${C.kraft2}" ${ink(1)}/>`);
+  });
+  for (const [px, k] of [[x - w / 2 + 14, 1], [x + w / 2 - 16, .85]]) {   // pots of bougainvillea on the wall's corners
+    s += g(px, y - h - 18, 0, k, `<path d="M-9 0 L-7 -14 H7 L9 0Z" fill="${C.terra}" ${ink(1.6)}/>` + `<circle cx="0" cy="-22" r="13" fill="${C.leaf}" ${ink(1.6)}/>` +
+      [0, 1, 2, 3, 4].map(i => `<circle cx="${n1(Math.cos(i * 1.3) * 9)}" cy="${n1(-24 + Math.sin(i * 1.3) * 8)}" r="3.4" fill="${C.pink}" ${ink(1)}/>`).join(''));
+  }
+  s += g(x + 60, y - h - 52, -6, 1, `<rect x="-62" y="-14" width="124" height="26" rx="13" fill="${C.cream}" ${ink(1.8)}/>` + T(0, 5, 'Nhà chàng', { f: F.hand, w: 700, s: 20, anchor: 'middle', fill: C.rose }));
+  return s;
+}
+/* the night post office, its sign, a red post box by the door */
+function postOffice() {
+  const x = 218, y = 352, w = 190, h = 104;
+  keep(x - w / 2 - 12, y - h - 96, x + w / 2 + 60, y + 8);
+  let s = house(x, y, w, h, C.wall1, C.roofBlue, { rh: 66, cols: 3, rows: 1, door: 0, doorColor: C.red });
+  s += g(x, y - h - 84, 0, 1, `<rect x="-86" y="-18" width="172" height="36" rx="8" fill="${C.ink}" ${ink(2)}/><rect x="-80" y="-12" width="160" height="24" rx="5" fill="none" ${ink(1.4, C.gold)}/>` +
+    T(6, 7, 'Bưu cục Đêm', { f: F.hand, w: 700, s: 22, anchor: 'middle', fill: C.butter }) + g(-62, 0, 0, 1, envelope(20, 13, C.gold, 1.2)) + `<path d="M-50 18 V34 M50 18 V34" ${ink(2.4, '#6b4a33')}/>`);
+  s += g(x + w / 2 + 30, y, 0, 1, `<rect x="-12" y="-44" width="24" height="44" rx="4" fill="${C.red}" ${ink(2)}/><path d="M-12 -40 Q0 -58 12 -40Z" fill="${C.red}" ${ink(2)}/>` +
+    `<rect x="-8" y="-34" width="16" height="3.5" rx="1.5" fill="${C.ink}"/>` + g(0, -20, 0, 1, heart(9, C.cream, 1)) + `<rect x="-15" y="-3" width="30" height="5" rx="2" fill="#7a1d24" ${ink(1.4)}/>`);
+  return s;
+}
+/* the lighthouse on its rocks, its beam across the sea */
+function lighthouse() {
+  const x = 1186, y = 198;
+  keep(x - 56, 56, x + 56, y + 24);
+  let s = `<path d="M${x - 14} ${y - 128} L${x - 128} ${y - 140} L${x - 124} ${y - 108}Z" fill="${C.butter}" opacity=".75" ${ink(1.2, C.gold)}/>`;
+  s += `<path d="M${x - 50} ${y + 14} Q${x - 46} ${y - 6} ${x - 24} ${y - 8} Q${x - 4} ${y - 22} ${x + 18} ${y - 8} Q${x + 44} ${y - 10} ${x + 50} ${y + 14}Z" fill="${C.stone}" ${ink(2.2)}/>`;
+  for (let k = 0; k < 5; k++) s += `<path d="M${n1(x - 40 + k * 18)} ${n1(y + 6 - r() * 8)} q6 -5 12 -1" fill="none" ${ink(1.2, C.stone2)}/>`;
+  const bands = 5, top = y - 112, bot = y - 6, w0 = 20, w1 = 30;
+  for (let i = 0; i < bands; i++) {
+    const a = top + (bot - top) * i / bands, b = top + (bot - top) * (i + 1) / bands, wa = w0 + (w1 - w0) * i / bands, wb = w0 + (w1 - w0) * (i + 1) / bands;
+    s += `<path d="M${n1(x - wa / 2)} ${n1(a)} L${n1(x + wa / 2)} ${n1(a)} L${n1(x + wb / 2)} ${n1(b)} L${n1(x - wb / 2)} ${n1(b)}Z" fill="${i % 2 ? C.cream : C.red}" ${ink(2)}/>`;
+  }
+  s += `<rect x="${x - 4}" y="${bot - 14}" width="8" height="14" rx="3" fill="${C.ink}"/>`;
+  s += `<rect x="${x - 17}" y="${top - 6}" width="34" height="6" fill="${C.ink}"/><rect x="${x - 11}" y="${top - 26}" width="22" height="20" fill="${C.butter}" ${ink(2)}/>`;
+  s += `<path d="M${x - 15} ${top - 26} L${x} ${top - 44} L${x + 15} ${top - 26}Z" fill="${C.red}" ${ink(2)}/><circle cx="${x}" cy="${top - 47}" r="3.4" fill="${C.ink}"/>`;
+  s += g(x + 34, y - 64, 0, 1, T(0, 0, 'Hải đăng', { f: F.note, w: 400, s: 17, anchor: 'middle', fill: C.ink, stroke: C.paper, sw: 4 }));
+  return s;
+}
+
+/* ---- streets, the cobbled square, trees, lamp posts, the rooftops of the town ---- */
+function town() {
+  let s = '';
+  const road = (d, w) => `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="${w + 4}" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${C.street}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="${d}" fill="none" stroke="${C.kraft}" stroke-width="1.4" stroke-dasharray="6 9"/>`;
+  s += road('M60 392 C220 404 360 380 520 398 S800 410 1080 398 S1200 404 1226 396', 26);   // the harbour street
+  s += road('M640 404 C632 470 652 520 640 560', 30) + road('M330 398 C300 470 250 560 150 600', 18) + road('M900 404 C940 470 1040 520 1200 560', 18);
+  const sq = [640, 640, 168, 92];                                     // the square
+  s += `<ellipse cx="${sq[0]}" cy="${sq[1]}" rx="${sq[2]}" ry="${sq[3]}" fill="${C.cobble}" ${ink(2.4)}/>`;
+  for (let i = 0; i < 230; i++) {                                     // its cobbles, each its own shape
+    const a = r() * 360, k = Math.sqrt(r()) * .94, cx = sq[0] + Math.cos(rad(a)) * sq[2] * k, cy = sq[1] + Math.sin(rad(a)) * sq[3] * k;
+    if (Math.hypot((cx - 640) / 64, (cy - 646) / 34) < 1) continue;
+    const w = 7 + r() * 8, h = 5 + r() * 5;
+    s += `<rect x="${n1(cx - w / 2)}" y="${n1(cy - h / 2)}" width="${n1(w)}" height="${n1(h)}" rx="2.5" fill="${pick([C.paper, C.cobble, C.stone, '#f2e8d4'])}" ${ink(1, C.stone2)} transform="rotate(${n1(r() * 40 - 20)} ${n1(cx)} ${n1(cy)})"/>`;
+  }
+  s += g(640, 646, 0, 1, compass(30));
+  s += T(724, 572, 'Quảng trường', { f: F.note, w: 400, s: 18, fill: C.ink, stroke: C.paper, sw: 4 });
+  s += T(112, 384, 'Phố Cảng', { f: F.note, w: 400, s: 17, fill: C.ink, stroke: C.paper, sw: 4 });
+  s += T(1140, 520, 'Dốc Gió', { f: F.note, w: 400, s: 17, fill: C.ink, stroke: C.paper, sw: 4 });
+  s += T(232, 172, 'Bến cảng', { f: F.note, w: 400, s: 17, fill: C.ink, stroke: C.paper, sw: 4 });
+  const homes = [[58, 236, 64, 70, C.wall5, C.teal], [422, 236, 84, 104, C.wall2, C.terra, { chimney: true }], [582, 216, 92, 80, C.wall3, C.mustard],
+    [749, 238, 76, 112, C.wall4, C.berry, { chimney: true }], [1058, 236, 60, 66, C.wall2, C.teal]];
+  homes.forEach(([x, y, w, h, wall, roof, o]) => { keep(x - w / 2 - 8, y - h - w * .5 - 8, x + w / 2 + 8, y + 4); s += house(x, y, w, h, wall, roof, o || {}); });
+  [[396, 378, 50, 50, C.wall3, C.berry], [462, 378, 58, 64, C.wall1, C.teal, { chimney: true }], [532, 378, 48, 46, C.wall2, C.roofBlue],
+    [716, 378, 54, 58, C.wall5, C.terra], [782, 378, 46, 48, C.wall4, C.mustard]].forEach(([x, y, w, h, wall, roof, o]) => {
+    keep(x - w / 2 - 6, y - h - w * .5 - 6, x + w / 2 + 6, y + 4); s += house(x, y, w, h, wall, roof, { cols: 2, rows: 1, ...(o || {}) });
+  });
+  const stall = (x, y) => {                                           // the fish stall: a striped awning, a counter of fish
+    let a = '';
+    for (let i = 0; i < 6; i++) a += `<path d="M${-36 + i * 12} -40 H${-24 + i * 12} V-28 Q${-30 + i * 12} -20 ${-36 + i * 12} -28Z" fill="${i % 2 ? C.cream : C.blue}" ${ink(1.4)}/>`;
+    const fish = (fx, fy, col) => `<path d="M${fx - 8} ${fy} Q${fx} ${fy - 6} ${fx + 6} ${fy} Q${fx} ${fy + 6} ${fx - 8} ${fy}Z M${fx + 6} ${fy} L${fx + 11} ${fy - 4} L${fx + 11} ${fy + 4}Z" fill="${col}" ${ink(1.1)}/>`;
+    return g(x, y, 0, 1, `<path d="M-34 -28 V0 M34 -28 V0" ${ink(2.4, '#8a5a35')}/>` + a + `<rect x="-36" y="-12" width="72" height="14" fill="#a5703f" ${ink(1.8)}/>` +
+      fish(-20, -16, C.sea) + fish(-2, -17, C.coral) + fish(16, -16, C.mint) + T(0, -44, 'Chợ cá', { f: F.note, w: 400, s: 15, anchor: 'middle', fill: C.ink, stroke: C.paper, sw: 4 }));
+  };
+  keep(600, 172, 680, 244); s += stall(640, 240);
+  const palm = (x, y, k) => g(x, y, 0, k, `<path d="M0 0 C-3 -20 4 -40 -2 -62" fill="none" stroke="${C.ink}" stroke-width="7" stroke-linecap="round"/><path d="M0 0 C-3 -20 4 -40 -2 -62" fill="none" stroke="#a87a4f" stroke-width="4" stroke-linecap="round"/>` +
+    [[-60, 30], [-20, 34], [20, 32], [60, 28], [100, 26], [-100, 26]].map(([a, l]) => g(-2, -62, a + (r() - .5) * 14, 1, `<path d="M0 0 Q${n1(l * .5)} -8 ${l} 4 Q${n1(l * .5)} 2 0 0Z" fill="${pick([C.leaf, C.moss])}" ${ink(1.6)}/>`)).join('') +
+    `<circle cx="-5" cy="-58" r="4" fill="#8a5a35" ${ink(1.2)}/><circle cx="2" cy="-57" r="4" fill="#8a5a35" ${ink(1.2)}/>`);
+  s += palm(330, 380, .8) + palm(1214, 300, .8) + palm(536, 520, .72);
+  const bush = (x, y, k) => g(x, y, 0, k, `<circle cx="-9" cy="-6" r="10" fill="${C.leaf}" ${ink(1.6)}/><circle cx="7" cy="-8" r="12" fill="${C.leaf}" ${ink(1.6)}/><circle cx="0" cy="-15" r="9" fill="${C.leaf}" ${ink(1.6)}/>` +
+    [0, 1, 2, 3].map(i => `<circle cx="${n1(-10 + i * 6 + r() * 4)}" cy="${n1(-14 + r() * 10)}" r="2.6" fill="${pick([C.pink, C.rose, C.cream])}"/>`).join(''));
+  s += bush(476, 470, 1) + bush(800, 470, .9) + bush(640, 470, .8) + bush(1110, 470, .9) + bush(456, 210, .7) + bush(796, 214, .7);
+  const lamp = (x, y) => g(x, y, 0, 1, `<path d="M0 0 V-58" ${ink(3.4)}/><path d="M-6 0 H6" ${ink(3)}/><rect x="-7" y="-72" width="14" height="14" fill="${C.butter}" ${ink(2)}/><path d="M-9 -72 L0 -80 L9 -72Z" fill="${C.ink}"/>`);
+  s += lamp(77, 643) + lamp(1216, 566);
+  return s;
+}
+function compass(z) {
+  let s = `<circle r="${z}" fill="${C.cream}" ${ink(1.8)}/><circle r="${n1(z * .72)}" fill="none" ${ink(1, C.stone2)}/>`;
+  [0, 90, 180, 270].forEach((a, i) => { const [x, y] = pt(0, 0, z * .95, a - 90), [lx, ly] = pt(0, 0, z * .22, a), [rx, ry] = pt(0, 0, z * .22, a + 180); s += `<path d="M${x} ${y} L${lx} ${ly} L${rx} ${ry}Z" fill="${i ? C.blue : C.red}" ${ink(1.2)}/>`; });
+  [45, 135, 225, 315].forEach(a => { const [x, y] = pt(0, 0, z * .62, a - 90), [lx, ly] = pt(0, 0, z * .14, a), [rx, ry] = pt(0, 0, z * .14, a + 180); s += `<path d="M${x} ${y} L${lx} ${ly} L${rx} ${ry}Z" fill="${C.gold}" ${ink(1)}/>`; });
+  return s + T(0, n1(-z - 5), 'B', { s: 11, anchor: 'middle', fill: C.red });
+}
+
+/* ---- the flight: a dotted path that spirals up from the post office, loops over the roofs and ends at his door ---- */
+function flight() {
+  const pts = [];
+  for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2.2, rr = 22 + i * .8; pts.push([372 + Math.sin(a) * rr * 1.25, 476 - i * 2.2 + Math.cos(a) * rr * .7]); }
+  [[420, 330], [470, 270], [560, 150], [660, 150], [760, 168], [822, 236], [860, 330], [888, 390]].forEach(p => pts.push(p));
+  let d = `M${n1(pts[0][0])} ${n1(pts[0][1])}`;
+  for (let i = 1; i < pts.length - 1; i++) { const [x, y] = pts[i], [x2, y2] = pts[i + 1]; d += ` Q${n1(x)} ${n1(y)} ${n1((x + x2) / 2)} ${n1((y + y2) / 2)}`; }
+  d += ` L${pts[pts.length - 1].map(n1).join(' ')}`;
+  let s = `<path d="${d}" fill="none" stroke="${C.cream}" stroke-width="7" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${C.rose}" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>`;
+  [[446, 300, -58], [610, 146, 2], [842, 280, 62]].forEach(([x, y, a]) => { s += g(x, y, a, 1, `<path d="M-7 -6 L4 0 L-7 6" fill="none" ${ink(2.4, C.rose)}/>`); });
+  s += g(712, 150, 8, 1, broom(1));
+  s += g(904, 402, 0, 1, heart(26, C.rose, 2.2) + sparkle(7, C.butter, 1.2).replace('<path', '<path transform="translate(18 -18)"'));
+  s += g(372, 534, -6, 1, T(0, 0, 'cất cánh!', { f: F.hand, w: 700, s: 20, anchor: 'middle', fill: C.rose, stroke: C.paper, sw: 4 }));
+  let hd = '';                                                        // the heart they draw over the sea at dusk
+  for (let i = 0; i <= 40; i++) { const t = i / 40 * Math.PI * 2, hx = 16 * Math.sin(t) ** 3, hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t); hd += `${i ? 'L' : 'M'}${n1(980 + hx * 2.6)} ${n1(88 - hy * 2.4)}`; }
+  s += `<path d="${hd}" fill="none" stroke="${C.cream}" stroke-width="6" stroke-linecap="round"/><path d="${hd}" fill="none" stroke="${C.rose}" stroke-width="2.6" stroke-dasharray="1.5 6" stroke-linecap="round"/>`;
+  s += g(1030, 50, 0, 1, sparkle(8, C.butter, 1.2)) + g(930, 60, 0, 1, sparkle(6, C.cream, 1.1));
+  return s;
+}
+function broom(k) {
+  return g(0, 0, 0, k, `<path d="M-34 4 L22 -3" ${ink(5)}/><path d="M-34 4 L22 -3" stroke="#a5703f" stroke-width="2.6" stroke-linecap="round"/>` +
+    `<path d="M20 -8 L44 -12 L46 6 L22 3Z" fill="${C.butter}" ${ink(1.8)}/><path d="M26 -6 L44 -8 M26 -1 L45 -2 M25 2 L44 3" ${ink(.9, C.kraft2)}/><path d="M21 -8 L23 3" ${ink(2.6, C.red)}/>` +
+    sparkle(6, C.butter, 1.1).replace('<path', '<path transform="translate(52 -14)"') + sparkle(4, C.pink, 1).replace('<path', '<path transform="translate(58 4)"'));
+}
+
+/* ---- the title on an airmail label, top left ---- */
+function title() {
+  const x = 48, y = 524, w = 446, h = 210;
+  keep(x - 6, y - 6, x + w + 10, y + h + 10);
+  let s = `<g transform="${tf(x + w / 2, y + h / 2, -1.6)}"><g transform="translate(${-w / 2} ${-h / 2})">`;
+  s += `<rect x="4" y="6" width="${w}" height="${h}" rx="14" fill="${C.ink}" opacity=".18"/><rect width="${w}" height="${h}" rx="14" fill="${C.cream}" ${ink(2.4)}/>`;
+  let st = '';                                                        // a strip of airmail stripes along its top
+  for (let xx = -40, i = 0; xx < w + 30; i++) { const ww = 10 + r() * 10, col = [C.red, C.cream, C.blue, C.cream][i % 4]; if (col !== C.cream) st += `<path d="M${n1(xx)} 0 L${n1(xx + ww)} 0 L${n1(xx + ww - 16)} 16 L${n1(xx - 16)} 16Z" fill="${col}"/>`; xx += ww; }
+  s += `<clipPath id="tstrip"><rect width="${w}" height="16" rx="8"/></clipPath><g clip-path="url(#tstrip)">${st}</g><path d="M2 16 H${w - 2}" ${ink(1.6)}/>`;
+  s += T(26, 106, 'Thư tình', { f: F.hand, w: 700, s: 96, fill: C.ink }) + T(22, 101, 'Thư tình', { f: F.hand, w: 700, s: 96, fill: C.rose, stroke: C.ink, sw: 4.5 });
+  const f2 = fit('bay qua phố biển', 700, F.hand, 60, 400);
+  s += T(52, 164, 'bay qua phố biển', { f: F.hand, w: 700, s: f2, fill: C.ink }) + T(48, 160, 'bay qua phố biển', { f: F.hand, w: 700, s: f2, fill: C.teal, stroke: C.ink, sw: 4 });
+  s += T(28, 196, 'Special delivery', { f: F.round, w: 400, s: 20, fill: C.blue });
+  s += T(216, 194, 'BƯU CỤC ĐÊM · HỎA TỐC', { s: 11, ls: 2.2, fill: C.red });
+  s += g(386, 62, 14, 1, heart(26, C.rose, 2.2)) + g(420, 92, -10, 1, heart(15, C.pink, 1.8)) + g(356, 30, 0, 1, sparkle(9, C.butter));
+  s += g(390, 132, -18, .66, broom(1));
+  return s + '</g></g>';
+}
+
+/* ---- stamps and postmarks, top right ---- */
+function stamp(w, h, art, value, col) {
+  let edge = '';
+  const per = (len, n) => Array.from({ length: n + 1 }, (_, i) => i / n * len);
+  per(w, 9).forEach((xx, i) => { edge += `${i ? 'L' : 'M'}${n1(-w / 2 + xx)} ${n1(-h / 2 + (i % 2 ? 3 : 0))}`; });
+  per(h, 11).forEach((yy, i) => { edge += ` L${n1(w / 2 - (i % 2 ? 3 : 0))} ${n1(-h / 2 + yy)}`; });
+  per(w, 9).forEach((xx, i) => { edge += ` L${n1(w / 2 - xx)} ${n1(h / 2 - (i % 2 ? 3 : 0))}`; });
+  per(h, 11).forEach((yy, i) => { edge += ` L${n1(-w / 2 + (i % 2 ? 3 : 0))} ${n1(h / 2 - yy)}`; });
+  return `<path d="${edge}Z" fill="${C.cream}" ${ink(1.8)}/><rect x="${n1(-w / 2 + 8)}" y="${n1(-h / 2 + 8)}" width="${n1(w - 16)}" height="${n1(h - 30)}" fill="${col}" ${ink(1.4)}/>` +
+    art + T(0, n1(h / 2 - 9), value, { s: 11, anchor: 'middle', fill: C.ink });
+}
+function postmark(rr, top, bottom, mid, id) {
+  let m = `<circle r="${rr}" fill="none" ${ink(2.4, C.red)}/><circle r="${rr - 14}" fill="none" ${ink(1.4, C.red)}/>`;
+  m += `<path id="aT${id}" d="M${-rr + 7} 0 A${rr - 7} ${rr - 7} 0 0 1 ${rr - 7} 0" fill="none"/><path id="aB${id}" d="M${-rr + 7} 0 A${rr - 7} ${rr - 7} 0 0 0 ${rr - 7} 0" fill="none"/>`;
+  m += `<text font-family="${F.sans}" font-weight="800" font-size="10" letter-spacing="1.6" fill="${C.red}"><textPath href="#aT${id}" startOffset="50%" text-anchor="middle">${top}</textPath></text>`;
+  m += `<text font-family="${F.sans}" font-weight="800" font-size="10" letter-spacing="1.6" fill="${C.red}" dy="9"><textPath href="#aB${id}" startOffset="50%" text-anchor="middle">${bottom}</textPath></text>`;
+  return m + T(0, 5, mid, { s: 13, anchor: 'middle', fill: C.red });
+}
+function stamps() {
+  keep(44, 404, 312, 518);
+  let s = '';
+  s += g(96, 458, -6, 1, stamp(96, 116, g(0, -14, -20, 1, broom(1.05)) + g(-22, -36, 0, 1, star5(7, C.butter, 1.1)) + g(26, 4, 0, 1, heart(13, C.rose, 1.2)), '520đ', C.sea));
+  s += g(196, 452, 5, 1, stamp(84, 100, `<path d="M-6 26 L-3 -22 H3 L6 26Z" fill="${C.cream}" ${ink(1.4)}/><path d="M-4.5 6 H4.5 M-5 16 H5 M-4 -6 H4" ${ink(3, C.red)}/>` +
+    `<rect x="-6" y="-32" width="12" height="10" fill="${C.butter}" ${ink(1.2)}/><path d="M-8 -32 L0 -40 L8 -32Z" fill="${C.red}" ${ink(1.2)}/><path d="M6 -28 L32 -36 L32 -20Z" fill="${C.butter}" opacity=".85"/>` +
+    `<path d="M-30 26 Q-14 20 0 26 T30 26" fill="none" ${ink(1.4, C.foam)}/>`, '2010đ', C.deep));
+  s += g(272, 470, -12, 1, stamp(64, 76, g(0, -6, 0, 1, heart(30, C.rose, 1.4)) + g(12, -18, 0, 1, sparkle(6, C.cream, 1)), '14đ', C.blush));
+  s += g(150, 500, -10, .9, postmark(42, 'BƯU CỤC ĐÊM', 'PHỐ BIỂN', '20·10', 1) + `<path d="M46 -14 q22 -8 44 0 t44 0 M46 0 q22 -8 44 0 t44 0 M46 14 q22 -8 44 0" fill="none" ${ink(1.8, C.red)}/>`);
+  return s;
+}
+
+/* ---- the delivery slip, bottom left ---- */
+function slip() {
+  const x = 876, y = 552, w = 316, h = 196;
+  keep(x - 8, y - 12, x + w + 12, y + h + 10);
+  let s = `<g transform="${tf(x, y, 2.2)}"><rect width="${w}" height="${h}" rx="6" fill="${C.kraft}" ${ink(2.2)}/>`;
+  for (let i = 0; i < 14; i++) s += `<path d="M${n1(8 + r() * (w - 30))} ${n1(10 + r() * (h - 20))} q${n1(6 + r() * 10)} ${n1(-2 + r() * 4)} ${n1(16 + r() * 14)} ${n1(r() * 3)}" fill="none" ${ink(1, C.kraft2)}/>`;
+  s += `<rect x="10" y="10" width="${w - 20}" height="34" rx="4" fill="${C.ink}"/>` + T(22, 33, 'PHIẾU GIAO THƯ', { s: 15, ls: 2.6, fill: C.cream });
+  s += g(w - 70, 27, -6, 1, `<rect x="-52" y="-13" width="104" height="26" rx="13" fill="${C.red}" ${ink(1.6, C.cream)}/>` + T(0, 5, 'HỎA TỐC', { s: 12, ls: 2, anchor: 'middle', fill: C.cream }));
+  [['Người gửi:', 'anh, người thương em'], ['Người nhận:', 'em'], ['Địa chỉ:', 'mái nhà có sân thượng'], ['Cước phí:', 'một nụ cười']].forEach(([k, v], i) => {
+    const ly = 72 + i * 28;
+    s += T(16, ly, k, { s: 12, fill: C.ink }) + T(110, ly + 1, v, { f: F.hand, w: 700, s: 20, fill: C.blue });
+    s += `<path d="M106 ${ly + 6} H${w - 16}" stroke="${C.ink}" stroke-width="1" stroke-dasharray="2 4"/>`;
+  });
+  s += `<rect x="16" y="${h - 34}" width="18" height="18" rx="3" fill="${C.cream}" ${ink(1.6)}/><path d="M19 ${h - 26} l5 6 l9 -12" fill="none" ${ink(2.6, C.red)}/>` + T(42, h - 19, 'Giao tận tay · Hỏa tốc', { f: F.hand, w: 700, s: 21, fill: C.red });
+  let bars = '';                                                     // a barcode, its bars of their own widths
+  for (let xx = w - 104, i = 0; xx < w - 16; i++) { const bw = 1 + (r() * 3 | 0); if (i % 2 === 0) bars += `<rect x="${n1(xx)}" y="${h - 40}" width="${bw}" height="26" fill="${C.ink}"/>`; xx += bw + 1; }
+  s += bars + T(w - 60, h - 6, '2010·0520', { s: 8, ls: 1, anchor: 'middle', fill: C.ink });
+  s += g(w - 40, 126, 12, .8, postmark(34, 'GIAO TẬN TAY', 'BƯU CỤC ĐÊM', '♥', 2));
+  return s + '</g>';
+}
+
+/* ---- the instruction, on a ribbon under the square ---- */
+function banner() {
+  const cx = 640, cy = 742, w = 440, h = 34;
+  keep(cx - w / 2 - 30, cy - h / 2 - 4, cx + w / 2 + 30, cy + h / 2 + 10);
+  const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, f = 22;
+  let s = `<path d="M${x0 - f} ${y0 + 7} L${x0 + 6} ${y0 + 7} L${x0 + 6} ${y1 + 7} L${x0 - f} ${y1 + 7} L${x0 - f + 10} ${cy + 7}Z" fill="${C.blue}" ${ink(2)}/>`;
+  s += `<path d="M${x1 + f} ${y0 + 7} L${x1 - 6} ${y0 + 7} L${x1 - 6} ${y1 + 7} L${x1 + f} ${y1 + 7} L${x1 + f - 10} ${cy + 7}Z" fill="${C.red}" ${ink(2)}/>`;
+  s += `<path d="M${x0} ${y0} Q${cx} ${y0 - 8} ${x1} ${y0} L${x1} ${y1} Q${cx} ${y1 - 8} ${x0} ${y1}Z" fill="${C.cream}" ${ink(2.4)}/>`;
+  return s + T(cx, cy + 5, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 15, anchor: 'middle', fill: C.ink });
+}
+
+/* ---- gulls over the sea and the roofs, sparkles, hearts, little envelopes wherever there is paper left ---- */
+function scatter() {
+  let s = '';
+  [[700, 70, 16, -6], [742, 98, 11, 8], [516, 64, 12, -10], [1120, 274, 13, 4], [260, 160, 14, 10], [1000, 300, 10, -8], [96, 300, 12, 6]].forEach(([x, y, z, a]) => { s += g(x, y, a, 1, gull(z)); });
+  const placed = [];
+  for (let i = 0; i < 3000 && placed.length < 150; i++) {
+    const x = 56 + r() * 1168, y = 150 + r() * 600;
+    if (blocked(x, y, 10) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 26)) continue;
+    if (Math.hypot((x - 640) / 180, (y - 640) / 104) < 1) continue;     // the square stays clear
+    placed.push([x, y]);
+    const k = r(), a = (r() * 60 - 30) | 0;
+    if (k < .24) s += g(x, y, a, 1, heart(9 + r() * 8, pick([C.rose, C.pink, C.coral])));
+    else if (k < .44) s += g(x, y, a, 1, sparkle(5 + r() * 5, pick([C.butter, C.mint, C.pink, C.cream])));
+    else if (k < .58) s += g(x, y, a, 1, star5(5 + r() * 4, pick([C.gold, C.butter, C.lilac])));
+    else if (k < .7) s += g(x, y, a, 1, envelope(16 + r() * 8, 11 + r() * 5, pick([C.cream, C.blush, C.mint]), 1.3));
+    else if (k < .82) s += g(x, y, a * 4, 1, leaf(12 + r() * 8, 4 + r() * 2, pick([C.leaf, C.moss])));
+    else if (k < .92) s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(2.4 + r() * 3)}" fill="${pick([C.red, C.blue, C.gold, C.teal])}"/>`;
+    else s += g(x, y, a, 1, gull(7 + r() * 5, 1.8));
+  }
+  return s;
+}
+
+const FACES = [`700 96px "${F.hand}"`, `400 22px "${F.round}"`, `400 17px "${F.note}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `900 40px "${F.serif}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Thư tình bay qua phố biển ĐẶT Hỏa tốc ữ Ơ ’'))).then(() => {
+  let out = sheet() + sea();
+  const parts = [harbour(), town(), lighthouse(), postOffice(), terrace(), flight(), title(), stamps(), slip(), banner()];
+  out += parts.join('') + scatter();
+  document.getElementById('card').innerHTML = out;
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

@@ -1,0 +1,24 @@
+{
+  "label": "Trăng và sao băng (3D: hai bạn nhỏ nằm trên đồi ngắm trăng và mưa sao băng)",
+  "preset": {
+    "title": "Trăng và sao băng",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Có những buổi chiều chỉ cần nằm cạnh em trên triền cỏ, chờ trăng lên là đủ.",
+      "Mỗi vì sao băng anh thấy, anh đều ước một điều giống nhau: được ở bên em."
+    ],
+    "from": "Người cùng em ước nguyện"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi trăng lên)", "value": "Cùng em ngắm trăng lên", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Điều ước của anh là em", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Ước gì mình mãi bên nhau!", "max": 32 }]
+      ]
+    }
+  ]
+}

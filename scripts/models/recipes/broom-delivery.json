@@ -1,0 +1,12 @@
+{
+  "girl": {
+    "from": "kaykit/Mage",
+    "drop": ["Spellbook", "Spellbook_open", "1H_Wand", "2H_Staff"],
+    "clips": ["Idle", "Jump_Full_Short", "Sit_Chair_Idle", "Sit_Chair_StandUp", "Use_Item"]
+  },
+  "boy": {
+    "from": "kaykit/Knight",
+    "drop": ["1H_Sword", "1H_Sword_Offhand", "2H_Sword", "Badge_Shield", "Rectangle_Shield", "Round_Shield", "Spike_Shield", "Knight_Helmet"],
+    "clips": ["Idle", "Cheer", "Walking_A", "Interact", "Jump_Full_Short", "Sit_Chair_Idle"]
+  }
+}

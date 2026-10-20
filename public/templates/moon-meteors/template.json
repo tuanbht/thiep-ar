@@ -1,0 +1,27 @@
+{
+  "name": "Trăng và sao băng",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "Two chibi sweethearts on a grassy hilltop at twilight (KayKit Adventurers, CC0: the Knight with his cape, recoloured night blue, and no helmet; the Mage without her hat or cape, her dress recoloured rose; weapons dropped by scripts/pack-models.mjs). The hill, its swaying grass and wildflowers, a lone tree, a stone lantern, the magic-hour sky with far hills and a town, the moon and the comet are built in story.js. Stop 1: the sky unfolds and the hill swells out of the card; she leads him up the hill by the hand while a huge moon rises behind the far hills, points at it, and they lie down side by side to watch as the stars come out; a note with the card's first words (slot note1) comes up. Stop 2: a great comet glides down the sky, they sit up to watch, and its tail parts into a cyan strand and a pink one that curl round into a heart; the card's photo lights up inside it with its caption (slot caption). Stop 3: the heart drifts aside and a meteor shower falls, some meteors bursting into tiny hearts; they scoot close, hold hands and make a wish; a last bright meteor flashes and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

@@ -1,0 +1,329 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cùng nhau xây nhà: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/900.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<style>
+/* The printed card = the tracking image. An architect's blueprint with a builder's notebook on it: the whole sheet is
+   blueprint-blue paper drawn in white (a front elevation with its measures, the building plot where the act stands, a
+   title block); on it, in colour, a spiral notebook page with the title, paint chips in the house's own colours, the
+   home-building permit with its stamp, a list of materials on a sticky note, a hammer and nails, a pencil, a tape
+   measure, a little sun and clouds. The plot in the middle (x 365–915, y 30–430: under the 3D house's slab) and the
+   ground in front of it are drawn quieter. Nothing mirrored or tiled; all randomness is seeded. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#2a62ad}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(1508);
+const C = { blue: '#2a62ad', blue2: '#3b78c6', deep: '#1c4a8e', line: '#ffffff', faint: 'rgba(255,255,255,.1)', ink: '#1b2a44',
+  cream: '#fffaf0', paper: '#fdf3e1', rule: '#9cc3ea', margin: '#f07f8e', coral: '#f07f6a', brick: '#e8907a', brick2: '#d97058',
+  pink: '#f59ab8', rose: '#e8566f', mint: '#4fbfa8', mint2: '#a8e3d4', butter: '#ffd27a', yellow: '#ffc229', roof: '#e35d4f',
+  wood: '#d9a066', wood2: '#b97a40', steel: '#b8c4d0', steel2: '#7f8c9a', kraft: '#e3c08a', leaf: '#5fae63', sky: '#bfe3ff', white: '#ffffff' };
+const F = { title: 'Pacifico', hand: 'Dancing Script', sans: 'Be Vietnam Pro', serif: 'Playfair Display', note: 'Patrick Hand' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.ink) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const wl = (sw = 2) => ink(sw, C.line);                                // a white line, drawn on the blueprint
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+const fit = (str, weight, family, size, w) => Math.min(size, n1(w / measure(str, `${weight} 100px "${family}"`) * 100));
+
+/* ---- what the scatter keeps clear of ---- */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m);
+
+/* ---- small shapes ---- */
+const heart = (z, fill, sw = 1.8, c = C.ink) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw, c)}/>`;
+const sparkle = (x, y, z, c, line = C.ink) => `<path transform="translate(${n1(x)} ${n1(y)})" d="M0 ${n1(-z)} Q${n1(z * .16)} ${n1(-z * .16)} ${n1(z)} 0 Q${n1(z * .16)} ${n1(z * .16)} 0 ${n1(z)} Q${n1(-z * .16)} ${n1(z * .16)} ${n1(-z)} 0 Q${n1(-z * .16)} ${n1(-z * .16)} 0 ${n1(-z)}Z" fill="${c}" ${ink(1.5, line)}/>`;
+const tape = (x, y, a, w = 58, col = C.butter) => g(x, y, a, 1, `<rect x="${-w / 2}" y="-10" width="${w}" height="20" fill="${col}" opacity=".85" ${ink(1.2)}/>` +
+  `<path d="M${-w / 2 + 7} -10 v20 M${w / 2 - 9} -10 v20" stroke="${C.white}" stroke-width="2" opacity=".6"/>`);
+const nail = (len = 34) => `<rect x="-2" y="0" width="4" height="${len}" rx="1" fill="${C.steel}" ${ink(1.3)}/><path d="M-2 ${len} L0 ${len + 7} L2 ${len}Z" fill="${C.steel}" ${ink(1.1)}/>` +
+  `<rect x="-6.5" y="-3" width="13" height="4" rx="1.5" fill="${C.steel2}" ${ink(1.3)}/>`;
+const screw = () => `<circle r="6" fill="${C.steel}" ${ink(1.4)}/><path d="M-4 -1.5 L4 1.5" ${ink(1.6)}/>`;
+const brickTiny = (fill = C.brick) => `<rect x="-11" y="-5" width="22" height="10" rx="1.5" fill="${fill}" ${ink(1.4)}/><path d="M-4 -5 v10" fill="none" ${ink(.9)}/>`;
+const tileTiny = (fill = C.roof) => `<path d="M-9 -5 H9 V2 Q0 9 -9 2Z" fill="${fill}" ${ink(1.4)}/>`;
+const cross = (x, y, z = 8) => `<g transform="translate(${n1(x)} ${n1(y)})"><circle r="${z}" fill="none" ${wl(1.5)}/><path d="M${-z - 4} 0 H${z + 4} M0 ${-z - 4} V${z + 4}" fill="none" ${wl(1.2)}/></g>`;
+
+/* ---- the sheet: blueprint paper, a faint grid that never quite repeats, a double border, words round the margin ---- */
+function sheet() {
+  let s = `<defs><radialGradient id="bp" cx="48%" cy="44%" r="75%"><stop offset="0" stop-color="${C.blue2}"/><stop offset=".65" stop-color="${C.blue}"/><stop offset="1" stop-color="${C.deep}"/></radialGradient></defs>`;
+  s += `<rect width="1280" height="800" fill="url(#bp)"/>`;
+  let d = '';
+  for (let x = 44 + r() * 6; x < 1240; x += 18 + r() * 5) d += `M${n1(x)} 40 V760 `;
+  for (let y = 40 + r() * 6; y < 760; y += 18 + r() * 5) d += `M40 ${n1(y)} H1240 `;
+  s += `<path d="${d}" fill="none" stroke="${C.faint}" stroke-width="1"/>`;
+  for (let i = 0; i < 260; i++) { const x = r() * 1280, y = r() * 800; s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(.6 + r() * 1.3)}" fill="rgba(255,255,255,${n1(.08 + r() * .2)})"/>`; }   // the paper's flecks
+  s += `<rect x="30" y="30" width="1220" height="740" fill="none" ${wl(3)}/><rect x="38" y="38" width="1204" height="724" fill="none" ${wl(1.2)}/>`;
+  for (const [x, y, sx, sy] of [[30, 30, 1, 1], [1250, 30, -1, 1], [30, 770, 1, -1], [1250, 770, -1, -1]]) {   // registration marks
+    s += `<path d="M${x - sx * 22} ${y} H${x - sx * 6} M${x} ${y - sy * 22} V${y - sy * 6}" fill="none" ${wl(1.6)}/>`;
+  }
+  const words = [
+    [640, 21, 0, 'CÙNG NHAU XÂY NHÀ  ·  BUILD A HOME WITH YOU  ·  BẢN VẼ SỐ 01  ·  TỔ ẤM HAI NGƯỜI'],
+    [640, 788, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  TỪNG VIÊN GẠCH MỘT  ·  BRICK BY BRICK'],
+    [16, 400, -90, 'MÓNG · TƯỜNG · MÁI · CỬA · NHÀ'],
+    [1265, 400, 90, 'HOME SWEET HOME  ·  KHỞI CÔNG']];
+  words.forEach(([x, y, a, str]) => { s += g(x, y, a, 1, T(0, a ? 4 : 0, str, { s: 11, ls: 3, anchor: 'middle', fill: C.white, w: 600 })); });
+  return s;
+}
+
+/* ---- the notebook page, top left: spiral rings, ruled lines, the title ---- */
+function title() {
+  keep(40, 40, 372, 282);
+  let p = `<path d="M0 0 H300 V214 L284 222 L262 214 L238 223 L214 213 L188 222 L160 214 L134 223 L106 213 L80 222 L54 214 L28 223 L0 214Z" fill="${C.cream}" ${ink(2.4)}/>`;
+  for (let y = 44; y < 210; y += 22) p += `<path d="M10 ${y} H292" stroke="${C.rule}" stroke-width="1.3"/>`;
+  p += `<path d="M34 8 V214" stroke="${C.margin}" stroke-width="1.6"/>`;
+  for (let i = 0; i < 11; i++) p += `<ellipse cx="${18 + i * 26.5}" cy="2" rx="5" ry="11" fill="none" ${ink(2.2, C.steel2)}/><circle cx="${18 + i * 26.5}" cy="10" r="3.2" fill="${C.deep}"/>`;
+  const w1 = measure('Cùng nhau', `700 50px "${F.hand}"`);
+  p += T(48, 70, 'Cùng nhau', { f: F.hand, w: 700, s: 50, fill: C.ink });
+  p += T(52, 146, 'xây nhà', { f: F.title, w: 400, s: 62, fill: C.ink }) + T(48, 142, 'xây nhà', { f: F.title, w: 400, s: 62, fill: C.coral, stroke: C.ink, sw: 4 });
+  p += `<path d="M50 160 C110 170 190 154 270 164" fill="none" ${ink(2.2, C.rose)}/>`;
+  p += T(52, 190, 'Build a home with you', { f: F.note, w: 400, s: fit('Build a home with you', 400, F.note, 25, 230), fill: C.deep });
+  p += g(Math.min(270, 64 + w1 + 30), 48, 0, 1, `<path d="M-16 6 V-10 L0 -22 L16 -10 V6Z" fill="${C.butter}" ${ink(1.8)}/>` + g(0, -2, 0, 1, heart(12, C.rose, 1.3)));
+  p += g(262, 198, -10, 1, heart(15, C.pink));
+  let o = g(52, 56, -2.5, 1, p) + tape(338, 64, 38, 54, C.mint2) + tape(70, 270, -24, 50, C.pink);
+  /* a little sun peeking over the page, and clouds */
+  let sun = `<circle r="26" fill="${C.yellow}" ${ink(2.4)}/>`;
+  for (let i = 0; i < 11; i++) { const a = i / 11 * 360 + r() * 8; sun += g(0, 0, a, 1, `<path d="M0 -33 L5 -45 L-5 -45Z" fill="${C.butter}" ${ink(1.6)}/>`); }
+  sun += `<circle cx="-8" cy="-3" r="2.8" fill="${C.ink}"/><circle cx="8" cy="-3" r="2.8" fill="${C.ink}"/><path d="M-8 7 Q0 14 8 7" fill="none" ${ink(2)}/>`;
+  sun += `<circle cx="-15" cy="6" r="4" fill="${C.pink}" opacity=".8"/><circle cx="15" cy="6" r="4" fill="${C.pink}" opacity=".8"/>`;
+  o += g(386, 70, 8, 1, sun);
+  return o;
+}
+const cloud = (s, fill = C.white) => `<path d="M-40 10 C-52 10 -52 -8 -38 -8 C-38 -24 -16 -28 -8 -16 C-2 -30 22 -28 24 -12 C38 -14 44 4 32 10Z" fill="${fill}" ${ink(2)} transform="scale(${s})"/>`;
+
+/* ---- the front elevation, left middle: drawn in white with its measures ---- */
+function elevation() {
+  keep(44, 300, 360, 590);
+  const x0 = 96, x1 = 300, base = 540, top = 432, apex = 336, mx = (x0 + x1) / 2;
+  let o = T(58, 318, 'MẶT ĐỨNG CHÍNH', { s: 12, ls: 2.4, fill: C.white }) + T(58, 334, 'TỈ LỆ 1 : 50  ·  A-01', { w: 600, s: 9.5, ls: 1.8, fill: C.white });
+  o += `<path d="M${x0} ${base} V${top} H${x1} V${base}" fill="none" ${wl(2.8)}/>`;
+  o += `<path d="M${x0 - 16} ${top + 6} L${mx} ${apex} L${x1 + 16} ${top + 6}" fill="none" ${wl(2.8)}/>`;
+  for (let k = 1; k < 6; k++) { const y = top - k * 16, half = (y - apex) / (top + 6 - apex) * (x1 - x0 + 32) / 2; if (half > 8) o += `<path d="M${n1(mx - half + 4)} ${y} H${n1(mx + half - 4)}" fill="none" ${wl(1)} opacity=".7"/>`; }
+  o += `<path d="M${x1 - 46} ${n1(apex + 30)} V${n1(apex + 2)} H${x1 - 26} V${n1(apex + 46)}" fill="none" ${wl(2.2)}/>`;   // the chimney, heart smoke
+  for (const [x, y, z] of [[x1 - 30, apex - 14, 10], [x1 - 18, apex - 34, 13], [x1 - 34, apex - 58, 9]]) o += g(x, y, -8, 1, heart(z, 'none', 1.6, C.line));
+  o += `<circle cx="${mx}" cy="${apex + 52}" r="16" fill="none" ${wl(2.2)}/>` + g(mx, apex + 54, 0, 1, heart(14, C.pink, 1.4, C.line));
+  o += `<path d="M${mx - 18} ${base} V${base - 64} H${mx + 18} V${base}" fill="none" ${wl(2.4)}/><circle cx="${mx + 11}" cy="${base - 30}" r="2.5" fill="${C.white}"/>`;
+  o += g(mx, base - 48, 0, 1, heart(10, 'none', 1.3, C.line));
+  for (const wx of [x0 + 16, x1 - 56]) {
+    o += `<rect x="${wx}" y="${base - 86}" width="40" height="40" fill="none" ${wl(2.2)}/><path d="M${wx + 20} ${base - 86} V${base - 46} M${wx} ${base - 66} H${wx + 40}" fill="none" ${wl(1.4)}/>`;
+    o += `<path d="M${wx - 4} ${base - 40} H${wx + 44} V${base - 32} H${wx - 4}Z" fill="none" ${wl(1.6)}/>`;
+    for (let k = 0; k < 4; k++) o += `<circle cx="${wx + 4 + k * 11}" cy="${base - 44}" r="3.4" fill="${pick([C.pink, C.butter, C.white, C.coral])}" ${ink(1, C.ink)}/>`;
+  }
+  for (let y = top + 12; y < base; y += 12) {                       // brick courses, lightly
+    const off = ((y - top) / 12) % 2 ? 0 : 11;
+    for (let x = x0 + 4 + off; x < x1 - 4; x += 22) if (!((x > mx - 24 && x < mx + 24 && y > base - 70) || ((x > x0 + 10 && x < x0 + 62) || (x > x1 - 62 && x < x1 - 10)) && y > base - 92 && y < base - 30)) o += `<path d="M${n1(x)} ${y} v6" stroke="${C.line}" stroke-width=".9" opacity=".5"/>`;
+    o += `<path d="M${x0 + 2} ${y} H${x1 - 2}" stroke="${C.line}" stroke-width=".8" opacity=".35"/>`;
+  }
+  o += `<path d="M${x0 - 36} ${base} H${x1 + 40}" fill="none" ${wl(2.4)}/>`;
+  for (let x = x0 - 32; x < x1 + 36; x += 10) o += `<path d="M${x} ${base + 1} l-6 7" ${wl(1)}/>`;
+  o += `<path d="M${x0} ${base + 20} H${x1} M${x0} ${base + 14} V${base + 26} M${x1} ${base + 14} V${base + 26}" fill="none" ${wl(1.3)}/>` + T(mx, base + 38, '3 800', { w: 600, s: 12, anchor: 'middle', fill: C.white });
+  o += `<path d="M${x0 - 26} ${base} V${apex} M${x0 - 32} ${base} H${x0 - 20} M${x0 - 32} ${apex} H${x0 - 20}" fill="none" ${wl(1.3)}/>` + g(x0 - 34, (base + apex) / 2, -90, 1, T(0, 0, '4 200', { w: 600, s: 12, anchor: 'middle', fill: C.white }));
+  o += g(x1 + 30, base - 10, 0, 1, `<path d="M-10 0 H10 M0 -10 L0 0" fill="none" ${wl(1.4)}/><path d="M-6 -16 L0 -6 L6 -16Z" fill="${C.white}"/>`) + T(x1 + 30, base - 22, '±0.00', { w: 600, s: 9, anchor: 'middle', fill: C.white });
+  return o + sparkle(338, 352, 8, C.butter);
+}
+
+/* ---- the building plot in the middle, where the act stands: quiet lines, survey marks, a path to the door ---- */
+function plot() {
+  keep(372, 26, 912, 650);
+  let o = `<rect x="388" y="44" width="504" height="406" rx="6" fill="rgba(255,255,255,.04)" stroke="${C.line}" stroke-width="1.8" stroke-dasharray="14 6 3 6"/>`;
+  o += `<rect x="404" y="58" width="472" height="262" fill="none" ${wl(2.6)}/>`;               // the house's footprint, under the slab
+  o += `<path d="M404 58 L876 320 M876 58 L404 320" stroke="${C.line}" stroke-width="1" opacity=".25"/>`;
+  let hatch = '';
+  for (let x = 410; x < 876; x += 14 + r() * 5) hatch += `M${n1(x)} 64 l-6 10 `;
+  o += `<path d="${hatch}" stroke="${C.line}" stroke-width="1" opacity=".35"/>`;
+  o += T(640, 196, 'KHU ĐẤT XÂY TỔ ẤM', { s: 15, ls: 4, anchor: 'middle', fill: 'rgba(255,255,255,.55)' });
+  o += T(640, 218, 'diện tích: vừa đủ hai người thương', { f: F.note, w: 400, s: 17, anchor: 'middle', fill: 'rgba(255,255,255,.6)' });
+  for (const [x, y] of [[388, 44], [892, 44], [388, 450], [892, 450]]) o += cross(x, y, 7);
+  for (let i = 0; i < 6; i++) { const y = 340 + i * 19, x = 640 + Math.sin(i * 1.3) * 10; o += `<ellipse cx="${n1(x)}" cy="${y}" rx="${n1(17 - i * .8)}" ry="7" fill="rgba(255,255,255,.12)" ${wl(1.4)}/>`; }   // stepping stones
+  o += g(640, 470, 0, 1, `<path d="M0 -14 L8 4 L0 0 L-8 4Z" fill="${C.white}"/>`) + T(640, 490, 'LỐI VÀO', { w: 600, s: 9.5, ls: 2.4, anchor: 'middle', fill: C.white });
+  for (const [x, y, s] of [[426, 380, 1], [470, 414, .8], [846, 372, 1.1], [806, 420, .75], [432, 548, .9], [858, 560, .85]]) {   // trees, seen from above
+    let t = '';
+    for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2; t += `<circle cx="${n1(Math.cos(a) * 15 * s)}" cy="${n1(Math.sin(a) * 15 * s)}" r="${n1(8 * s)}" fill="rgba(255,255,255,.1)" ${wl(1.2)}/>`; }
+    o += g(x, y, r() * 360, 1, t + `<circle r="${n1(3 * s)}" fill="${C.white}"/>`);
+  }
+  o += g(864, 92, 0, 1, `<circle r="16" fill="none" ${wl(1.5)}/><path d="M0 -12 L5 3 L0 0 L-5 3Z" fill="${C.white}"/>` + T(0, 12, 'B', { s: 8, anchor: 'middle', fill: C.white }));
+  /* the foundation: footings at uneven spacings, beams between them, rebar marks */
+  const fx = [424, 516, 598, 702, 790, 856], fy = [78, 170, 238, 300];
+  let beams = '';
+  fx.forEach(x => { beams += `M${x - 3} 78 V300 M${x + 3} 78 V300 `; }); fy.forEach(y => { beams += `M424 ${y - 3} H856 M424 ${y + 3} H856 `; });
+  o += `<path d="${beams}" fill="none" stroke="${C.line}" stroke-width="1" opacity=".42"/>`;
+  fx.forEach(x => fy.forEach(y => { o += `<rect x="${x - 8}" y="${y - 8}" width="16" height="16" fill="rgba(255,255,255,.14)" ${wl(1.4)}/><path d="M${x - 8} ${y - 8} L${x + 8} ${y + 8}" ${wl(.8)}/>`; }));
+  for (let k = 0; k < 40; k++) { const x = 430 + r() * 420, y = 84 + r() * 210; if (Math.abs(y - 196) < 30 && Math.abs(x - 640) < 150) continue; o += g(x, y, r() * 180, 1, `<path d="M-5 0 H5" ${wl(1)}/>`); }
+  const notes = [[476, 128, -6, 'góc đọc sách'], [804, 128, 5, 'bếp nhỏ'], [478, 276, 4, 'chỗ để hai đôi dép'], [800, 272, -5, 'cửa sổ đón nắng']];
+  notes.forEach(([x, y, a, t]) => { o += g(x, y, a, 1, T(0, 0, t, { f: F.note, w: 400, s: 17, anchor: 'middle', fill: C.white })); });
+  o += `<path d="M520 136 Q560 150 584 172 M760 136 Q720 150 700 170 M540 268 Q580 256 600 244 M748 264 Q712 256 696 244" fill="none" ${wl(1.3)} stroke-dasharray="3 4"/>`;
+  o += g(640, 248, 0, 1, heart(30, C.pink, 2, C.line));
+  let dims = '';                                                     // dimension chains over the top and down the left
+  [404, 516, 640, 760, 876].forEach(x => { dims += `M${x} 48 V54 `; }); dims += 'M404 51 H876 ';
+  [58, 170, 320].forEach(y => { dims += `M396 ${y} H402 `; }); dims += 'M399 58 V320 ';
+  o += `<path d="${dims}" fill="none" ${wl(1.2)}/>`;
+  [['1 100', 460], ['1 200', 578], ['1 200', 700], ['1 100', 818]].forEach(([t, x]) => { o += T(x, 46, t, { w: 600, s: 8.5, anchor: 'middle', fill: C.white }); });
+  /* the front yard: a low fence, grass, a flower bed, and two pairs of footprints going to the door */
+  o += `<path d="M412 470 H868" stroke="${C.line}" stroke-width="1.2" stroke-dasharray="2 5" opacity=".6"/>`;
+  for (let x = 400; x < 884; x += 22 + r() * 6) { if (Math.abs(x - 640) < 40) continue; o += `<path d="M${n1(x)} 462 v-14 l3 -4 l3 4 v14" fill="none" ${wl(1.2)} opacity=".8"/>`; }
+  o += `<path d="M400 452 H608 M672 452 H880" fill="none" ${wl(1.1)} opacity=".8"/>`;
+  for (let k = 0; k < 70; k++) {
+    const x = 400 + r() * 480, y = 486 + r() * 150;
+    if (Math.abs(x - 640) < 40 && y < 560) continue;
+    o += `<path d="M${n1(x)} ${n1(y)} l2.5 -7 l2.5 7 l2.5 -5" fill="none" ${wl(1.1)} opacity="${n1(.45 + r() * .4)}"/>`;
+  }
+  let bed = `<path d="M0 0 C20 -26 96 -30 118 -4 C126 14 100 26 58 24 C18 24 -10 16 0 0Z" fill="rgba(255,255,255,.08)" ${wl(1.6)}/>`;
+  for (let k = 0; k < 9; k++) { const bx = 12 + r() * 92, by = -14 + r() * 26; bed += g(bx, by, 0, 1, `<circle r="5" fill="${pick([C.pink, C.butter, C.white, C.coral])}" ${ink(1.1)}/><circle r="1.6" fill="${C.ink}"/>`); }
+  o += g(748, 514, -4, 1, bed);
+  const print = (x, y, a, s) => g(x, y, a, s, `<ellipse cx="0" cy="0" rx="4.5" ry="7" fill="rgba(255,255,255,.55)"/><ellipse cx="0" cy="10" rx="3.6" ry="3.4" fill="rgba(255,255,255,.55)"/>`);
+  for (let k = 0; k < 6; k++) { o += print(606 + (k % 2) * 12, 640 - k * 30, 4, 1.1) + print(664 + (k % 2) * 10, 628 - k * 30, -4, .85); }
+  o += T(420, 528, 'sân trước', { f: F.note, w: 400, s: 16, fill: 'rgba(255,255,255,.65)' }) + T(870, 610, 'vườn nhỏ', { f: F.note, w: 400, s: 16, anchor: 'end', fill: 'rgba(255,255,255,.65)' });
+  o += g(706, 592, 12, 1, heart(16, C.pink, 1.6, C.line)) + T(560, 604, 'hai đôi chân', { f: F.note, w: 400, s: 15, anchor: 'middle', fill: 'rgba(255,255,255,.7)' });
+  return o;
+}
+
+/* ---- the instruction ribbon under the plot, and a line in hand ---- */
+function ribbon(cx, cy, w, h, fill, text, o = {}) {
+  const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, f = 22;
+  let s = `<path d="M${n1(x0 - f)} ${n1(y0 + 7)} L${n1(x0 + 6)} ${n1(y0 + 7)} L${n1(x0 + 6)} ${n1(y1 + 7)} L${n1(x0 - f)} ${n1(y1 + 7)} L${n1(x0 - f + 10)} ${n1(cy + 7)}Z" fill="${o.dark}" ${ink(2)}/>`;
+  s += `<path d="M${n1(x1 + f)} ${n1(y0 + 7)} L${n1(x1 - 6)} ${n1(y0 + 7)} L${n1(x1 - 6)} ${n1(y1 + 7)} L${n1(x1 + f)} ${n1(y1 + 7)} L${n1(x1 + f - 10)} ${n1(cy + 7)}Z" fill="${o.dark}" ${ink(2)}/>`;
+  s += `<path d="M${n1(x0)} ${n1(y0)} Q${cx} ${n1(y0 - 8)} ${n1(x1)} ${n1(y0)} L${n1(x1)} ${n1(y1)} Q${cx} ${n1(y1 - 8)} ${n1(x0)} ${n1(y1)}Z" fill="${fill}" ${ink(2.4)}/>`;
+  s += T(cx, cy + 5, text, { f: F.sans, w: 800, s: o.s || 14, anchor: 'middle', fill: o.ink || C.ink });
+  return s;
+}
+function words() {
+  keep(380, 652, 900, 770);
+  let o = ribbon(640, 676, 460, 34, C.cream, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 15, dark: C.coral });
+  const line = 'Từng viên gạch một, mình xây nên nhà.';
+  o += `<path d="M440 744 H840" stroke="${C.pink}" stroke-width="1.6"/>` + T(640, 736, line, { f: F.hand, w: 700, s: fit(line, 700, F.hand, 28, 400), anchor: 'middle', fill: C.white });
+  return o + g(858, 732, 16, 1, heart(13, C.rose)) + g(420, 730, -14, 1, brickTiny());
+}
+
+/* ---- tools, bottom left: a hammer, nails, a pencil ---- */
+function tools() {
+  keep(44, 596, 372, 770);
+  let h = `<rect x="-9" y="0" width="18" height="150" rx="7" fill="${C.wood}" ${ink(2.6)}/>`;
+  for (let k = 0; k < 5; k++) h += `<path d="M${-5 + r() * 4} ${20 + k * 26} q4 ${8 + r() * 6} 0 ${16 + r() * 6}" fill="none" ${ink(1.1, C.wood2)}/>`;
+  h += `<rect x="-9" y="112" width="18" height="38" rx="7" fill="${C.rose}" ${ink(2.4)}/><path d="M-9 122 H9 M-9 132 H9 M-9 142 H9" fill="none" ${ink(1.2)}/>`;
+  h += `<path d="M-30 -24 H30 L36 -16 V2 L30 8 H-30 Q-40 -8 -30 -24Z" fill="${C.steel}" ${ink(2.6)}/>`;
+  h += `<path d="M30 -24 C52 -30 70 -20 74 -6 C62 -14 48 -14 36 -8Z" fill="${C.steel}" ${ink(2.2)}/>`;   // the claw
+  h += `<rect x="-44" y="-26" width="14" height="36" rx="3" fill="${C.steel2}" ${ink(2.4)}/><path d="M-24 -16 H24" fill="none" ${ink(1.2, C.white)}/>`;
+  let o = g(130, 640, -52, 1, h);
+  o += g(268, 732, 72, 1, nail(40)) + g(304, 706, 96, 1, nail(34)) + g(236, 694, 58, .9, nail(36)) + g(318, 752, 120, .85, nail(30));
+  o += g(200, 754, 0, 1, screw()) + g(342, 676, 0, .9, screw());
+  let p = `<path d="M0 -9 H150 V9 H0Z" fill="${C.yellow}" ${ink(2.2)}/><path d="M0 -3 H150 M0 3 H150" fill="none" ${ink(1, '#c9921a')}/>`;
+  p += `<path d="M150 -9 L182 0 L150 9Z" fill="${C.kraft}" ${ink(2)}/><path d="M172 -3 L182 0 L172 3Z" fill="${C.ink}"/>`;
+  p += `<rect x="-22" y="-9" width="22" height="18" rx="3" fill="${C.pink}" ${ink(2)}/><rect x="-4" y="-10" width="9" height="20" fill="${C.steel}" ${ink(1.6)}/>`;
+  p += T(64, 4, 'HB', { s: 9, ls: 1.6, fill: C.ink });
+  o += g(150, 782, -18, 1, p);
+  o += T(312, 618, 'búa &amp; đinh', { f: F.note, w: 400, s: 18, anchor: 'middle', fill: C.white });
+  return o + sparkle(64, 600, 7, C.butter) + sparkle(352, 744, 6, C.pink);
+}
+
+/* ---- paint chips, top right: the house's own colours, each a name ---- */
+function chips() {
+  keep(912, 40, 1244, 270);
+  const list = [['Hồng gạch', 'TƯỜNG', C.brick, -26], ['Đỏ ngói', 'MÁI', C.roof, -9], ['Xanh bạc hà', 'CỬA', C.mint, 8], ['Vàng bơ', 'MŨ BẢO HỘ', C.butter, 25]];
+  let o = '';
+  list.forEach(([name, part, col, a], i) => {
+    let c = `<rect x="-46" y="-178" width="92" height="178" rx="7" fill="${C.cream}" ${ink(2.2)}/>`;
+    c += `<rect x="-38" y="-170" width="76" height="98" rx="4" fill="${col}" ${ink(1.8)}/>`;
+    c += `<rect x="-38" y="-68" width="76" height="22" rx="3" fill="${col}" opacity=".55" ${ink(1.2)}/>`;
+    c += T(-38, -28, name, { f: F.note, w: 400, s: fit(name, 400, F.note, 15, 76), fill: C.ink }) + T(-38, -13, `${part} · 0${i + 1}`, { s: 7.5, ls: 1.2, fill: C.deep });
+    if (i === 2) c += g(0, -122, 0, 1, heart(26, C.cream, 1.6));
+    if (i === 0) for (let k = 0; k < 3; k++) c += `<path d="M-38 ${-150 + k * 26} H38" stroke="${C.cream}" stroke-width="2" opacity=".7"/>`;
+    o += g(1078, 262, a, 1, c);
+  });
+  o += `<circle cx="1078" cy="252" r="8" fill="${C.yellow}" ${ink(2)}/><circle cx="1078" cy="252" r="3" fill="${C.ink}"/>`;
+  o += T(944, 64, 'màu nhà mình', { f: F.hand, w: 700, s: 24, fill: C.white }) + sparkle(1226, 60, 9, C.butter);
+  o += g(966, 104, -6, .8, cloud(1)) + g(1196, 116, 4, .55, cloud(1));
+  return o;
+}
+
+/* ---- the home-building permit, right middle: a kraft form and its round stamp ---- */
+function permit() {
+  keep(912, 284, 1244, 520);
+  let f = `<path d="M0 0 H300 V196 H0Z" fill="${C.kraft}" ${ink(2.4)}/><rect x="10" y="10" width="280" height="176" fill="none" stroke="${C.wood2}" stroke-width="1.4" stroke-dasharray="6 3"/>`;
+  f += T(150, 38, 'GIẤY PHÉP XÂY TỔ ẤM', { s: 17, ls: 1.6, anchor: 'middle', fill: C.ink });
+  f += `<path d="M44 48 H256" fill="none" ${ink(1.6)}/>`;
+  const rows = [['Chủ nhà:', 'hai đứa mình'], ['Diện tích:', 'vừa đủ thương'], ['Vật liệu:', 'gạch hồng, nắng'], ['Thời hạn:', 'mãi mãi']];
+  rows.forEach(([k, v], i) => {
+    const y = 76 + i * 28;
+    f += T(22, y, k, { w: 600, s: 12, fill: C.ink }) + `<path d="M100 ${y + 4} H${i === 3 ? 170 : 276}" stroke="${C.wood2}" stroke-width="1.2" stroke-dasharray="2 3"/>`;
+    f += T(104, y - 1, v, { f: F.note, w: 400, s: fit(v, 400, F.note, 18, i === 3 ? 66 : 170), fill: C.deep });
+  });
+  let o = g(928, 300, -3, 1, f) + tape(1078, 296, -4, 70, C.mint2);
+  let st = `<circle r="54" fill="rgba(232,86,111,.12)" stroke="${C.rose}" stroke-width="4"/><circle r="44" fill="none" stroke="${C.rose}" stroke-width="2"/>`;
+  const ring = 'ĐÃ DUYỆT · KHỞI CÔNG · ĐÃ DUYỆT · ';
+  [...ring].forEach((ch, i) => { const a = i / ring.length * 360; st += g(0, 0, a, 1, T(0, -46.5, ch, { s: 9.5, anchor: 'middle', fill: C.rose })); });
+  st += g(0, -4, 0, 1, heart(34, C.rose, 2, C.rose)) + T(0, 30, 'SỐ 01', { s: 11, ls: 2, anchor: 'middle', fill: C.rose });
+  o += g(1174, 470, 14, 1, st);
+  return o + sparkle(1232, 300, 7, C.pink) + sparkle(924, 506, 8, C.butter);
+}
+
+/* ---- the list of materials on a sticky note, and the tape measure, bottom right ---- */
+function materials() {
+  keep(912, 530, 1244, 770);
+  let n = `<path d="M0 0 H176 V150 L154 170 H0Z" fill="${C.butter}" ${ink(2.2)}/><path d="M176 150 L154 150 L154 170" fill="#f0b94a" ${ink(1.8)}/>`;
+  n += T(14, 26, 'Vật liệu cần có:', { f: F.note, w: 400, s: 19, fill: C.ink });
+  const items = [['gạch hồng', '999'], ['ngói đỏ', '60'], ['sơn bạc hà', '1'], ['nắng sớm', 'đủ'], ['thương nhau', '∞']];
+  items.forEach(([k, v], i) => {
+    const y = 50 + i * 21;
+    n += `<rect x="12" y="${y - 11}" width="12" height="12" rx="2" fill="${C.cream}" ${ink(1.4)}/>` + (i < 4 ? `<path d="M14 ${y - 5} l3 4 l7 -9" fill="none" ${ink(2, C.rose)}/>` : '');
+    n += T(30, y, k, { f: F.note, w: 400, s: 16, fill: C.ink }) + T(160, y, v, { f: F.note, w: 400, s: 16, anchor: 'end', fill: C.rose });
+  });
+  let o = g(936, 548, 4, 1, n) + tape(1024, 548, -8, 46, C.pink);
+  /* the tape measure: its yellow case, the tape pulled out with marks and numbers */
+  let m = `<rect x="0" y="-12" width="250" height="24" fill="${C.yellow}" ${ink(2)}/>`;
+  for (let k = 0; k <= 50; k++) { const x = 4 + k * 4.9; m += `<path d="M${n1(x)} -12 v${k % 5 ? 6 : 11}" ${ink(k % 5 ? .8 : 1.3)}/>`; if (k % 10 === 0 && k) m += T(x, 9, String(k / 10 * 10 + 120), { s: 7, anchor: 'middle', fill: C.ink }); }
+  m += `<path d="M0 -15 H-8 V15 H0" fill="${C.steel}" ${ink(1.8)}/>`;
+  let cs = `<rect x="-46" y="-46" width="92" height="92" rx="22" fill="${C.yellow}" ${ink(2.6)}/><circle r="26" fill="${C.ink}" opacity=".85"/><circle r="18" fill="${C.steel}" ${ink(1.6)}/>`;
+  cs += T(0, 5, '5m', { s: 13, anchor: 'middle', fill: C.ink }) + `<rect x="-14" y="-58" width="28" height="12" rx="3" fill="${C.steel2}" ${ink(1.6)}/>`;
+  o += g(1012, 724, -6, 1, m) + g(1196, 704, -6, 1, cs);
+  o += T(1148, 568, 'đo ni', { f: F.hand, w: 700, s: 22, anchor: 'middle', fill: C.white }) + T(1148, 590, 'đóng giày', { f: F.hand, w: 700, s: 22, anchor: 'middle', fill: C.white });
+  o += g(1224, 620, 10, 1, heart(12, C.pink));
+  return o;
+}
+
+/* ---- the title block, a strip of small boxes along the bottom left of the plot ---- */
+function titleBlock() {
+  keep(46, 576, 372, 596);
+  return '';
+}
+
+/* ---- confetti of small builder's things wherever there is paper left ---- */
+function scatter(count) {
+  let s = '';
+  const placed = [];
+  for (let i = 0; i < count; i++) {
+    const x = 50 + r() * 1180, y = 50 + r() * 700, k = r(), a = (r() * 360) | 0;
+    if (blocked(x, y, 10) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 24)) continue;
+    placed.push([x, y]);
+    if (k < .2) s += g(x, y, (r() - .5) * 50, 1, heart(9 + r() * 7, pick([C.rose, C.pink, C.coral, C.butter])));
+    else if (k < .34) s += sparkle(x, y, 5 + r() * 5, pick([C.butter, C.pink, C.mint2, C.cream]));
+    else if (k < .48) s += g(x, y, a, 1, brickTiny(pick([C.brick, C.brick2])));
+    else if (k < .58) s += g(x, y, a, 1, tileTiny());
+    else if (k < .7) s += g(x, y, a, .75, nail(22));
+    else if (k < .8) s += g(x, y, 0, .8, screw());
+    else if (k < .9) s += cross(x, y, 5);
+    else s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(2.4 + r() * 3)}" fill="${pick([C.butter, C.pink, C.mint2, C.white])}"/>`;
+  }
+  return s;
+}
+
+const FACES = [`400 62px "${F.title}"`, `700 50px "${F.hand}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `900 38px "${F.serif}"`, `400 18px "${F.note}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Cùng nhau xây nhà ĐẶT ữ Ơ ’ ∞'))).then(() => {
+  let out = sheet();
+  const parts = [title(), elevation(), plot(), chips(), permit(), materials(), tools(), titleBlock(), words()];
+  out += scatter(900) + parts.join('');
+  document.getElementById('card').innerHTML = out;
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

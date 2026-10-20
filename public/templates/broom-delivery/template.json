@@ -1,0 +1,27 @@
+{
+  "name": "Thư tình bay qua phố biển",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A love letter delivered by broom over a little harbour town at golden hour (KayKit Adventurers, CC0: the Mage with her hat and cape, recoloured in sea green with a coral cape, and the Knight without his helmet, recoloured in sailor blue with a mustard cape, in story.js; weapons and books dropped by scripts/pack-models.mjs; the town, the lighthouse, the broom, the envelope and the painted sky are built in story.js). Stop 1: the town pops up out of the card, a young witch hops onto her broom by the night post office, rises in a swirl of sparkles and banks round over the rooftops while a boy waves from his roof terrace; an airmail label with the card's first words (slot note1) comes up and gets its postmark. Stop 2: she swoops low past the viewer, lands on his terrace, steps off and hands him the letter; he opens it, the heart seal pops and the card's photo rises out of the envelope with its caption (slot caption). Stop 3: dusk falls and the photo is pegged on his washing line; they hop onto the broom one after the other and draw a heart of sparkles in the sky while the lighthouse sweeps; they hover over the town, his arms round her, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "girl": "models/girl.glb",
+    "boy": "models/boy.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

@@ -1,0 +1,390 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dạo biển hoàng hôn: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/400-italic.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<style>
+/* The printed card = the tracking image. A seaside postcard at sunset: a cream sheet on a sea-blue band; a framed sunset
+   with the sun on the horizon, its path on the water, a sailboat and gulls; the title in script with "sunset with you"; a
+   tide timetable; a striped umbrella over a deckchair; a beach towel where the act stands (x 404–876, y 440–676) with a
+   heart drawn in the sand and the instruction ribbon under it; a surfboard, sunglasses and a coconut drink; a "Biển gọi
+   tên em" stamp and postmarks; a bottle with a message; a trail of footprints; waves along the bottom; shells, starfish
+   and bubbles between them. Every shape is inked in deep sea blue so the tracker finds edges everywhere. Nothing mirrored
+   or tiled; all randomness is seeded, so every render is the same picture. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#17506a}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(707);
+const C = { ink: '#163b4f', band: '#17506a', deep: '#0f3346', sea: '#2a8fb0', lagoon: '#5cc6c8', foam: '#e8fbff', sky: '#bfe6ff',
+  cream: '#fff8ee', paper: '#fdf1e4', sand: '#f3d9a4', dune: '#e3b878', coral: '#ff6f61', peach: '#ffb48a', orange: '#ff9f43',
+  gold: '#f6c64e', butter: '#ffe6a3', pink: '#ff9fb2', blush: '#ffd6dc', rose: '#e8436d', wine: '#9e1f45', lilac: '#c9b6ff',
+  violet: '#7b5ea7', mint: '#8fe3cf', leaf: '#4fa860', palm: '#2f7d4a', white: '#ffffff', brown: '#8b5a36', bark: '#a87a4e' };
+const F = { title: 'Pacifico', hand: 'Dancing Script', sans: 'Be Vietnam Pro', serif: 'Playfair Display', note: 'Patrick Hand' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.ink) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.style ? ` font-style="${o.style}"` : ''}${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `>${str}</text>`;
+/** big words drawn once into a picture after their font arrives: on a busy machine large type came out a little different
+    from one frame to the next, and a print has to hold still. Same options as T(), plus stroke and sw for an outline */
+const WORDS = [];
+const TO = (x, y, str, o) => { WORDS.push({ x, y, str, o }); return `<g id="words${WORDS.length - 1}"></g>`; };
+async function drawWords() {
+  await Promise.all(WORDS.map(async ({ x, y, str, o }, i) => {
+    const k = 2, pad = (o.sw || 0) + 6, font = `${o.style || ''} ${o.w || 800} ${o.s * k}px "${o.f}"`;
+    const cv = document.createElement('canvas'), c = cv.getContext('2d', { willReadFrequently: true }); c.font = font;   // drawn by the CPU: the same pixels every load
+    const w = c.measureText(str).width / k, h = o.s * 1.7;
+    cv.width = Math.ceil((w + pad * 2) * k); cv.height = Math.ceil(h * k);
+    c.font = font; c.lineJoin = 'round'; c.textBaseline = 'alphabetic';
+    const bx = pad * k, by = o.s * 1.25 * k;
+    if (o.stroke) { c.strokeStyle = o.stroke; c.lineWidth = (o.sw || 4) * k; c.strokeText(str, bx, by); }
+    c.fillStyle = o.fill || C.ink; c.fillText(str, bx, by);
+    const left = x - pad - (o.anchor === 'middle' ? w / 2 : 0), url = cv.toDataURL(), img = new Image();
+    img.src = url; await img.decode();
+    document.getElementById(`words${i}`).outerHTML = `<image x="${n1(left)}" y="${n1(y - o.s * 1.25)}" width="${n1(cv.width / k)}" height="${n1(cv.height / k)}" href="${url}"/>`;
+  }));
+  await Promise.all([...document.querySelectorAll('#card image')].map(el => (el.decode ? el.decode() : Promise.resolve()).catch(() => {})));
+}
+
+/* what the scatter keeps clear of */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m);
+
+/* small shapes */
+const heart = (z, fill, sw = 1.8, c = C.ink) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw, c)}/>`;
+const twinkle = (z, fill, sw = 1.4, c = C.ink) => `<path d="M0 ${n1(-z)} Q${n1(z * .14)} ${n1(-z * .14)} ${n1(z)} 0 Q${n1(z * .14)} ${n1(z * .14)} 0 ${n1(z)} Q${n1(-z * .14)} ${n1(z * .14)} ${n1(-z)} 0 Q${n1(-z * .14)} ${n1(-z * .14)} 0 ${n1(-z)}Z" fill="${fill}" ${ink(sw, c)}/>`;
+const starfish = (z, fill, sw = 1.6) => {                          // five plump arms, each a little different, with dots
+  let d = '';
+  for (let i = 0; i < 10; i++) { const rr = i % 2 ? z * (.42 + r() * .08) : z * (.9 + r() * .2), [x, y] = pt(0, 0, rr, -90 + i * 36); d += `${i ? 'Q' : 'M'}${i ? `${pt(0, 0, z * .62, -90 + i * 36 - 18).join(' ')} ` : ''}${x} ${y}`; }
+  let s = `<path d="${d}Z" fill="${fill}" ${ink(sw)}/>`;
+  for (let i = 0; i < 5; i++) for (const k of [.32, .58]) { const [x, y] = pt(0, 0, z * k, -90 + i * 72); s += `<circle cx="${x}" cy="${y}" r="${n1(z * .07)}" fill="${C.cream}"/>`; }
+  return s;
+};
+const scallop = (z, fill, sw = 1.6) => {                           // a fan shell with ribs
+  let s = `<path d="M0 ${n1(z * .5)} L${n1(-z * .78)} ${n1(-z * .2)} Q${n1(-z * .6)} ${n1(-z * .78)} 0 ${n1(-z * .82)} Q${n1(z * .6)} ${n1(-z * .78)} ${n1(z * .78)} ${n1(-z * .2)}Z" fill="${fill}" ${ink(sw)}/>`;
+  for (let i = -3; i <= 3; i++) { const [x, y] = pt(0, z * .5, z * 1.15, -90 + i * 18); s += `<path d="M0 ${n1(z * .5)} L${n1(x * .82)} ${n1(z * .5 + (y - z * .5) * .82)}" ${ink(sw * .6)}/>`; }
+  return s + `<path d="M${n1(-z * .26)} ${n1(z * .42)} L${n1(-z * .3)} ${n1(z * .66)} L${n1(z * .3)} ${n1(z * .66)} L${n1(z * .26)} ${n1(z * .42)}Z" fill="${fill}" ${ink(sw * .8)}/>`;
+};
+const conch = (z, fill, sw = 1.5) => `<path d="M${n1(-z)} ${n1(z * .1)} Q${n1(-z * .4)} ${n1(-z * .7)} ${n1(z * .5)} ${n1(-z * .45)} Q${n1(z * 1.05)} ${n1(-z * .2)} ${n1(z * .9)} ${n1(z * .25)} Q${n1(z * .3)} ${n1(z * .55)} ${n1(-z)} ${n1(z * .1)}Z" fill="${fill}" ${ink(sw)}/>` +
+  `<path d="M${n1(-z * .5)} ${n1(-z * .1)} q${n1(z * .5)} ${n1(-z * .3)} ${n1(z * 1.1)} ${n1(-z * .05)} M${n1(-z * .2)} ${n1(z * .25)} q${n1(z * .4)} ${n1(-z * .2)} ${n1(z * .9)} ${n1(-z * .1)}" fill="none" ${ink(sw * .7)}/>`;
+const gull = (z, sw = 2, c = C.ink) => `<path d="M${n1(-z)} ${n1(-z * .15)} Q${n1(-z * .5)} ${n1(-z * .6)} 0 ${n1(z * .05)} Q${n1(z * .5)} ${n1(-z * .6)} ${n1(z)} ${n1(-z * .15)}" fill="none" ${ink(sw, c)}/>`;
+const bubble = (z) => `<circle r="${n1(z)}" fill="${C.foam}" ${ink(1.1, C.sea)}/><circle cx="${n1(-z * .35)}" cy="${n1(-z * .35)}" r="${n1(z * .25)}" fill="${C.white}"/>`;
+
+/* ── the sheet: a sea-blue band with foam dots and running words, a scalloped cream sheet on it ── */
+function sheet() {
+  let s = `<rect width="1280" height="800" fill="${C.band}"/>`;
+  const words = [
+    [640, 21, 0, 'DẠO BIỂN HOÀNG HÔN  ·  SUNSET WITH YOU  ·  BIỂN GỌI TÊN EM  ·  CHỈ CÓ HAI MÌNH', 660],
+    [640, 790, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  KEEP IT IN VIEW  ·  No. 0707  ·  BƯU CỤC BIỂN', 690],
+    [19, 400, -90, 'NGHE SÓNG HÁT  ·  HEAR THE WAVES', 300],
+    [1262, 400, 90, 'MỘT HOÀNG HÔN  ·  MỘT ĐIỀU ƯỚC', 300]];
+  const inWords = (x, y) => words.some(([wx, wy, a, , w]) => a ? Math.abs(x - wx) < 15 && Math.abs(y - wy) < w / 2 + 12 : Math.abs(y - wy + 4) < 15 && Math.abs(x - wx) < w / 2 + 12);
+  for (let i = 0; i < 1300; i++) {
+    const x = r() * 1280, y = r() * 800;
+    if (x > 30 && x < 1250 && y > 30 && y < 770) continue;
+    if (inWords(x, y)) continue;
+    const z = 1.2 + r() * 3.2, k = r();
+    s += k < .12 ? g(x, y, r() * 90, 1, twinkle(z * 1.5, pick([C.gold, C.butter, C.white]), .8, C.deep))
+      : k < .26 ? g(x, y, r() * 360, 1, `<path d="M${n1(-z * 1.6)} 0 q${n1(z * .8)} ${n1(-z)} ${n1(z * 1.6)} 0 t${n1(z * 1.6)} 0" fill="none" stroke="${pick([C.foam, C.lagoon, C.sky])}" stroke-width="1.4" stroke-linecap="round"/>`)
+      : `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(z)}" fill="${pick([C.cream, C.foam, C.sky, C.lagoon, C.peach, C.butter])}"/>`;
+  }
+  words.forEach(([x, y, a, str]) => { s += g(x, y, a, 1, T(0, a ? 4 : 0, str, { s: 11.5, ls: 3, anchor: 'middle', fill: C.cream })); });
+  const L = 30, Tp = 30, R = 1250, B = 770;
+  let d = `M${L} ${Tp}`;
+  const edge = (from, to, fixed, horizontal, out) => {           // scallops along one edge, each its own width
+    for (let p = from; Math.abs(to - p) > 1;) {
+      const step = Math.sign(to - p) * Math.min(Math.abs(to - p), 15 + r() * 10), q = p + step, m = (p + q) / 2, b = (6 + r() * 4) * out;
+      d += horizontal ? ` Q${n1(m)} ${n1(fixed + b)} ${n1(q)} ${n1(fixed)}` : ` Q${n1(fixed + b)} ${n1(m)} ${n1(fixed)} ${n1(q)}`;
+      p = q;
+    }
+  };
+  edge(L, R, Tp, true, -1); edge(Tp, B, R, false, 1); edge(R, L, B, true, 1); edge(B, Tp, L, false, -1);
+  s += `<path d="${d}Z" fill="${C.cream}" ${ink(2.4)}/>`;
+  s += `<rect x="44" y="44" width="1192" height="712" rx="10" fill="none" stroke="${C.sea}" stroke-width="1.4" stroke-dasharray="7 6"/>`;
+  return s;
+}
+
+/* ── the sunset window: the sun on the horizon, its path on the sea, heart clouds, a sailboat, gulls ── */
+function sunsetWindow() {
+  const x0 = 760, y0 = 62, w = 450, h = 290, hz = y0 + 168;
+  keep(x0 - 14, y0 - 14, x0 + w + 14, y0 + h + 30);
+  let s = `<clipPath id="win"><rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="22"/></clipPath>`;
+  s += `<g clip-path="url(#win)">`;
+  const stops = [[0, [107, 85, 160]], [.38, [229, 127, 154]], [.72, [255, 159, 110]], [1, [255, 210, 122]]];   // the sky in thin flat bands:
+  for (let y = y0; y < hz; y += 2) {                                   // an SVG gradient got dithered differently from one load to the next
+    const t = (y - y0) / (hz - y0), i = Math.max(1, stops.findIndex(([k]) => k >= t)), [k0, c0] = stops[i - 1], [k1, c1] = stops[i], f = (t - k0) / (k1 - k0 || 1);
+    s += `<rect x="${x0}" y="${y}" width="${w}" height="2.6" fill="rgb(${c0.map((v, j) => Math.round(v + (c1[j] - v) * f)).join(',')})"/>`;
+  }
+  const sx = x0 + 250;
+  for (let i = 0; i < 16; i++) { const a = 180 + i * 12 + (r() - .5) * 4, [ax, ay] = pt(sx, hz, 52, a), [bx, by] = pt(sx, hz, 78 + r() * 34, a); s += `<path d="M${ax} ${ay} L${bx} ${by}" ${ink(2.4, C.butter)}/>`; }
+  s += `<path d="M${sx - 44} ${hz} A44 44 0 0 1 ${sx + 44} ${hz}Z" fill="${C.gold}" ${ink(2.6)}/>`;
+  s += `<path d="M${sx - 30} ${hz - 14} q30 -10 60 0" fill="none" ${ink(1.6, C.orange)}/>`;
+  for (const [cx, cy, k] of [[x0 + 92, y0 + 66, 1], [x0 + 372, y0 + 52, .8], [x0 + 186, y0 + 30, .55]]) {   // heart-shaped clouds
+    s += g(cx, cy, (r() - .5) * 12, k, heart(64, C.blush, 2.2) + `<path d="M-20 4 q20 12 40 0" fill="none" ${ink(1.6, C.coral)}/>`);
+  }
+  for (const [cx, cy, wd] of [[x0 + 120, hz - 26, 150], [x0 + 350, hz - 40, 120], [x0 + 210, hz - 70, 90]]) s += `<path d="M${cx - wd / 2} ${cy} q${wd / 2} -8 ${wd} 0" fill="none" ${ink(3.4, C.peach)}/>`;
+  s += `<rect x="${x0}" y="${hz}" width="${w}" height="${y0 + h - hz}" fill="${C.sea}"/>`;
+  for (let i = 0; i < 60; i++) {                                     // ripples, finer near the horizon
+    const k = r(), y = hz + 6 + k * k * (y0 + h - hz - 10), x = x0 + r() * w, len = 8 + 30 * k;
+    s += `<path d="M${n1(x)} ${n1(y)} q${n1(len / 2)} -3 ${n1(len)} 0" fill="none" stroke="${pick([C.foam, C.lagoon, C.sky])}" stroke-width="${n1(1 + k * 1.6)}" stroke-linecap="round"/>`;
+  }
+  for (let i = 0; i < 26; i++) {                                     // the sun's golden path on the water
+    const k = r(), y = hz + 6 + k * (y0 + h - hz - 12), spread = 10 + 70 * k, x = sx + (r() + r() - 1) * spread, len = 10 + 26 * k;
+    s += `<path d="M${n1(x - len / 2)} ${n1(y)} L${n1(x + len / 2)} ${n1(y)}" ${ink(2.2 + k * 1.6, pick([C.gold, C.butter, C.orange]))}/>`;
+  }
+  s += `<line x1="${x0}" y1="${hz}" x2="${x0 + w}" y2="${hz}" ${ink(2.2)}/>`;
+  const bx = x0 + 96, by = hz + 8;                                   // a little sailboat
+  s += `<path d="M${bx - 30} ${by} L${bx + 30} ${by} L${bx + 20} ${by + 12} L${bx - 22} ${by + 12}Z" fill="${C.coral}" ${ink(2)}/>`;
+  s += `<path d="M${bx} ${by - 2} L${bx} ${by - 50} L${bx + 26} ${by - 8}Z" fill="${C.cream}" ${ink(2)}/><path d="M${bx - 3} ${by - 6} L${bx - 3} ${by - 40} L${bx - 22} ${by - 8}Z" fill="${C.butter}" ${ink(1.8)}/>`;
+  s += g(bx + 2, by - 54, 0, 1, `<path d="M0 0 l10 3 l-10 3z" fill="${C.rose}" ${ink(1)}/>`);
+  for (const [gx, gy, z] of [[x0 + 300, y0 + 108, 14], [x0 + 330, y0 + 90, 10], [x0 + 140, y0 + 120, 12], [x0 + 410, y0 + 128, 9]]) s += g(gx, gy, (r() - .5) * 20, 1, gull(z, 2.2));
+  s += '</g>';
+  s += `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="22" fill="none" ${ink(3.4)}/>`;
+  s += `<rect x="${x0 + 10}" y="${y0 + 10}" width="${w - 20}" height="${h - 20}" rx="16" fill="none" stroke="${C.cream}" stroke-width="1.2" stroke-dasharray="3 7" opacity=".8"/>`;
+  s += T(x0 + w - 24, y0 + h - 18, 'HOÀNG HÔN · 18:05', { s: 13, ls: 2.5, anchor: 'end', fill: C.foam });
+  s += T(x0 + 26, y0 + h - 18, 'chỗ của mình', { f: F.hand, w: 700, s: 22, fill: C.butter });
+  return s;
+}
+
+/* ── the title ── */
+function title() {
+  keep(56, 56, 740, 296);
+  let s = TO(70, 142, 'Dạo biển', { f: F.title, w: 400, s: 84, fill: C.ink, stroke: C.lagoon, sw: 10 });
+  s += TO(196, 228, 'hoàng hôn', { f: F.hand, w: 700, s: 96, fill: C.coral, stroke: C.cream, sw: 8 });
+  s += g(468, 92, 0, 1, `<circle r="22" fill="${C.gold}" ${ink(2.2)}/>` + [0, 45, 90, 135, 180, 225, 270, 315].map(a => { const [ax, ay] = pt(0, 0, 28, a), [bx, by] = pt(0, 0, 38, a); return `<path d="M${ax} ${ay} L${bx} ${by}" ${ink(2.4, C.orange)}/>`; }).join(''));
+  s += TO(80, 196, 'sunset', { f: F.serif, w: 400, style: 'italic', s: 26, fill: C.sea }) + TO(92, 224, 'with you', { f: F.serif, w: 400, style: 'italic', s: 26, fill: C.sea });
+  s += `<path d="M206 244 C330 262 430 234 560 250" fill="none" ${ink(2.4, C.coral)}/>`;
+  s += `<rect x="318" y="262" width="222" height="26" rx="13" fill="${C.ink}"/>` + T(429, 280, 'BIỂN GỌI TÊN EM · 07·07', { s: 11.5, ls: 2.2, anchor: 'middle', fill: C.cream });
+  s += g(560, 128, -12, 1, gull(16, 2.6)) + g(604, 104, 8, 1, gull(11, 2.2)) + g(660, 140, -6, 1, gull(9, 2));
+  s += g(640, 210, 14, 1, starfish(20, C.orange, 2)) + g(700, 252, -10, 1, scallop(18, C.blush, 1.8));
+  return s;
+}
+
+/* ── a tide timetable on a card ── */
+function tides() {
+  const x = 560, y = 296;
+  keep(x - 12, y - 12, x + 200, y + 136);
+  let s = `<g transform="${tf(x, y, 2)}"><rect x="0" y="0" width="186" height="128" rx="10" fill="${C.white}" ${ink(2)}/>`;
+  s += `<rect x="0" y="0" width="186" height="34" rx="10" fill="${C.lagoon}" ${ink(2)}/>` + T(93, 22, 'LỊCH THỦY TRIỀU', { s: 12, ls: 1.8, anchor: 'middle', fill: C.ink });
+  [['Nước lên', '17:40'], ['Hoàng hôn', '18:05'], ['Nắm tay', 'cả ngày']].forEach(([k, v], i) => {
+    const ly = 54 + i * 21;
+    s += T(12, ly, k, { s: 11, w: 600, fill: C.sea }) + T(174, ly, v, { f: F.note, w: 400, s: 17, anchor: 'end', fill: C.ink });
+    s += `<line x1="12" y1="${ly + 5}" x2="174" y2="${ly + 5}" stroke="${C.ink}" stroke-width=".8" opacity=".35"/>`;
+  });
+  let wave = 'M12 116';                                               // the day's tide, drawn as a wave
+  for (let i = 1; i <= 16; i++) wave += ` L${n1(12 + i * 10.1)} ${n1(112 - 7 * Math.sin(i / 16 * Math.PI * 2.2) - r() * 2)}`;
+  s += `<path d="${wave}" fill="none" ${ink(2, C.sea)}/>` + g(128, 104, 0, 1, heart(10, C.coral, 1.2));
+  return s + '</g>';
+}
+
+/* ── a striped umbrella over a deckchair, a bucket and spade ── */
+function umbrella() {
+  const x = 190, y = 300;
+  keep(56, 286, 336, 566);
+  let s = '';
+  const stripes = [C.coral, C.cream, C.coral, C.cream, C.coral, C.cream, C.coral];
+  const tip = [x + 6, y + 8];
+  stripes.forEach((c, i) => {                                         // the canopy, seven panels with scalloped hems
+    const a0 = 192 + i * 22.3, a1 = a0 + 22.3, [p0x, p0y] = pt(x, y + 92, 134, a0), [p1x, p1y] = pt(x, y + 92, 134, a1), mid = pt(x, y + 92, 120, (a0 + a1) / 2);
+    s += `<path d="M${tip[0]} ${tip[1]} L${p0x} ${p0y} Q${mid[0]} ${mid[1]} ${p1x} ${p1y}Z" fill="${c}" ${ink(2.2)}/>`;
+  });
+  s += `<path d="M${x + 6} ${y + 8} L${x + 26} ${y + 262}" ${ink(4.4)}/><path d="M${x + 6} ${y + 8} L${x + 26} ${y + 262}" ${ink(2, C.cream)}/>`;
+  s += `<circle cx="${x + 6}" cy="${y + 2}" r="6" fill="${C.gold}" ${ink(1.8)}/>`;
+  const cx = x - 18, cy = y + 196;                                    // the deckchair: a frame and a striped sling
+  s += `<path d="M${cx - 70} ${cy + 64} L${cx - 20} ${cy - 46} M${cx - 40} ${cy + 64} L${cx + 40} ${cy - 6} M${cx + 64} ${cy + 64} L${cx + 6} ${cy + 14}" fill="none" ${ink(4, C.brown)}/>`;
+  s += `<path d="M${cx - 30} ${cy - 40} Q${cx - 56} ${cy + 20} ${cx - 34} ${cy + 46} L${cx + 40} ${cy + 26} Q${cx + 16} ${cy - 4} ${cx + 14} ${cy - 30}Z" fill="${C.lagoon}" ${ink(2.2)}/>`;
+  for (let i = 1; i < 5; i++) s += `<path d="M${n1(cx - 30 + i * 9)} ${n1(cy - 38 + i * 2)} Q${n1(cx - 48 + i * 15)} ${n1(cy + 14)} ${n1(cx - 30 + i * 14)} ${n1(cy + 42 - i * 4)}" fill="none" ${ink(3, C.white)}/>`;
+  s += g(cx - 4, cy + 4, -20, 1, `<rect x="-14" y="-6" width="28" height="12" rx="6" fill="${C.butter}" ${ink(1.6)}/>`);   // a towel roll
+  const kx = x + 92, ky = y + 236;                                    // a bucket and a spade
+  s += `<path d="M${kx - 20} ${ky - 24} L${kx + 20} ${ky - 24} L${kx + 14} ${ky + 10} L${kx - 14} ${ky + 10}Z" fill="${C.gold}" ${ink(2)}/>`;
+  s += `<path d="M${kx - 18} ${ky - 22} Q${kx} ${ky - 50} ${kx + 18} ${ky - 22}" fill="none" ${ink(1.8)}/>` + g(kx, ky - 8, 0, 1, starfish(9, C.coral, 1.2));
+  s += `<path d="M${kx + 30} ${ky + 8} L${kx + 48} ${ky - 40}" ${ink(3, C.brown)}/><path d="M${kx + 44} ${ky - 40} l12 -2 l-2 -20 l-12 -2 z" fill="${C.sea}" ${ink(1.8)}/>`;
+  s += `<path d="M${x - 110} ${y + 262} q60 -14 120 -4 t130 0" fill="none" ${ink(2, C.dune)}/>`;
+  return s;
+}
+
+/* ── the beach towel the act stands on: stripes, a heart drawn in the sand, the instruction ribbon ── */
+function towel() {
+  const x0 = 404, x1 = 876, y0 = 440, y1 = 668;
+  keep(x0 - 22, y0 - 18, x1 + 22, y1 + 66);
+  const edge = `M${x0 + 16} ${y0 + 4} L${x1 - 12} ${y0} Q${x1 + 6} ${y0 + 2} ${x1 + 4} ${y0 + 20} L${x1 + 8} ${y1 - 16} Q${x1 + 10} ${y1 + 2} ${x1 - 10} ${y1} L${x0 + 8} ${y1 + 2} Q${x0 - 10} ${y1} ${x0 - 8} ${y1 - 18} L${x0 - 2} ${y0 + 22} Q${x0 - 2} ${y0 + 4} ${x0 + 16} ${y0 + 4}Z`;
+  let s = `<clipPath id="towelClip"><path d="${edge}"/></clipPath><path d="${edge}" fill="${C.sand}" ${ink(2.8)}/>`;
+  s += `<g clip-path="url(#towelClip)">`;
+  const bands = [C.lagoon, C.cream, C.coral, C.cream, C.gold, C.cream, C.lagoon];
+  let yy = y0 - 6;
+  for (let i = 0; yy < y1 + 10; i++) {                                // stripes of uneven widths across the towel
+    const h = 18 + r() * 22, c = bands[i % bands.length];
+    if (c !== C.cream) s += `<path d="M${x0 - 14} ${n1(yy)} L${x1 + 14} ${n1(yy + (r() - .5) * 6)} L${x1 + 14} ${n1(yy + h)} L${x0 - 14} ${n1(yy + h + (r() - .5) * 6)}Z" fill="${c}" opacity=".55"/>`;
+    yy += h;
+  }
+  for (let i = 0; i < 90; i++) { const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0), l = 6 + r() * 12; s += `<path d="M${n1(x)} ${n1(y)} l${n1(l)} ${n1((r() - .5) * 2)}" ${ink(1, pick([C.ink, C.sea, C.coral]))} opacity=".35"/>`; }   // woven threads
+  for (let i = 0; i < 320; i++) { const x = x0 + r() * (x1 - x0), y = y0 + r() * (y1 - y0); s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(.7 + r() * 1.4)}" fill="${pick([C.dune, C.brown, C.white])}" opacity=".6"/>`; }   // sand on it
+  for (let i = 0; i < 7; i++) { const x = x0 + 30 + r() * (x1 - x0 - 60), y = y0 + 24 + r() * (y1 - y0 - 48); if (Math.hypot(x - 640, y - 548) < 100) continue; s += g(x, y, r() * 360, 1, i % 2 ? scallop(7 + r() * 3, C.white, 1.2) : conch(6 + r() * 3, C.peach, 1.1)); }
+  s += '</g>';
+  s += `<path d="M${x0 + 14} ${y0 + 14} L${x1 - 14} ${y0 + 12} L${x1 - 6} ${y1 - 12} L${x0 + 8} ${y1 - 10}Z" fill="none" stroke="${C.sea}" stroke-width="1.6" stroke-dasharray="6 5"/>`;
+  let hp = '';                                                         // a heart drawn in the sand with a stick
+  for (let i = 0; i <= 48; i++) { const t = i / 48 * Math.PI * 2, x = 16 * Math.sin(t) ** 3, y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)); hp += `${i ? 'L' : 'M'}${n1(640 + x * 4.6 + (r() - .5) * 2.4)} ${n1(548 + y * 4.4 + (r() - .5) * 2.4)}`; }
+  s += `<path d="${hp}" fill="${C.blush}" opacity=".7"/><path d="${hp}" fill="none" ${ink(4.4, C.brown)}/><path d="${hp}" fill="none" stroke="${C.butter}" stroke-width="1.4" stroke-dasharray="3 6"/>`;
+  s += g(712, 506, 38, 1, `<path d="M0 0 L0 -86" ${ink(4, C.bark)}/><path d="M0 -50 l-12 -14" ${ink(2.4, C.bark)}/>`);
+  s += TO(640, 628, 'hai mình ở đây', { f: F.hand, w: 700, s: 26, anchor: 'middle', fill: C.ink, stroke: C.cream, sw: 6 });
+  for (let i = 0; i < 10; i++) { const x = x0 + 26 + i * (x1 - x0 - 46) / 9 + (r() - .5) * 8; s += `<path d="M${n1(x)} ${y1 + 1} l${n1((r() - .5) * 6)} ${n1(10 + r() * 6)}" ${ink(2, C.sea)}/>`; }   // fringe
+  const ry = y1 + 36;                                                  // the instruction ribbon
+  s += `<path d="M452 ${ry - 16} L828 ${ry - 16} L812 ${ry} L828 ${ry + 16} L452 ${ry + 16} L468 ${ry}Z" fill="${C.ink}" ${ink(2)}/>`;
+  s += T(640, ry + 5, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 14.5, w: 600, anchor: 'middle', fill: C.cream });
+  return s;
+}
+
+/* ── a surfboard standing in the sand, sunglasses, a coconut drink ── */
+function beachThings() {
+  let s = '';
+  const sx = 940, sy = 560;
+  keep(sx - 44, sy - 196, sx + 44, sy + 168);
+  s += g(sx, sy, 8, 1, `<path d="M0 -190 C34 -150 38 60 22 150 Q0 168 -22 150 C-38 60 -34 -150 0 -190Z" fill="${C.lagoon}" ${ink(2.6)}/>` +
+    `<path d="M-6 -168 C10 -120 12 60 4 150" fill="none" ${ink(6, C.cream)}/><path d="M-6 -168 C10 -120 12 60 4 150" fill="none" ${ink(2.2, C.coral)}/>` +
+    g(-2, -40, 0, 1, heart(26, C.coral, 2)) + T(0, 44, 'SURF', { s: 13, ls: 2, anchor: 'middle', fill: C.ink }) +
+    `<path d="M-18 112 q18 10 36 0" fill="none" ${ink(1.6)}/>` + g(0, 92, 0, 1, starfish(10, C.gold, 1.2)));
+  const gx = 1112, gy = 412;                                          // sunglasses with heart lenses
+  keep(gx - 74, gy - 30, gx + 74, gy + 34);
+  s += g(gx, gy, -8, 1, g(-34, 0, 0, 1, heart(48, C.ink, 2.4)) + g(34, 0, 0, 1, heart(48, C.ink, 2.4)) +
+    `<path d="M-14 -6 Q0 -16 14 -6" fill="none" ${ink(3)}/><path d="M-62 -10 L-74 -18 M62 -10 L74 -18" ${ink(3)}/>` +
+    `<path d="M-46 -8 l10 -6 M22 -8 l10 -6" ${ink(2.4, C.white)}/>`);
+  const cx = 1100, cy = 528;                                          // a coconut with a straw, a paper umbrella and a hibiscus
+  keep(cx - 62, cy - 84, cx + 62, cy + 54);
+  s += `<path d="M${cx - 42} ${cy - 10} A44 44 0 0 0 ${cx + 42} ${cy - 10}Z" fill="${C.brown}" ${ink(2.4)}/>`;
+  s += `<ellipse cx="${cx}" cy="${cy - 10}" rx="42" ry="10" fill="${C.cream}" ${ink(2.2)}/>`;
+  for (let i = 0; i < 9; i++) s += `<path d="M${n1(cx - 34 + i * 8)} ${n1(cy + 4 + (r() - .5) * 6)} l${n1(4 + r() * 4)} ${n1(6 + r() * 6)}" ${ink(1.4, C.deep)}/>`;
+  s += `<path d="M${cx + 12} ${cy - 12} L${cx + 34} ${cy - 76} L${cx + 46} ${cy - 76}" fill="none" ${ink(3.4, C.coral)}/>`;
+  s += g(cx - 18, cy - 46, -16, 1, `<path d="M0 30 L0 -2" ${ink(2)}/><path d="M-22 0 Q0 -26 22 0 Q11 -6 0 0 Q-11 -6 -22 0Z" fill="${C.gold}" ${ink(2)}/>`);
+  s += g(cx + 30, cy - 4, 0, 1, [0, 72, 144, 216, 288].map(a => g(0, 0, a, 1, `<ellipse cx="0" cy="-11" rx="8" ry="11" fill="${C.pink}" ${ink(1.6)}/>`)).join('') + `<circle r="4" fill="${C.rose}" ${ink(1.2)}/>`);
+  return s;
+}
+
+/* ── the postage stamp and two postmarks ── */
+function stamps() {
+  let s = '';
+  const sx = 102, sy = 622;
+  keep(sx - 58, sy - 68, sx + 58, sy + 68);
+  let edge = '';
+  for (let i = 0; i <= 40; i++) { const t = i / 40, [a, b] = i < 10 ? [-46 + t * 4 * 92, -58] : i < 20 ? [46, -58 + (t - .25) * 4 * 116] : i < 30 ? [46 - (t - .5) * 4 * 92, 58] : [-46, 58 - (t - .75) * 4 * 116]; edge += `${i ? 'L' : 'M'}${n1(a)} ${n1(b)}`; }
+  let pic = `<rect x="-38" y="-50" width="76" height="70" fill="${C.sky}" ${ink(1.6)}/>`;
+  pic += `<path d="M-38 0 L38 0 L38 20 L-38 20Z" fill="${C.sea}"/><path d="M-14 0 A14 14 0 0 1 14 0Z" fill="${C.gold}" ${ink(1.2)}/>`;
+  pic += `<path d="M-38 6 q9 -6 19 0 t19 0 t19 0 t19 0" fill="none" ${ink(1.4, C.foam)}/>` + g(-22, -30, 0, 1, gull(7, 1.6)) + g(-24, 12, 0, 1, scallop(9, C.blush, 1));
+  s += g(sx, sy, -5, 1, `<path d="${edge}Z" fill="${C.white}" stroke="${C.ink}" stroke-width="2" stroke-dasharray="3 3"/>` + pic +
+    T(0, 36, 'BIỂN GỌI TÊN EM', { s: 7.6, ls: .6, anchor: 'middle', fill: C.rose }) + T(0, 50, '0707đ', { s: 11, anchor: 'middle' }));
+  const mark = (cx, cy, rr, top, bottom, mid, a) => {
+    let m = `<g transform="${tf(cx, cy, a)}" opacity=".85"><circle r="${rr}" fill="none" ${ink(2.2, C.rose)}/><circle r="${rr - 14}" fill="none" ${ink(1.4, C.rose)}/>`;
+    m += `<path id="arcT${cx}" d="M${-rr + 7} 0 A${rr - 7} ${rr - 7} 0 0 1 ${rr - 7} 0" fill="none"/><path id="arcB${cx}" d="M${-rr + 7} 0 A${rr - 7} ${rr - 7} 0 0 0 ${rr - 7} 0" fill="none"/>`;
+    m += `<text font-family="${F.sans}" font-weight="800" font-size="10.5" letter-spacing="2" fill="${C.rose}"><textPath href="#arcT${cx}" startOffset="50%" text-anchor="middle">${top}</textPath></text>`;
+    m += `<text font-family="${F.sans}" font-weight="800" font-size="10.5" letter-spacing="2" fill="${C.rose}" dy="9"><textPath href="#arcB${cx}" startOffset="50%" text-anchor="middle">${bottom}</textPath></text>`;
+    return m + T(0, 5, mid, { s: 13, anchor: 'middle', fill: C.rose }) + `<path d="M${rr + 6} -10 q20 -8 40 0 t40 0 M${rr + 6} 4 q20 -8 40 0 t40 0" fill="none" ${ink(1.8, C.rose)}/></g>`;
+  };
+  keep(166, 580, 344, 684);
+  s += mark(216, 630, 46, 'BƯU CỤC BIỂN', 'GỬI EM', '07·07', -10);
+  keep(1092, 660, 1196, 750);
+  s += mark(1136, 706, 40, 'HOÀNG HÔN', 'BIỂN XANH', '18:05', 10);
+  return s;
+}
+
+/* ── a handwritten verse on a slip of ruled paper ── */
+function verse() {
+  keep(50, 688, 384, 748);
+  let s = `<g transform="${tf(104, 714, 1.5)}"><rect x="-44" y="-22" width="300" height="56" rx="6" fill="${C.paper}" ${ink(1.8)}/>`;
+  [0, 22].forEach(ly => { s += `<line x1="-32" y1="${ly + 2}" x2="244" y2="${ly + 2}" stroke="${C.sky}" stroke-width="1.2"/>`; });
+  s += T(-24, -2, 'Sóng vỗ bờ bao nhiêu lần,', { f: F.hand, w: 700, s: 20, fill: C.ink });
+  s += T(-24, 20, 'anh thương em bấy nhiêu.', { f: F.hand, w: 700, s: 20, fill: C.ink });
+  return s + g(226, 8, 10, 1, heart(16, C.rose, 1.5)) + '</g>';
+}
+
+/* ── a bottle with a message, rolled and tied ── */
+function bottle() {
+  const x = 1030, y = 640;
+  keep(x - 70, y - 40, x + 80, y + 40);
+  let s = `<g transform="${tf(x, y, -18)}">`;
+  s += `<path d="M-64 -18 L22 -18 Q34 -18 40 -10 L58 -7 L58 7 L40 10 Q34 18 22 18 L-64 18 Q-72 18 -72 0 Q-72 -18 -64 -18Z" fill="${C.mint}" opacity=".85" ${ink(2.4)}/>`;
+  s += `<rect x="58" y="-6" width="12" height="12" rx="2" fill="${C.bark}" ${ink(1.8)}/>`;
+  s += `<rect x="-52" y="-9" width="66" height="18" rx="9" fill="${C.cream}" ${ink(1.8)}/><path d="M-20 -9 L-20 9" ${ink(3, C.rose)}/>`;
+  s += `<path d="M-60 -11 Q-40 -15 -10 -13" fill="none" ${ink(2, C.white)}/>`;
+  s += T(-10, 34, 'thư của biển', { f: F.hand, w: 700, s: 18, anchor: 'middle', fill: C.sea });
+  return s + '</g>';
+}
+
+/* ── footprints walking across the sand, two by two ── */
+function footprints() {
+  let s = '';
+  const foot = (big) => `<ellipse cx="0" cy="3" rx="${big ? 5.2 : 4.4}" ry="${big ? 8.4 : 7.2}" fill="${C.dune}" ${ink(1.2)}/>` +
+    [[-3.6, -7, 1.9], [-1, -8.4, 1.6], [1.4, -8, 1.4], [3.4, -7, 1.2], [4.8, -5.4, 1]].map(([x, y, rr]) => `<circle cx="${n1(x * (big ? 1.1 : 1))}" cy="${n1(y * (big ? 1.1 : 1))}" r="${rr}" fill="${C.dune}" ${ink(.9)}/>`).join('');
+  for (let i = 0; i < 9; i++) {                                         // his steps and hers, side by side, from the umbrella to the towel
+    const t = i / 8, x = 336 + t * 64 + Math.sin(t * 4) * 8, y = 600 - t * 180, a = 20 - t * 30;
+    for (const [dx, big] of [[-11, true], [11, false]]) {
+      const side = i % 2 ? 1 : -1, px = x + dx + side * 4, py = y + (big ? 0 : 6);
+      if (blocked(px, py, 2) && !(px > 330 && px < 404)) continue;
+      s += g(px, py, a + side * 6, 1, foot(big));
+    }
+  }
+  keep(318, 410, 404, 620);
+  return s;
+}
+
+/* ── waves along the bottom of the sheet ── */
+function waves() {
+  let s = '';
+  for (const [y, c, a] of [[744, C.lagoon, .9], [752, C.sea, 1]]) {
+    let d = `M44 ${y + 12}`;
+    for (let x = 44; x < 1236;) { const w = 34 + r() * 26; d += ` q${n1(w * .25)} ${n1(-10 - r() * 6)} ${n1(w * .5)} -2 q${n1(w * .2)} 8 ${n1(w * .5)} 2`; x += w; }
+    s += `<path d="${d} L1236 760 L44 760Z" fill="${c}" opacity="${a}" ${ink(1.6)}/>`;
+  }
+  for (let i = 0; i < 46; i++) s += `<circle cx="${n1(50 + r() * 1180)}" cy="${n1(744 + r() * 12)}" r="${n1(1 + r() * 2.2)}" fill="${C.foam}"/>`;
+  return s;
+}
+
+/* ── a palm in the corner, leaning in ── */
+function palm() {
+  const x = 1206, y = 596;
+  keep(x - 40, y - 60, x + 30, y + 150);
+  let s = `<path d="M${x + 16} ${y + 140} C${x + 10} ${y + 80} ${x + 4} ${y + 30} ${x - 14} ${y - 10}" fill="none" ${ink(11, C.ink)}/><path d="M${x + 16} ${y + 140} C${x + 10} ${y + 80} ${x + 4} ${y + 30} ${x - 14} ${y - 10}" fill="none" ${ink(7, C.bark)}/>`;
+  for (let i = 0; i < 7; i++) { const yy = y + 130 - i * 20; s += `<path d="M${x + 10 - i * 2} ${yy} q5 4 12 0" fill="none" ${ink(1.6)}/>`; }
+  for (let i = 0; i < 6; i++) {
+    const a = -170 + i * 34 + (r() - .5) * 10, [ex, ey] = pt(x - 14, y - 10, 58 + r() * 14, a), [mx, my] = pt(x - 14, y - 22, 36, a + 10);
+    s += `<path d="M${x - 14} ${y - 10} Q${mx} ${my} ${ex} ${ey} Q${n1((mx + x - 14) / 2 + 8)} ${n1((my + y - 10) / 2 + 8)} ${x - 14} ${y - 10}Z" fill="${pick([C.leaf, C.palm])}" ${ink(1.8)}/>`;
+  }
+  return s + `<circle cx="${x - 20}" cy="${y - 4}" r="6" fill="${C.brown}" ${ink(1.4)}/><circle cx="${x - 8}" cy="${y - 2}" r="6" fill="${C.brown}" ${ink(1.4)}/>`;
+}
+
+/* ── the scatter: shells, starfish, bubbles, gulls, hearts and sparkles where nothing else is ── */
+function scatter() {
+  let s = '';
+  for (let i = 0, placed = 0; i < 5000 && placed < 130; i++) {
+    const x = 52 + r() * 1176, y = 52 + r() * 690;
+    if (blocked(x, y, 14)) continue;
+    keep(x - 9, y - 9, x + 9, y + 9); placed++;
+    const k = r();
+    s += g(x, y, r() * 70 - 35, 1, k < .18 ? scallop(8 + r() * 6, pick([C.blush, C.peach, C.white, C.butter])) : k < .32 ? starfish(7 + r() * 6, pick([C.coral, C.orange, C.gold]))
+      : k < .42 ? conch(8 + r() * 5, pick([C.cream, C.peach])) : k < .56 ? bubble(3 + r() * 4) : k < .66 ? gull(7 + r() * 6, 1.8)
+      : k < .8 ? heart(9 + r() * 9, pick([C.pink, C.coral, C.blush])) : k < .92 ? twinkle(5 + r() * 6, pick([C.gold, C.butter, C.mint])) : `<circle r="${n1(2 + r() * 3)}" fill="${pick([C.ink, C.coral, C.sea])}"/>`);
+  }
+  return s;
+}
+
+/* every face first (Vietnamese marks included), then the drawing, the big words as pictures, and only then ready */
+const FACES = [`400 84px "${F.title}"`, `700 96px "${F.hand}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `italic 400 26px "${F.serif}"`, `400 17px "${F.note}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Dạo biển hoàng hôn ĐẶT Lịch thủy triều ữ Ơ ’ sunset with you 0707'))).then(async () => {
+  let body = sheet() + sunsetWindow() + title() + tides() + umbrella() + towel() + beachThings() + stamps() + verse() + bottle() + palm();
+  body += footprints() + waves() + scatter();
+  document.getElementById('card').innerHTML = body;
+  await drawWords();
+  await document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

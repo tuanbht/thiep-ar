@@ -1,0 +1,24 @@
+{
+  "label": "Thư tình bay qua phố biển (3D: cô phù thủy nhỏ cưỡi chổi mang thư tình đến cho chàng)",
+  "preset": {
+    "title": "Thư tình bay qua phố biển",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Lá thư này anh gửi theo gió biển, kèm cả một buổi hoàng hôn anh chỉ muốn ngắm cùng em.",
+      "Mong thư bay thật nhanh, như tim anh mỗi lần gặp em."
+    ],
+    "from": "Bưu tá của em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên nhãn thư hỏa tốc)", "value": "Thư hỏa tốc: gửi người anh thương", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Người nhận: em", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Bay đến đâu cũng muốn về bên em!", "max": 40 }]
+      ]
+    }
+  ]
+}
