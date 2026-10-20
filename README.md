@@ -52,13 +52,25 @@ uploaded for cards that were never ordered. Paid cards are never touched.
 
 ## Payments
 
-`lib/payments/provider.ts` is the slot: a provider starts a payment for an order and either completes it (the test
-provider) or redirects to a gateway whose callback calls `OrdersService.confirmPayment`. `PAYMENT_PROVIDER=zalopay`
-answers "not configured" until it is built. To add ZaloPay (v2): create the order with
-`mac = HMAC_SHA256(key1, app_id|app_trans_id|app_user|amount|app_time|embed_data|item)` and redirect to its
-`order_url`; verify the callback with `HMAC_SHA256(key2, data)` and answer `{ return_code: 1 }`; query unpaid orders
-with `mac = HMAC_SHA256(key1, app_id|app_trans_id|key1)`. The keys go in `ZALOPAY_*` (see `.env.example`). The test
-provider is refused in production unless `ALLOW_TEST_PAYMENTS=true`.
+`lib/payments/provider.ts` is the slot (a new provider is code only: the database takes any provider id);
+`PAYMENT_PROVIDER` picks `test` (pays at once; refused in production unless
+`ALLOW_TEST_PAYMENTS=true`) or `sepay`.
+
+**SePay** (bank transfer by VietQR, `lib/payments/sepay/`):
+1. The checkout shows a VietQR code for the shop's bank account (read from SePay's API), with the amount and the
+   order's payment code as the transfer message (`GC-261020-7K3QX` -> `GC2610207K3QX`).
+2. The page polls `GET /api/orders/:id` every 3 s. The server asks SePay's transaction list (at most every 4 s per order)
+   for money into that account carrying the code, of at least the amount; when found, `confirmPayment` marks the order
+   paid (idempotent per SePay transaction) and the page moves on to the gift link.
+3. SePay's webhook (`POST /callbacks/sepay/ipn`; set it in SePay > Webhooks) makes that check at once. It is only a
+   nudge: the money is always read back from SePay's API, never taken from the webhook's body.
+
+Settings: `SEPAY_API_KEY` (my.sepay.vn > Cấu hình công ty > API Access; production and sandbox tokens differ, see
+`SEPAY_API_URL`), `SEPAY_BANK_ACCOUNT_ID` (only when several accounts are linked), and the webhook's HMAC secret
+`SEPAY_WEBHOOK_SECRET` (else `SEPAY_SECRET_KEY` is read) or API key `SEPAY_WEBHOOK_API_KEY`. Works with any account
+linked to SePay, personal ones included. (SePay's per-order VA API, "Tạo đơn hàng", needs a business account at BIDV,
+Vietcombank, VietinBank, Shinhan or Sacombank; this shop's account is a personal TPBank one.)
+`SEPAY_LIVE=1 pnpm exec vitest run lib/payments/sepay/__tests__/live.test.ts` checks the token and account read-only.
 
 ## Assets
 
@@ -98,7 +110,8 @@ Any Next.js host (Vercel works as is) plus a Supabase project: `supabase link`, 
 
 ## Known limits (MVP)
 
-- No ZaloPay yet; no buyer accounts, emails or receipts; no admin screen (prices and products are edited in Supabase).
+- Underpaid transfers are not matched (the order waits for the full amount); no refunds from the shop.
+- No buyer accounts, emails or receipts; no admin screen (prices and products are edited in Supabase).
 - The rate limiter is in memory (one server instance); use Redis or Upstash with several instances.
 - The buyer's access lives in a cookie on the browser that ordered; there is no email or account to recover it yet.
 - Several templates still have English names, blurbs and starting words (from their `form.json`).

@@ -1,5 +1,5 @@
 /* The test provider: the order is paid the moment the buyer presses "Pay", through the same confirmPayment a real
-   provider's callback uses, so the rest of the flow (the gift link, the stats) runs exactly as it will with ZaloPay.
+   provider's callback uses, so the rest of the flow (the gift link, the stats) runs exactly as it does with SePay.
    Development, tests and demo sites only (see lib/payments/index.ts). */
 import type { ConfirmedPayment, PaymentConfirmation } from '../db/repository';
 import type { Order, Product } from '../domain/types';

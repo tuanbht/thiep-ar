@@ -104,6 +104,13 @@ export class SupabaseRepository implements Repository {
     return toOrder(data);
   }
 
+  async getOrderByCode(code: string): Promise<Order | null> {
+    if (!/^[0-9A-Z-]{1,32}$/.test(code)) return null;
+    const { data, error } = await this.db.from('orders').select('*').eq('code', code).maybeSingle();
+    if (error) fail(`order ${code}`, error);
+    return data ? toOrder(data) : null;
+  }
+
   async getOrder(id: string): Promise<Order | null> {
     if (!UUID.test(id)) return null;
     const { data, error } = await this.db.from('orders').select('*').eq('id', id).maybeSingle();

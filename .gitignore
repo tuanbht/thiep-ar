@@ -5,6 +5,7 @@ build/
 coverage/
 test-results/
 playwright-report/
+.playwright-mcp/
 *.tsbuildinfo
 next-env.d.ts
 *.tmp

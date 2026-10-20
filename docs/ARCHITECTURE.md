@@ -2,7 +2,7 @@
 
 A buyer picks a card, writes its words, previews it, pays, and gets a link (`/g/<slug>`) that brings the printed
 card to life on the recipient's phone. Next.js 16 (App Router, cache components), TypeScript, Tailwind 4, three.js,
-MindAR, Supabase (Postgres + Storage). Payments go through a provider slot: `test` now, ZaloPay later.
+MindAR, Supabase (Postgres + Storage). Payments go through a provider slot: `test` or SePay (VietQR bank transfer).
 
 ## The buy workflow
 
@@ -15,7 +15,9 @@ MindAR, Supabase (Postgres + Storage). Payments go through a provider slot: `tes
                          sets the buyer's access cookie gc_o_<orderId> (random token; only its sha256 is stored)
 /checkout/[orderId]    summary + "Pay" -> POST /api/orders/:id/pay -> provider.start()
                          test:    confirmPayment at once -> redirect /orders/:id
-                         zalopay: redirect to its order_url; its callback calls confirmPayment (later)
+                         sepay:   a VietQR code (amount + the order's code as the message); the page polls
+                                  GET /api/orders/:id, which asks SePay's transactions for the money and then
+                                  confirmPayment; SePay's webhook (POST /callbacks/sepay/ipn) triggers that check
 /orders/[orderId]      status; once paid: the gift link /g/<slug>, a QR code, copy/share
 /g/[slug]              the gift (active only): AR player (camera; the act faces the phone) or without the camera;
                        the photo comes as a short-lived signed URL
@@ -37,6 +39,10 @@ same provider reference (a provider may call back more than once).
 | orders | code, amount, status, buyer contact, access token hash, payment provider + ref, paid_at |
 | payments | every confirmed payment, with the provider's raw payload |
 | events | analytics: name, session, gift/order/product, props jsonb, user agent, referrer, time |
+
+The database does not list the payment providers: `orders.payment_provider` and `payments.provider` take any lowercase
+id (`^[a-z][a-z0-9_]{1,31}$`). Which ones exist is the app's business (`PaymentProviderId`, `PAYMENT_PROVIDER`), so
+adding or retiring a provider needs no migration; orders paid through a retired one keep its id.
 
 RLS is on for every table with no policies: only the server (secret key) reads and writes. Storage bucket
 `gift-photos` is private; the server signs short-lived URLs.

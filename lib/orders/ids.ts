@@ -1,14 +1,14 @@
 /* The names an order and its gift go by.
    - slug: the gift's link (/g/<slug>), 10 base62 characters from a cryptographic source (about 59.5 bits): nobody can
      guess a gift that was not sent to them.
-   - order code: GC-yymmdd-XXXXX, the day in Vietnam time (ZaloPay's references start with it too) and 5 characters
+   - order code: GC-yymmdd-XXXXX, the day in Vietnam time and 5 characters
      a person can read out over the phone (no 0/O, 1/I/L). */
 import { randomBytes as nodeRandomBytes } from 'node:crypto';
 
 export type RandomBytes = (n: number) => Uint8Array;
 
 const BASE62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const READABLE = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+export const READABLE = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 export const SLUG_LENGTH = 10;
 export const SLUG_RE = /^[0-9A-Za-z]{10}$/;

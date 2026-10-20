@@ -24,7 +24,7 @@ describe('errorResponse', () => {
   it('hides the inside of a state clash, an outage and anything unexpected', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {}), err = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(errorResponse(new StateError('order GC-1 is paid by zp_9'), 't').status).toBe(409);
-    expect(errorResponse(new PaymentUnavailable('ZaloPay key1 missing'), 't').status).toBe(503);
+    expect(errorResponse(new PaymentUnavailable('SEPAY_API_KEY is not set'), 't').status).toBe(503);
     const res = errorResponse(new Error('connect ECONNREFUSED 10.0.0.3:5432 password=hunter2'), 't');
     expect(res.status).toBe(500);
     expect(JSON.stringify(await res.json())).not.toMatch(/ECONNREFUSED|hunter2/);

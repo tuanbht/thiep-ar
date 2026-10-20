@@ -97,14 +97,17 @@ export function repositoryContract(name: string, setup: () => Promise<RepoFixtur
       expect(await repo.getOrder(order.id)).toEqual(order);
       expect(await repo.getOrder('00000000-0000-4000-8000-000000000000')).toBeNull();
       expect(await repo.getOrder('not-a-uuid')).toBeNull();
+      expect(await repo.getOrderByCode(order.code)).toEqual(order);
+      expect(await repo.getOrderByCode('GC-000000-ZZZZZ')).toBeNull();
+      expect(await repo.getOrderByCode("' or 1=1 --")).toBeNull();
       await expect(repo.createOrder({ code: order.code, giftCardId: gift.id, productId: order.productId, amountVnd: 1, buyer: order.buyer, accessTokenHash: tokenHash() }))
         .rejects.toBeInstanceOf(RepositoryError);
     });
 
     it('remembers how a payment was started, while the order stays pending', async () => {
       const { repo, order } = await bought();
-      const o = await repo.setOrderPayment(order.id, 'zalopay', '261016_abc');
-      expect(o).toMatchObject({ status: 'pending', paymentProvider: 'zalopay', paymentRef: '261016_abc' });
+      const o = await repo.setOrderPayment(order.id, 'sepay', '261016_abc');
+      expect(o).toMatchObject({ status: 'pending', paymentProvider: 'sepay', paymentRef: '261016_abc' });
       await expect(repo.setOrderPayment('00000000-0000-4000-8000-000000000000', 'test', 'x')).rejects.toBeInstanceOf(RepositoryError);
     });
 

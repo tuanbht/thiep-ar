@@ -60,6 +60,8 @@ export interface Repository {
   /** a pending order for a draft gift card */
   createOrder(input: NewOrder): Promise<Order>;
   getOrder(id: string): Promise<Order | null>;
+  /** an order by its code ("GC-261016-7K3QX"), e.g. from a bank transfer's message */
+  getOrderByCode(code: string): Promise<Order | null>;
   /** remember which provider and reference a payment was started with (the order stays pending) */
   setOrderPayment(orderId: string, provider: PaymentProviderId, ref: string): Promise<Order>;
 

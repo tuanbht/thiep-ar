@@ -1,9 +1,11 @@
 /* The Repository contract against Supabase. Runs when SUPABASE_URL and SUPABASE_SECRET_KEY are set (pnpm db:start,
    then .env.local); its rows carry this run's own ids and are deleted afterwards. */
 import { afterAll, describe, expect, it } from 'vitest';
-import type { OrderStatus } from '../../domain/types';
+import { randomBytes } from 'node:crypto';
+import type { OrderStatus, PaymentProviderId } from '../../domain/types';
 import { createAdminClient, supabaseConfig, ConfigError } from '../client';
 import { repositoryContract, runId, testProducts } from './repository.contract';
+import { RepositoryError } from '../repository';
 import { SupabaseRepository } from '../supabase-repository';
 
 const configured = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_SECRET_KEY;
@@ -50,6 +52,20 @@ describe.skipIf(!configured)('Supabase', () => {
     const pub = createClient(process.env.SUPABASE_URL!, anon!, { auth: { persistSession: false } });
     const { data, error } = await pub.from('products').select('id').limit(1);
     expect(error ?? data?.length === 0).toBeTruthy();
+  });
+
+  it('takes any provider the app names, with no migration, and refuses a malformed one', async () => {
+    const repo = new SupabaseRepository(db);                           // the contract above has put the products in
+    const gift = await repo.createGiftCard({ slug: randomBytes(9).toString('hex'), productId: products.first.id, template: 'flower-letter', design: null,
+      content: { title: 't', intro: '', letter: { to: 'a', body: ['b'], from: 'c' }, slots: {}, photoPath: null } });
+    const order = await repo.createOrder({ code: `T-${randomBytes(6).toString('hex').toUpperCase()}`, giftCardId: gift.id, productId: products.first.id,
+      amountVnd: 49000, buyer: { name: null, email: null, phone: null }, accessTokenHash: 'a'.repeat(64) });
+    const someday = 'momo_qr' as PaymentProviderId;
+    for (const bad of ['MoMo', 'momo pay', 'x', "sepay'; --"])
+      await expect(repo.setOrderPayment(order.id, bad as PaymentProviderId, 'ref-2'), bad).rejects.toBeInstanceOf(RepositoryError);
+    expect(await repo.setOrderPayment(order.id, someday, 'ref-1')).toMatchObject({ paymentProvider: 'momo_qr' });
+    const paid = await repo.confirmPayment({ orderId: order.id, provider: someday, providerRef: 'ref-1', amountVnd: 49000, raw: {}, paidAt: new Date().toISOString() });
+    expect(paid.order).toMatchObject({ status: 'paid', paymentProvider: 'momo_qr' });
   });
 
   afterAll(async () => {

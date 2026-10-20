@@ -3,7 +3,8 @@ import { EnvError, readEnv, testPaymentsAllowed } from '../env';
 
 describe('readEnv', () => {
   it('defaults to development with test payments', () => {
-    expect(readEnv({})).toEqual({ NODE_ENV: 'development', PAYMENT_PROVIDER: 'test', ALLOW_TEST_PAYMENTS: false });
+    expect(readEnv({})).toEqual({ NODE_ENV: 'development', PAYMENT_PROVIDER: 'test', ALLOW_TEST_PAYMENTS: false,
+      SEPAY_API_URL: 'https://userapi.sepay.vn/v2', SEPAY_QR_TEMPLATE: 'compact' });
   });
 
   it('reads the Supabase keys and the site address, and treats blanks as unset', () => {

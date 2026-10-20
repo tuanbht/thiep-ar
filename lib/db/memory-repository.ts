@@ -58,6 +58,11 @@ export class MemoryRepository implements Repository {
     return o ? copy(o) : null;
   }
 
+  async getOrderByCode(code: string): Promise<Order | null> {
+    const o = [...this.orders.values()].find(x => x.code === code);
+    return o ? copy(o) : null;
+  }
+
   async setOrderPayment(orderId: string, provider: Order['paymentProvider'] & string, ref: string): Promise<Order> {
     const o = this.orders.get(orderId);
     if (!o) throw new RepositoryError(`no order ${orderId}`);

@@ -71,10 +71,23 @@ export interface OrderView {
   giftUrl: string | null;
 }
 
-export interface PayResponse {
-  /** where to send the buyer: the order page (paid at once) or the payment gateway */
-  redirect: string;
+/** A bank transfer to make by scanning a VietQR code (SePay): the page shows it and waits for the money. */
+export interface PaymentQr {
+  /** the VietQR image to scan with a banking app */
+  imageUrl: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  amountVnd: number;
+  /** the transfer's message: the order's payment code, which is how the payment is matched to the order */
+  content: string;
 }
+
+export type PayResponse =
+  /** where to send the buyer: the order page (paid at once) or a payment gateway */
+  | { redirect: string }
+  /** pay by transfer: show the QR code, then poll GET /api/orders/:id until it is paid */
+  | { qr: PaymentQr };
 
 export interface UploadResponse {
   photoPath: string;

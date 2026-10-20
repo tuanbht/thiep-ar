@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { OrderView } from '@/lib/api/dto';
 import type { FormSpec } from '@/lib/catalog/form';
 import type { Product } from '@/lib/domain/types';
+import { resetServerEnv } from '@/lib/server/env';
 
 const getProduct = vi.fn(), getTemplateInfo = vi.fn();
 vi.mock('@/lib/server/services', () => ({ getServices: () => ({ orders: { getProduct } }) }));
@@ -13,7 +14,7 @@ vi.mock('@/components/shop/CustomizeForm', () => ({ CustomizeForm: ({ product }:
 vi.mock('@/components/shop/OrderStatus', () => ({ OrderStatus: ({ initial }: { initial: OrderView }) => <p data-testid="status">{initial.status}</p> }));
 let gateView: OrderView;
 vi.mock('@/components/shop/OrderGate', () => ({ OrderGate: ({ children }: { children: (v: OrderView) => React.ReactNode }) => <>{children(gateView)}</> }));
-vi.mock('@/components/shop/PayButton', () => ({ PayButton: () => <button type="button">pay</button> }));
+vi.mock('@/components/shop/PayButton', () => ({ PayButton: ({ auto }: { auto?: boolean }) => <button type="button">{auto ? 'pay (qr at once)' : 'pay'}</button> }));
 vi.mock('next/image', () => ({ default: ({ alt, src }: { alt: string; src: string }) => <img alt={alt} src={src} /> }));
 vi.mock('next/link', () => ({ default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a> }));
 vi.mock('next/navigation', () => ({ notFound: () => { throw new Error('NEXT_NOT_FOUND'); } }));
@@ -52,13 +53,21 @@ describe('the shop pages', () => {
     expect(await generateMetadata(params({ productId: 'mochi' }) as PageProps<'/cards/[productId]'>)).toEqual({});
   });
 
-  it('checkout: the slip, a clear word that the payment is a test, and the pay button', async () => {
+  it('checkout: the slip and the pay button; with SePay the QR code is shown at once', async () => {
     const { default: Checkout } = await import('../checkout/[orderId]/page');
     gateView = view();
+    vi.stubEnv('PAYMENT_PROVIDER', 'test');
+    resetServerEnv();
     render(await Checkout(params({ orderId: 'o1' }) as PageProps<'/checkout/[orderId]'>));
     expect(screen.getAllByText('GC-261016-ABCDE').length).toBeGreaterThan(0);
-    expect(screen.getByText(/thanh toán thử/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'pay' })).toBeTruthy();
+    cleanup();
+    vi.stubEnv('PAYMENT_PROVIDER', 'sepay');
+    resetServerEnv();
+    render(await Checkout(params({ orderId: 'o1' }) as PageProps<'/checkout/[orderId]'>));
+    expect(screen.getByRole('button', { name: 'pay (qr at once)' })).toBeTruthy();
+    vi.unstubAllEnvs();
+    resetServerEnv();
     cleanup();
     gateView = view({ status: 'paid' });
     render(await Checkout(params({ orderId: 'o1' }) as PageProps<'/checkout/[orderId]'>));

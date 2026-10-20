@@ -55,7 +55,7 @@ export interface Buyer {
 
 export interface Order {
   id: string;
-  /** short and human: "GC-261016-7K3QX" (also the payment reference later) */
+  /** short and human: "GC-261016-7K3QX"; without its dashes it is the bank transfer's message (SePay) */
   code: string;
   giftCardId: string;
   productId: string;
@@ -70,13 +70,14 @@ export interface Order {
   createdAt: string;
 }
 
-export type PaymentProviderId = 'test' | 'zalopay';
+/** The providers the app knows. The database stores any lowercase id (a-z, 0-9, _), so adding one needs no migration. */
+export type PaymentProviderId = 'test' | 'sepay';
 
 export interface Payment {
   id: string;
   orderId: string;
   provider: PaymentProviderId;
-  /** the provider's own id for the payment (ZaloPay: zp_trans_id) */
+  /** the provider's own id for the payment (SePay: its transaction id) */
   providerRef: string;
   amountVnd: number;
   status: 'succeeded' | 'failed';

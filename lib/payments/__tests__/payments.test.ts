@@ -29,8 +29,14 @@ describe('choosing the provider', () => {
     expect(paymentProviderFactory(readEnv({ NODE_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://shop.test', ALLOW_TEST_PAYMENTS: 'true' }))(confirmed()).id).toBe('test');
   });
 
-  it('has no ZaloPay yet: the factory is made, paying with it is refused', () => {
-    const make = paymentProviderFactory(readEnv({ PAYMENT_PROVIDER: 'zalopay' }));
-    expect(() => make(confirmed())).toThrow('ZaloPay is not configured yet');
+  it('makes SePay once its token is set, and refuses it without one', () => {
+    expect(() => paymentProviderFactory(readEnv({ PAYMENT_PROVIDER: 'sepay' }))(confirmed())).toThrow('SEPAY_API_KEY is not set');
+    const make = paymentProviderFactory(readEnv({ PAYMENT_PROVIDER: 'sepay', SEPAY_API_KEY: 'k'.repeat(64) }));
+    expect(make(confirmed()).id).toBe('sepay');
+    expect(make(confirmed())).toBe(make(confirmed()));                // one provider, so its bank account lookup is kept
+  });
+
+  it('no longer knows ZaloPay', () => {
+    expect(() => readEnv({ PAYMENT_PROVIDER: 'zalopay' })).toThrow('PAYMENT_PROVIDER');
   });
 });

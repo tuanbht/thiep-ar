@@ -139,21 +139,21 @@ describe('OrdersService: the order and paying it', () => {
   });
 
   it('answers Payment unavailable when no provider is configured', async () => {
-    const { orders, orderId, accessToken } = await bought({ makeProvider: () => { throw new PaymentUnavailable('ZaloPay is not configured yet'); } });
+    const { orders, orderId, accessToken } = await bought({ makeProvider: () => { throw new PaymentUnavailable('SEPAY_API_KEY is not set'); } });
     await expect(orders.startPayment(orderId, accessToken, ORIGIN)).rejects.toThrow(PaymentUnavailable);
   });
 
   it('follows a provider that sends the buyer to its gateway', async () => {
     const { orders, orderId, accessToken } = await bought({
-      makeProvider: () => ({ id: 'zalopay', redirectHosts: ['sb-openapi.zalopay.vn'], start: async () => ({ kind: 'redirect', url: 'https://sb-openapi.zalopay.vn/pay/abc' }) })
+      makeProvider: () => ({ id: 'sepay', redirectHosts: ['gateway.example'], start: async () => ({ kind: 'redirect', url: 'https://gateway.example/pay/abc' }) })
     });
-    expect(await orders.startPayment(orderId, accessToken, ORIGIN)).toEqual({ redirect: 'https://sb-openapi.zalopay.vn/pay/abc' });
+    expect(await orders.startPayment(orderId, accessToken, ORIGIN)).toEqual({ redirect: 'https://gateway.example/pay/abc' });
   });
 
   it('never sends the buyer to a host the provider does not own, or over plain http', async () => {
-    for (const url of ['https://evil.example/pay', 'http://sb-openapi.zalopay.vn/pay', 'javascript:alert(1)']) {
+    for (const url of ['https://evil.example/pay', 'http://gateway.example/pay', 'javascript:alert(1)']) {
       const { orders, orderId, accessToken } = await bought({
-        makeProvider: () => ({ id: 'zalopay', redirectHosts: ['sb-openapi.zalopay.vn'], start: async () => ({ kind: 'redirect', url }) })
+        makeProvider: () => ({ id: 'sepay', redirectHosts: ['gateway.example'], start: async () => ({ kind: 'redirect', url }) })
       });
       await expect(orders.startPayment(orderId, accessToken, ORIGIN), url).rejects.toThrow('does not own');
     }
@@ -220,5 +220,71 @@ describe('OrdersService: photos and events', () => {
     await expect(kit.orders.createOrder(parse(), ORIGIN)).resolves.toBeTruthy();
     expect(log).toHaveBeenCalled();
     log.mockRestore();
+  });
+});
+
+describe('OrdersService: paying by bank transfer (SePay)', () => {
+  const QR = { imageUrl: 'https://qr.sepay.vn/img?x', bankName: 'TPBank', accountNumber: '0123', accountName: 'SHOP', amountVnd: 49000, content: 'CODE' };
+  function transfer(found: () => Promise<import('../../payments/provider').PaymentFound | null>) {
+    let clock = FIXED_NOW.getTime();
+    const findPayment = vi.fn(found);
+    const provider = { id: 'sepay' as const, start: async (o: { code: string }) => ({ kind: 'qr' as const, qr: { ...QR, content: o.code.replace(/-/g, '') }, ref: o.code.replace(/-/g, '') }), findPayment };
+    return { findPayment, tick: (ms: number) => { clock += ms; }, over: { makeProvider: () => provider, now: () => new Date(clock) } };
+  }
+
+  it('hands back the QR code and remembers the transfer\'s code on the order', async () => {
+    const t = transfer(async () => null);
+    const { orders, repo, orderId, accessToken } = await bought(t.over);
+    const r = await orders.startPayment(orderId, accessToken, ORIGIN);
+    const order = (await repo.getOrder(orderId))!;
+    expect(r).toEqual({ qr: { ...QR, content: order.code.replace(/-/g, '') } });
+    expect(order).toMatchObject({ status: 'pending', paymentProvider: 'sepay', paymentRef: order.code.replace(/-/g, '') });
+  });
+
+  it('is paid once the money is found while the buyer waits, then shows the gift link', async () => {
+    let money: import('../../payments/provider').PaymentFound | null = null;
+    const t = transfer(async () => money);
+    const { orders, repo, orderId, accessToken } = await bought(t.over);
+    await orders.startPayment(orderId, accessToken, ORIGIN);
+    expect((await orders.getOrderView(orderId, accessToken, ORIGIN)).status).toBe('pending');
+    money = { providerRef: 'tx-9', amountVnd: 50000, paidAt: '2026-10-20T03:05:00.000Z', raw: { id: 'tx-9' } };
+    t.tick(5000);
+    const view = await orders.getOrderView(orderId, accessToken, ORIGIN);
+    expect(view).toMatchObject({ status: 'paid', paidAt: '2026-10-20T03:05:00.000Z' });
+    expect(view.giftUrl).toMatch(/\/g\/[A-Za-z0-9]{10}$/);
+    expect(repo.events.at(-1)).toMatchObject({ name: 'order_paid', props: { provider: 'sepay', amountVnd: 49000 } });
+  });
+
+  it('asks SePay at most every few seconds per order, but at once when its webhook names the order', async () => {
+    const t = transfer(async () => null);
+    const { orders, repo, orderId, accessToken } = await bought(t.over);
+    await orders.startPayment(orderId, accessToken, ORIGIN);
+    await orders.getOrderView(orderId, accessToken, ORIGIN);
+    await orders.getOrderView(orderId, accessToken, ORIGIN);
+    expect(t.findPayment).toHaveBeenCalledTimes(1);
+    t.tick(4000);
+    await orders.getOrderView(orderId, accessToken, ORIGIN);
+    expect(t.findPayment).toHaveBeenCalledTimes(2);
+    const code = (await repo.getOrder(orderId))!.code;
+    expect(await orders.notifyPayment(code)).toBe('pending');
+    expect(t.findPayment).toHaveBeenCalledTimes(3);
+    expect(await orders.notifyPayment('GC-000000-ZZZZZ')).toBeNull();
+  });
+
+  it('keeps waiting when SePay does not answer', async () => {
+    const t = transfer(async () => { throw new Error('SePay /transactions answered 503'); });
+    const { orders, orderId, accessToken } = await bought(t.over);
+    await orders.startPayment(orderId, accessToken, ORIGIN);
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect((await orders.getOrderView(orderId, accessToken, ORIGIN)).status).toBe('pending');
+    expect(err).toHaveBeenCalled();
+    err.mockRestore();
+  });
+
+  it('never asks for an order whose payment was not started with it', async () => {
+    const t = transfer(async () => null);
+    const { orders, orderId, accessToken } = await bought(t.over);
+    await orders.getOrderView(orderId, accessToken, ORIGIN);
+    expect(t.findPayment).not.toHaveBeenCalled();
   });
 });

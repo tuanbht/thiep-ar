@@ -36,9 +36,12 @@ export interface OrdersDeps {
 /** How long a photo link lasts: long enough to watch the card through, short enough not to be a permanent link. */
 const PHOTO_LINK_SECONDS = 60 * 60;
 const ATTEMPTS = 5;
+/** how often a waiting order may ask its provider whether it has been paid (the buyer's page polls every few seconds) */
+const CHECK_EVERY_MS = 4000;
 
 export class OrdersService {
   private readonly now: () => Date;
+  private readonly lastCheck = new Map<string, number>();
 
   constructor(private readonly d: OrdersDeps) {
     this.now = d.now ?? (() => new Date());
@@ -93,7 +96,7 @@ export class OrdersService {
   }
 
   async getOrderView(orderId: string, accessToken: string | null, origin: string): Promise<OrderView> {
-    const order = await this.ownOrder(orderId, accessToken);
+    const order = await this.settle(await this.ownOrder(orderId, accessToken));
     const [product, gift] = await Promise.all([this.d.repo.getProduct(order.productId), this.d.repo.getGiftCard(order.giftCardId)]);
     const giftUrl = order.status === 'paid' && gift?.status === 'active' ? this.giftUrl(gift, origin) : null;
     return {
@@ -112,7 +115,7 @@ export class OrdersService {
     return new URL(`/g/${gift.slug}`, this.d.siteUrl ?? origin).toString();
   }
 
-  /** "Pay": the provider either pays at once (test) or sends the buyer to its gateway (ZaloPay, later) */
+  /** "Pay": the provider either pays at once (test), hands back a QR code to pay by transfer (SePay), or redirects */
   async startPayment(orderId: string, accessToken: string | null, origin: string): Promise<PayResponse> {
     const order = await this.ownOrder(orderId, accessToken);
     const done = { redirect: `/orders/${order.id}` };
@@ -124,12 +127,49 @@ export class OrdersService {
     await this.recordEvent({ name: 'payment_started', orderId: order.id, productId: product.id, giftCardId: order.giftCardId,
       props: { provider: provider.id } });
     const start = await provider.start(order, product, { origin: this.d.siteUrl ?? origin });
+    if (start.kind === 'qr') {
+      if (order.paymentProvider !== provider.id || order.paymentRef !== start.ref) await this.d.repo.setOrderPayment(order.id, provider.id, start.ref);
+      return { qr: start.qr };
+    }
     if (start.kind !== 'redirect') return done;
     if (!isGatewayUrl(start.url, provider.redirectHosts ?? [])) throw new Error(`provider ${provider.id} redirected to a host it does not own`);
     return { redirect: start.url };
   }
 
-  /** the only way an order becomes paid (the test provider now, ZaloPay's callback later) */
+  /* ── waiting for the money ── */
+
+  /** A pending order whose payment was started with a provider that can be asked: has it been paid? If so it is
+      confirmed now. At most every CHECK_EVERY_MS per order unless `force` (a webhook); a provider that does not answer
+      leaves the order as it is (the next look tries again). */
+  private async settle(order: Order, force = false): Promise<Order> {
+    if (order.status !== 'pending' || !order.paymentProvider || order.paymentProvider === 'test') return order;
+    const at = this.now().getTime();
+    if (!force && at - (this.lastCheck.get(order.id) ?? 0) < CHECK_EVERY_MS) return order;
+    this.lastCheck.set(order.id, at);
+    let provider: PaymentProvider;
+    try { provider = this.d.makeProvider(c => this.confirmPayment(c)); } catch { return order; }
+    if (provider.id !== order.paymentProvider || !provider.findPayment) return order;
+    try {
+      const found = await provider.findPayment(order);
+      if (!found) return order;
+      const r = await this.confirmPayment({ orderId: order.id, provider: provider.id, providerRef: found.providerRef,
+        amountVnd: order.amountVnd, raw: { ...(found.raw as object), receivedVnd: found.amountVnd }, paidAt: found.paidAt });
+      this.lastCheck.delete(order.id);
+      return r.order;
+    } catch (e) {
+      console.error(`[orders] could not check the payment of order ${order.code}`, e);
+      return order;
+    }
+  }
+
+  /** A provider's webhook named this order: look for its payment now. Unknown codes are ignored. */
+  async notifyPayment(orderCode: string): Promise<Order['status'] | null> {
+    const order = await this.d.repo.getOrderByCode(orderCode);
+    if (!order) return null;
+    return (await this.settle(order, true)).status;
+  }
+
+  /** the only way an order becomes paid (the test provider at once; SePay when its money is found) */
   async confirmPayment(c: PaymentConfirmation): Promise<ConfirmedPayment> {
     const r = await this.d.repo.confirmPayment(c);
     if (!r.alreadyPaid) {

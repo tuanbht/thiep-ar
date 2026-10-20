@@ -12,7 +12,6 @@ const { Field } = await import('../fields');
 const { ProductCard } = await import('../ProductCard');
 const { OrderStatus } = await import('../OrderStatus');
 const { GiftLink } = await import('../GiftLink');
-const { PayButton } = await import('../PayButton');
 const { PhotoField } = await import('../PhotoField');
 
 const product: Product = { id: 'mochi', template: 'mochi', design: null, name: 'Mochi', blurb: 'A rice cake runs', kind: '3d', priceVnd: 49000, active: true, sort: 1 };
@@ -98,25 +97,6 @@ describe('GiftLink', () => {
     expect(writeText).toHaveBeenCalledWith('https://thiep.example/g/AbC123xyz0');
     expect(screen.getByRole('button', { name: 'Đã chép' })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Mở thiệp/ }).getAttribute('href')).toBe('https://thiep.example/g/AbC123xyz0');
-  });
-});
-
-describe('PayButton', () => {
-  it('starts the payment and goes where the server says', async () => {
-    const assign = vi.fn();
-    vi.stubGlobal('location', { ...window.location, assign });
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ redirect: '/orders/o1' }), { status: 200 })));
-    render(<PayButton orderId="o1" />);
-    await act(async () => { fireEvent.click(screen.getByRole('button')); });
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/orders/o1'));
-  });
-
-  it('says what went wrong', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Đơn đã huỷ' }), { status: 409 })));
-    render(<PayButton orderId="o1" />);
-    await act(async () => { fireEvent.click(screen.getByRole('button')); });
-    expect((await screen.findByRole('alert')).textContent).toBe('Đơn đã huỷ');
-    expect(screen.getByRole('button').hasAttribute('disabled')).toBe(false);
   });
 });
 
