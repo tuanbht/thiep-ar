@@ -1,0 +1,24 @@
+{
+  "label": "Bó hoa bất ngờ (3D: chàng trai lén mang bó hoa đến tặng nàng)",
+  "preset": {
+    "title": "Bó hoa bất ngờ",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Anh không giỏi nói lời hay, nên để những bông hoa này nói thay anh.",
+      "Mong ngày nào của em cũng rực rỡ như hôm nay."
+    ],
+    "from": "Người tặng hoa"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên tấm thiệp nhỏ khi chàng tặng hoa)", "value": "Tặng em một bó hoa, thay cho ngàn lời muốn nói", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Nụ cười em là đẹp nhất", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Em là bông hoa đẹp nhất!", "max": 32 }]
+      ]
+    }
+  ]
+}

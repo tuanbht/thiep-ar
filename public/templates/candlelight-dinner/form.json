@@ -1,0 +1,24 @@
+{
+  "label": "Bữa tối nến hồng (3D: hai bạn nhỏ cùng ăn tối dưới ánh nến)",
+  "preset": {
+    "title": "Bữa tối nến hồng",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Bàn cho hai người, ba ngọn nến hồng và em bên cạnh: thế là đủ một tối thật đẹp.",
+      "Cảm ơn em vì bao bữa tối đã qua, và thật nhiều bữa tối phía trước."
+    ],
+    "from": "Thương em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên tấm thực đơn)", "value": "Cảm ơn em vì mọi bữa tối có em", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Bữa tối đầu tiên của mình", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Mãi bên nhau em nhé!", "max": 32 }]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "bot": {
+    "from": "robot/RobotExpressive",
+    "clips": ["Idle", "Walking", "Wave", "ThumbsUp", "Jump", "Dance"]
+  },
+  "botgirl": {
+    "from": "robot/RobotExpressive",
+    "clips": ["Idle", "Jump", "Yes", "Dance"]
+  }
+}

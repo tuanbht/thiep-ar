@@ -68,7 +68,8 @@ export const S = {
     photoType: 'Chỉ nhận ảnh JPG, PNG hoặc WebP.',
     photoFailed: 'Chưa tải được ảnh lên. Thử lại nhé.',
     orderFailed: 'Chưa tạo được đơn. Thử lại sau một chút.',
-    noForm: 'Tấm thiệp này chưa mở bán.'
+    noForm: 'Tấm thiệp này chưa mở bán.',
+    credits: 'Mô hình 3D miễn phí'
   },
 
   checkout: {

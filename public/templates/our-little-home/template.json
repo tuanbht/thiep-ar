@@ -1,0 +1,40 @@
+{
+  "name": "Tổ ấm nhỏ",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A little home builds itself on the card (KayKit Furniture Bits and KayKit Adventurers, CC0: the Barbarian in his bear hat and the Rogue, weapons dropped by scripts/pack-models.mjs). Stop 1: a papered wall folds up like a pop-up page, the rug unrolls, the couch drops with a bounce and the lamp, the plant and the table pop in; she walks in, he follows carrying a moving box, sets it down and they cheer; a note with the card's first words (slot note1) pops up. Stop 2: dusk; they back up onto the couch and sit, she points at the lamp and it glows warm, the box shakes and opens and the card's photo rises out of it with its caption (slot caption). Stop 3: they stand and dance, hands held, she twirls under his arm, the photo goes up on the wall, fairy lights come on and a banner with the last words (slot note2) rises among hearts. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb",
+    "couch": "models/couch.glb",
+    "rug": "models/rug.glb",
+    "lamp": "models/lamp.glb",
+    "table": "models/table.glb",
+    "plant": "models/plant.glb",
+    "books": "models/books.glb",
+    "frame": "models/frame.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    },
+    {
+      "model": "KayKit Furniture Bits",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/furniture-bits"
+    }
+  ]
+}

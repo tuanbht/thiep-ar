@@ -1,0 +1,558 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Robot biết yêu card</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/900.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<style>
+/* The printed card = the tracking image. "Robot biết yêu" (robots in love), a retro-tech love card in pastels: a navy
+   band with running words round a castellated cream board, the chunky title, a little CRT that is loading love with a
+   "Love.exe" install dialog popping over it, meshing gears, a pixel heart, a pastel circuit (chips, resistors, a crystal,
+   capacitors, LEDs and wandering traces), a blueprint of a robot, a floppy, a warning tag and a battery. The two robots
+   stand and dance on the charging pad in the middle of the lower half (centre 640, 565; 430 x 300). Pastels are pale in
+   grey, so every shape is inked in navy (#2b2652): the tracker sees edges everywhere. Nothing mirrored, nothing
+   repeated; everything random is seeded, so every render is identical. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#2b2652}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(1402);
+const C = { ink: '#2b2652', deep: '#1c1838', paper: '#fff8ec', cream: '#fffdf7', white: '#ffffff',
+  mint: '#a6e8d0', mint2: '#d6f6ea', teal: '#52b89d', blue: '#a9d3f5', blue2: '#ddeefc', sky: '#6fa9e0',
+  lilac: '#cbb5f3', lilac2: '#e9defc', violet: '#8b6ad6', butter: '#ffe58a', butter2: '#fff3c4', gold: '#efb54a',
+  peach: '#ffc5a1', peach2: '#ffe3d0', coral: '#ff8e73', rose: '#ec5b8b', pink: '#ff9dbf', pink2: '#ffd0e0',
+  silver: '#dcd9ea', steel: '#a7a3c4', screen: '#29254f' };
+const RAMP = [C.pink, C.peach, C.butter, C.mint, C.blue, C.lilac];
+const F = { sans: 'Be Vietnam Pro', hand: 'Dancing Script', note: 'Patrick Hand' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+const fit = (str, weight, family, size, w) => Math.min(size, n1(w / measure(str, `${weight} 100px "${family}"`) * 100));
+const ink = (sw = 2) => `stroke="${C.ink}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const box = (x, y, w, h, fill, sw = 2, rx = 0) => `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(w)}" height="${n1(h)}"${rx ? ` rx="${rx}"` : ''} fill="${fill}"${sw ? ` ${ink(sw)}` : ''}/>`;
+const dot = (x, y, rr, fill, sw = 1.6) => `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(rr)}" fill="${fill}"${sw ? ` ${ink(sw)}` : ''}/>`;
+
+/* ---- what the scatter and the traces keep clear of ---- */
+const BOX = [], OVALS = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0, mo = m) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m) ||
+  OVALS.some(([cx, cy, rx, ry]) => ((x - cx) / (rx + mo)) ** 2 + ((y - cy) / (ry + mo)) ** 2 < 1);
+
+/* ---- small shapes ---- */
+const heart = (z, fill, sw = 1.8) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw)}/>`;
+const sparkle = (x, y, z, c) => `<path transform="translate(${n1(x)} ${n1(y)})" d="M0 ${n1(-z)} Q1.6 -1.6 ${n1(z)} 0 Q1.6 1.6 0 ${n1(z)} Q-1.6 1.6 ${n1(-z)} 0 Q-1.6 -1.6 0 ${n1(-z)}Z" fill="${c}" ${ink(1.6)}/>`;
+const plus = (x, y, p, c) => [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]].map(([i, j]) => box(x + (i - .5) * p, y + (j - .5) * p, p, p, c, 1.1)).join('');
+function screw(z, a, cross) {                           // a round head, its slot (or cross) turned its own way
+  return dot(0, 0, z, C.silver, 1.8) + g(0, 0, a, 1, `<path d="M${n1(-z * .62)} 0 H${n1(z * .62)}${cross ? ` M0 ${n1(-z * .62)} V${n1(z * .62)}` : ''}" ${ink(Math.max(1.4, z * .24))}/>`) +
+    `<path d="M${n1(-z * .58)} ${n1(-z * .42)} A${n1(z * .72)} ${n1(z * .72)} 0 0 1 ${n1(z * .1)} ${n1(-z * .72)}" fill="none" stroke="${C.white}" stroke-width="1.3" stroke-linecap="round"/>`;
+}
+function bolt(z, a, fill = C.steel) {                    // a hex bolt on a washer
+  let d = ''; for (let i = 0; i < 6; i++) { const [x, y] = pt(0, 0, z, a + i * 60); d += `${i ? 'L' : 'M'}${x} ${y}`; }
+  return dot(0, 0, z * 1.32, C.silver, 1.6) + `<path d="${d}Z" fill="${fill}" ${ink(1.8)}/>` + dot(0, 0, z * .42, C.cream, 1.3);
+}
+function spring(n, len, h, col) {                        // a coil spring lying along x: the back of every turn, then its front
+  const p = len / n;
+  let back = '', front = '';
+  for (let i = 0; i < n; i++) {
+    const x = i * p;
+    back += `<path d="M${n1(x + p / 2)} ${h} C${n1(x + p * .72)} ${n1(h * .4)} ${n1(x + p * .86)} ${n1(-h * .4)} ${n1(x + p)} ${-h}"/>`;
+    front += `<path d="M${n1(x)} ${-h} C${n1(x + p * .12)} ${n1(-h * .2)} ${n1(x + p * .36)} ${n1(h * .9)} ${n1(x + p / 2)} ${h}"/>`;
+  }
+  return `<g fill="none" stroke-linecap="round"><g stroke="${C.ink}" stroke-width="4">${back}</g><g stroke="${C.steel}" stroke-width="1.5">${back}</g>` +
+    `<g stroke="${C.ink}" stroke-width="5.2">${front}</g><g stroke="${col}" stroke-width="2.4">${front}</g></g>` +
+    `<path d="M-14 ${-h} H0 M${n1(len)} ${-h} H${n1(len + 14)}" ${ink(4.4)}/>` + dot(-16, -h, 4, C.butter, 1.6) + dot(len + 16, -h, 4, C.butter, 1.6);
+}
+
+/* ---- a 5 x 7 pixel face: every lit pixel an inked square, the corners the tracker likes best ---- */
+const GLYPH = {
+  A: '.###.|#...#|#...#|#####|#...#|#...#|#...#', B: '####.|#...#|#...#|####.|#...#|#...#|####.',
+  C: '.###.|#...#|#....|#....|#....|#...#|.###.', D: '####.|#...#|#...#|#...#|#...#|#...#|####.',
+  E: '#####|#....|#....|####.|#....|#....|#####', G: '.###.|#...#|#....|#.###|#...#|#...#|.###.',
+  H: '#...#|#...#|#...#|#####|#...#|#...#|#...#', I: '###|.#.|.#.|.#.|.#.|.#.|###',
+  K: '#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#', L: '#....|#....|#....|#....|#....|#....|#####',
+  M: '#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#', N: '#...#|#...#|##..#|#.#.#|#..##|#...#|#...#',
+  O: '.###.|#...#|#...#|#...#|#...#|#...#|.###.', P: '####.|#...#|#...#|####.|#....|#....|#....',
+  R: '####.|#...#|#...#|####.|#.#..|#..#.|#...#', S: '.####|#....|#....|.###.|....#|....#|####.',
+  T: '#####|..#..|..#..|..#..|..#..|..#..|..#..', U: '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
+  V: '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..', X: '#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+  Y: '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..',
+  0: '.###.|#...#|#..##|#.#.#|##..#|#...#|.###.', 1: '..#..|.##..|..#..|..#..|..#..|..#..|.###.',
+  2: '.###.|#...#|....#|...#.|..#..|.#...|#####', 3: '####.|....#|....#|.###.|....#|....#|####.',
+  4: '...#.|..##.|.#.#.|#..#.|#####|...#.|...#.', 5: '#####|#....|####.|....#|....#|#...#|.###.',
+  6: '..##.|.#...|#....|####.|#...#|#...#|.###.', 7: '#####|....#|...#.|..#..|.#...|.#...|.#...',
+  8: '.###.|#...#|#...#|.###.|#...#|#...#|.###.', 9: '.###.|#...#|#...#|.####|....#|...#.|.##..',
+  '.': '..|..|..|..|..|##|##', '%': '##..#|##..#|...#.|..#..|.#...|#..##|#..##', '-': '....|....|....|####|....|....|....',
+  '!': '#|#|#|#|#|.|#', ':': '..|##|##|..|##|##|..', '♥': '.##.##.|#######|#######|#######|.#####.|..###..|...#...'
+};
+function pix(x, y, str, p, fill, o = {}) {
+  let s = '', cx = 0;
+  for (const ch of str) {
+    if (ch === ' ') { cx += p * 3; continue; }
+    const rows = (GLYPH[ch] || '').split('|'); if (!rows[0]) continue;
+    rows.forEach((row, j) => [...row].forEach((c, i) => {
+      if (c === '#') s += `<rect x="${n1(x + cx + i * p)}" y="${n1(y + j * p)}" width="${n1(p)}" height="${n1(p)}" fill="${typeof fill === 'function' ? fill(i, j) : fill}" stroke="${o.stroke || C.ink}" stroke-width="${n1(o.sw ?? Math.max(.6, p * .22))}"/>`;
+    }));
+    cx += (rows[0].length + 1) * p;
+  }
+  return s;
+}
+const pixW = (str, p) => [...str].reduce((w, ch) => w + (ch === ' ' ? 3 : (GLYPH[ch] || '').split('|')[0].length + 1) * p, 0) - p;
+
+/* ---- the sheet: a navy band with pastel pixels and running words, a cream board with castellated edges ---- */
+function sheet() {
+  let s = `<rect width="1280" height="800" fill="${C.ink}"/>`;
+  const font = `800 11.5px "${F.sans}"`, ls = 3;
+  const words = [
+    [640, 21, 0, 'ROBOT BIẾT YÊU  ·  LOVE.EXE  ·  ĐANG TẢI TÌNH YÊU  ·  100%  ·  MÃI BÊN NHAU'],
+    [640, 790, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  HAI TRÁI TIM, MỘT MẠCH ĐIỆN  ·  No. 1402  ·  NIGHT MAIL AR'],
+    [19, 400, -90, 'PIN TÌNH YÊU 100%  ·  KEEP IT IN VIEW'],
+    [1262, 400, 90, 'LOVE-01  ·  TIM-2.0  ·  BÍP BÍP, ANH THƯƠNG EM']].map(w => [...w, measure(w[3], font) + ls * w[3].length]);
+  const inWords = (x, y) => words.some(([wx, wy, a, , w]) => a ? Math.abs(x - wx) < 14 && Math.abs(y - wy) < w / 2 + 14 : Math.abs(y - wy + 4) < 14 && Math.abs(x - wx) < w / 2 + 14);
+  for (let i = 0; i < 1100; i++) {
+    const x = r() * 1280, y = r() * 800;
+    if ((x > 24 && x < 1256 && y > 24 && y < 776) || inWords(x, y)) continue;
+    const c = pick([C.mint, C.blue, C.lilac, C.butter, C.peach, C.pink, C.cream]), z = 2.2 + r() * 3.4;
+    s += r() < .55 ? `<rect x="${n1(x - z / 2)}" y="${n1(y - z / 2)}" width="${n1(z)}" height="${n1(z)}" fill="${c}"/>` : `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(z / 2 + .3)}" fill="${c}"/>`;
+  }
+  words.forEach(([x, y, a, str]) => { s += g(x, y, a, 1, T(0, a ? 4 : 0, str, { s: 11.5, ls, anchor: 'middle', fill: C.cream })); });
+  s += `<rect x="30" y="30" width="1220" height="740" rx="16" fill="${C.paper}" stroke="${C.lilac}" stroke-width="3"/>`;
+  const holes = [];                                      // half-holes plated in gold along the edge, unevenly spaced
+  for (let x = 64; x < 1220; x += 30 + r() * 52) holes.push([x, 30]);
+  for (let x = 58 + r() * 20; x < 1222; x += 30 + r() * 52) holes.push([x, 770]);
+  for (let y = 70; y < 740; y += 30 + r() * 52) holes.push([30, y]);
+  for (let y = 66 + r() * 20; y < 740; y += 30 + r() * 52) holes.push([1250, y]);
+  holes.forEach(([x, y]) => { s += dot(x, y, 5.6, C.gold, 1.5) + dot(x, y, 2.6, C.ink, 0); });
+  s += `<rect x="46" y="46" width="1188" height="708" rx="12" fill="none" stroke="${C.violet}" stroke-width="1.5" stroke-dasharray="12 4 2 4"/>`;
+  return s;
+}
+
+/* ---- the title, top left: chunky letters on a solid offset block, a sticker, the tagline ---- */
+function botSticker() {                                  // a round sticker: a little robot face with heart eyes
+  let o = dot(4, 5, 37, C.ink, 0) + dot(0, 0, 37, C.white, 2.4);
+  o += `<path d="M1 -22 Q4 -30 2 -34" fill="none" ${ink(2.4)}/>` + g(2, -36, 14, 1, heart(11, C.rose, 1.5));
+  o += box(-31, -12, 7, 15, C.silver, 1.8, 2) + box(24, -11, 7, 13, C.silver, 1.8, 2);
+  o += box(-25, -23, 50, 39, C.mint, 2.4, 11);
+  o += g(-10, -6, -8, 1, heart(11, C.rose, 1.4)) + g(10, -7, 6, 1, heart(10, C.rose, 1.4));
+  o += `<path d="M-7 6 Q1 12 9 5" fill="none" ${ink(2)}/>` + dot(-17, 5, 3.2, C.pink, 0) + dot(17, 4, 3, C.pink, 0);
+  o += `<path d="M-30 22 Q-4 34 26 20" fill="none" stroke="${C.rose}" stroke-width="1.6" stroke-dasharray="3 3"/>`;
+  return o;
+}
+function title() {
+  keep(50, 38, 480, 316);
+  let s = '';
+  const f1 = fit('Robot', 900, F.sans, 108, 318), f2 = fit('biết yêu', 900, F.sans, 98, 334);
+  const w1 = measure('Robot', `900 ${f1}px "${F.sans}"`);
+  for (let k = 7; k > 0; k--) s += T(68 + k, 136 + k, 'Robot', { w: 900, s: f1, fill: C.ink });
+  s += T(68, 136, 'Robot', { w: 900, s: f1, fill: C.pink, stroke: C.ink, sw: 5 });
+  for (let k = 7; k > 0; k--) s += T(112 + k, 236 + k, 'biết yêu', { w: 900, s: f2, fill: C.ink });
+  s += T(112, 236, 'biết yêu', { w: 900, s: f2, fill: C.mint, stroke: C.ink, sw: 5 });
+  s += g(Math.min(430, 68 + w1 + 52), 86, -10, 1, botSticker());
+  s += T(82, 290, 'hai trái tim, một mạch điện', { f: F.hand, w: 700, s: 30, fill: C.rose });
+  s += `<path d="M86 302 H190 L198 310 H330 L338 302 H392" fill="none" stroke="${C.ink}" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="M86 302 H190 L198 310 H330 L338 302 H392" fill="none" stroke="${C.lilac}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>` +
+    dot(86, 302, 5, C.butter, 1.8) + dot(392, 302, 5, C.butter, 1.8) + dot(86, 302, 1.8, C.ink, 0) + dot(392, 302, 1.8, C.ink, 0);
+  s += sparkle(64, 176, 8, C.butter) + sparkle(456, 168, 7, C.lilac) + plus(430, 238, 4, C.pink) + sparkle(98, 52, 6, C.mint);
+  return s;
+}
+
+/* ---- a little CRT loading love; its install dialog pops up over its corner ---- */
+function crt() {
+  const x = 492, y = 58, w = 262, h = 208;
+  keep(x - 6, y - 36, x + w + 12, y + h + 22);
+  let o = `<path d="M${x + 98} ${y + 2} L${x + 64} ${y - 24} M${x + 120} ${y + 2} L${x + 156} ${y - 26}" ${ink(2.8)}/>`;
+  o += g(x + 61, y - 28, -18, 1, heart(15, C.rose)) + dot(x + 158, y - 28, 6, C.butter, 1.8);
+  o += box(x + 38, y + h + 2, 36, 14, C.gold, 2, 3) + box(x + w - 84, y + h + 2, 36, 14, C.gold, 2, 3);
+  o += box(x + 7, y + 8, w, h, C.gold, 2.6, 24) + box(x, y, w, h, C.butter, 2.6, 24);
+  const sx = x + 18, sy = y + 18, sw = 176, sh = 146;
+  o += box(sx - 7, sy - 7, sw + 14, sh + 14, C.peach, 2, 22) + box(sx, sy, sw, sh, C.screen, 2, 18);
+  o += `<path d="M${sx + 10} ${sy + 24} Q${sx + 14} ${sy + 10} ${sx + 40} ${sy + 8}" fill="none" stroke="${C.lilac}" stroke-width="2.6" stroke-linecap="round"/>`;
+  const lines = [['&gt; khởi động trái tim… OK', C.mint], ['&gt; quét nụ cười… xong', C.blue], ['&gt; kết nối: em ♥', C.pink]];
+  lines.forEach(([t, c], i) => { o += T(sx + 13, sy + 36 + i * 19, t, { w: 700, s: fit(t.replace('&gt;', '>'), 700, F.sans, 11.5, sw - 24), fill: c }); });
+  o += T(sx + 13, sy + 106, 'Đang tải tình yêu…', { w: 800, s: fit('Đang tải tình yêu…', 800, F.sans, 15, sw - 26), fill: C.butter });
+  let bx = sx + 13;
+  [9, 6, 8, 11, 7, 9, 6].forEach((bw, i) => { o += `<rect x="${n1(bx)}" y="${sy + 118}" width="${bw}" height="11" fill="${RAMP[i % 6]}" stroke="${C.deep}" stroke-width="1"/>`; bx += bw + 2.6; });
+  o += pix(bx + 5, sy + 118.5, '100%', 1.45, C.mint, { stroke: C.screen, sw: .3 });
+  o += `<rect x="${sx + 150}" y="${sy + 117}" width="9" height="13" fill="${C.pink}"/>`;
+  const kx = x + 225;
+  o += g(kx, y + 42, 0, 1, dot(0, 0, 16, C.lilac, 2.2) + dot(0, 0, 9.5, C.lilac2, 1.6) + g(0, 0, -40, 1, `<path d="M0 0 V-13" ${ink(2.6)}/>`));
+  o += g(kx, y + 86, 0, 1, dot(0, 0, 13, C.mint, 2.2) + dot(0, 0, 7.5, C.mint2, 1.6) + g(0, 0, 70, 1, `<path d="M0 0 V-10" ${ink(2.6)}/>`));
+  o += dot(kx, y + 116, 5.5, C.rose, 1.8) + T(kx, y + 136, 'BẬT', { s: 9, ls: 1, anchor: 'middle' });
+  [22, 14, 19, 10].forEach((l, i) => { o += `<path d="M${kx - 12 + i * 8} ${y + 150} v${l}" ${ink(3.2)}/>`; });
+  o += T(sx + sw / 2, y + h - 13, 'LOVE-OS 1.4', { s: 10, ls: 2.4, anchor: 'middle' });
+  o += g(x + 22, y + h - 18, -16, 1, heart(12, C.pink, 1.5));
+  return o;
+}
+function dialog() {                                      // "Love.exe": install love in your heart? Yes / Yes
+  keep(726, 156, 950, 290);
+  const w = 214, h = 118;
+  let o = box(7, 7, w, h, C.ink, 0, 9) + box(0, 0, w, h, C.cream, 2.4, 9);
+  o += `<path d="M0 30 V9 a9 9 0 0 1 9 -9 H${w - 9} a9 9 0 0 1 9 9 V30Z" fill="${C.lilac}" ${ink(2.4)}/>`;
+  o += pix(11, 9.5, '♥', 1.7, C.rose, { sw: .4 }) + T(28, 20.5, 'Love.exe', { w: 800, s: 14 });
+  [[w - 58, C.mint], [w - 39, C.butter], [w - 20, C.pink]].forEach(([bx, c]) => { o += dot(bx, 15, 6.4, c, 1.6); });
+  o += `<path d="M${w - 23} 12 l6 6 M${w - 17} 12 l-6 6" ${ink(1.4)}/>`;
+  o += g(26, 62, 0, 1, pix(-11, -9, '♥', 3.2, C.pink, { sw: .8 }));
+  o += T(48, 54, 'Cài đặt tình yêu', { w: 800, s: fit('Cài đặt tình yêu', 800, F.sans, 14, 150) });
+  o += T(48, 72, 'vào trái tim em nhé?', { w: 600, s: fit('vào trái tim em nhé?', 600, F.sans, 12.5, 156) });
+  o += box(48, 84, 62, 24, C.mint, 2, 6) + T(79, 100.5, 'CÓ', { s: 12, anchor: 'middle' });
+  o += box(120, 84, 80, 24, C.pink, 2, 6) + T(160, 100.5, 'CÓ ♥', { s: 12, anchor: 'middle' });
+  o += `<path d="M186 98 L186 117 L190.5 113 L193.6 120 L197 118.5 L194 111.8 L199.5 111.8Z" fill="${C.white}" ${ink(1.6)}/>`;
+  return g(732, 160, 3, 1, o);
+}
+
+/* ---- meshing gears, top right: one circular pitch, so their teeth fit ---- */
+function gear(R, n, d, fill, o = {}) {
+  const step = 360 / n, ph = o.phase || 0;
+  let path = '';
+  for (let i = 0; i < n; i++) {
+    const a = ph + i * step;
+    [[R, a - step / 2], [R, a - step * .25], [R + d, a - step * .13], [R + d, a + step * .13], [R, a + step * .25]].forEach(([rr, aa], k) => {
+      const [x, y] = pt(0, 0, rr, aa); path += `${i || k ? 'L' : 'M'}${x} ${y}`;
+    });
+  }
+  let s = `<path d="${path}Z" fill="${fill}" ${ink(2.4)}/>`;
+  s += `<circle r="${n1(R * .86)}" fill="none" stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="${o.dash || '3 4'}"/>`;
+  if (o.style === 'spokes') {
+    for (let i = 0; i < o.k; i++) {
+      const a0 = o.rot + i * 360 / o.k + 10, a1 = o.rot + (i + 1) * 360 / o.k - 10, r0 = R * .4, r1 = R * .72;
+      const [x0, y0] = pt(0, 0, r1, a0), [x1, y1] = pt(0, 0, r1, a1), [x2, y2] = pt(0, 0, r0, a1), [x3, y3] = pt(0, 0, r0, a0);
+      s += `<path d="M${x0} ${y0} A${n1(r1)} ${n1(r1)} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${n1(r0)} ${n1(r0)} 0 0 0 ${x3} ${y3}Z" fill="${C.paper}" ${ink(1.8)}/>`;
+    }
+  } else if (o.style === 'holes') {
+    for (let i = 0; i < o.k; i++) { const [x, y] = pt(0, 0, R * (.52 + r() * .1), o.rot + i * 360 / o.k + r() * 16); s += dot(x, y, R * (.12 + r() * .05), C.paper, 1.6); }
+  }
+  s += dot(0, 0, R * (o.hub || .3), o.hubFill || C.cream, 2);
+  return s;
+}
+function gears() {
+  keep(960, 44, 1236, 312);
+  const CP = 30, pr = n => CP * n / (2 * Math.PI), D = 12;
+  const A = [1048, 150], at = (n, deg) => [n1(A[0] + Math.cos(rad(deg)) * (pr(16) + pr(n))), n1(A[1] + Math.sin(rad(deg)) * (pr(16) + pr(n)))];
+  const [bx, by] = at(10, -22.5), [cx, cy] = at(12, 45), [dx, dy] = at(7, 112.5);
+  let o = '';
+  o += g(bx, by, 0, 1, gear(pr(10) - D / 2, 10, D, C.mint, { phase: 157.5 - 18, style: 'holes', k: 4, rot: 30, hub: .34, hubFill: C.mint2 }) + bolt(9, 12));
+  o += g(cx, cy, 0, 1, gear(pr(12) - D / 2, 12, D, C.butter, { phase: 225 - 15, style: 'spokes', k: 5, rot: 8, hub: .3, dash: '6 3 1 3' }) + screw(9, 33, true));
+  o += g(dx, dy, 0, 1, gear(pr(7) - D / 2, 7, D, C.peach, { phase: 292.5 - 360 / 14, hub: .36, hubFill: C.peach2, dash: '2 3' }) + dot(0, 0, 4.5, C.ink, 0) + box(-2, -11, 4, 7, C.ink, 0));
+  o += g(A[0], A[1], 0, 1, gear(pr(16) - D / 2, 16, D, C.lilac, { phase: 0, style: 'spokes', k: 6, rot: -14, hub: .27, hubFill: C.lilac2 }) + g(0, 2, 0, 1, heart(26, C.rose, 2)));
+  o += g(1218, 290, 0, 1, bolt(8, 40)) + g(972, 62, 0, 1, screw(7, 120, false)) + g(1110, 290, 0, 1, screw(6, 70, true));
+  return o;
+}
+
+/* ---- the LOVE.EXE progress bar over the dance floor ---- */
+function progress() {
+  keep(440, 292, 842, 406);
+  let o = '';
+  const x0 = 448, x1 = 832, y0 = 330, y1 = 368;
+  o += pix(x0, 297, 'LOVE.EXE', 3.4, (i, j) => (j < 2 ? C.pink : C.rose));
+  o += pix(x1 - pixW('100%', 3.4), 297, '100%', 3.4, C.mint);
+  o += box(x0 + 6, y0 + 6, x1 - x0, y1 - y0, C.ink, 0, 12) + box(x0, y0, x1 - x0, y1 - y0, C.cream, 2.6, 12);
+  const n = 17, gap = 4, inner = x1 - x0 - 16, ws = Array.from({ length: n }, () => .7 + r() * .6), sum = ws.reduce((a, b) => a + b);
+  let x = x0 + 8;
+  ws.forEach((wk, i) => {
+    const w = (inner - gap * (n - 1)) * wk / sum;
+    o += box(x, y0 + 7, w, y1 - y0 - 14, RAMP[Math.floor(i * RAMP.length / n)], 1.6, 3);
+    o += `<path d="M${n1(x + 3.5)} ${y0 + 11.5} H${n1(x + 3.5 + w * (.25 + r() * .4))}" stroke="${C.white}" stroke-width="2.2" stroke-linecap="round"/>`;
+    x += w + gap;
+  });
+  o += T(x0 + 2, y1 + 22, '0%', { s: 10.5, fill: C.violet }) + T(x0 + 124, y1 + 22, 'đang yêu…', { s: 10.5, w: 700, fill: C.violet });
+  o += T(x1 - 26, y1 + 30, 'tải xong rồi nè!', { f: F.note, w: 400, s: 19, anchor: 'end', fill: C.rose });
+  o += `<path d="M${x1 - 20} ${y1 + 24} Q${x1 - 4} ${y1 + 22} ${x1 - 8} ${y1 + 6}" fill="none" ${ink(1.8)}/><path d="M${x1 - 13} ${y1 + 10} L${x1 - 8} ${y1 + 5} L${x1 - 4} ${y1 + 11}" fill="none" ${ink(1.8)}/>`;
+  return o;
+}
+
+/* ---- a big pixel heart, right: inked squares, a glint top left, the shade bottom right ---- */
+function bigHeart() {
+  keep(986, 314, 1222, 512);
+  const H = ['..###...###..', '.#####.#####.', '#############', '#############', '#############', '.###########.', '..#########..', '...#######...', '....#####....', '.....###.....', '......#......'];
+  const p = 14, on = (i, j) => !!(H[j] && H[j][i] === '#');
+  let o = '';
+  H.forEach((row, j) => [...row].forEach((c, i) => {
+    if (c !== '#') return;
+    const edge = !on(i - 1, j) || !on(i + 1, j) || !on(i, j - 1) || !on(i, j + 1);
+    const glint = [[2, 2], [3, 2], [2, 3], [9, 2]].some(([a, b]) => a === i && b === j);
+    const fill = glint ? C.white : edge ? C.rose : i + j > 13 ? '#f47aa3' : r() < .16 ? C.pink2 : C.pink;
+    o += box((i - 6.5) * p, (j - 5.5) * p, p, p, fill, 1.6);
+  }));
+  let s = g(1100, 400, -6, 1, o);
+  s += pix(1062, 486, 'TIM: OK', 2.6, C.mint) + plus(1004, 330, 5, C.butter) + plus(1204, 470, 4, C.lilac) + sparkle(1206, 330, 8, C.butter) + sparkle(998, 470, 6, C.pink);
+  return s;
+}
+
+/* ---- the circuit, left of the floor: chips, a crystal, resistors, capacitors, LEDs, silkscreen labels ---- */
+function chip(w, h, pins, label, p, body = C.ink) {
+  let o = '';
+  const pw = Math.min(9, w / pins * .48);
+  for (let i = 0; i < pins; i++) {
+    const px = -w / 2 + (i + .5) * w / pins - pw / 2;
+    o += box(px, -h / 2 - 11, pw, 13, C.silver, 1.4, 1.5) + box(px, h / 2 - 2, pw, 13, C.silver, 1.4, 1.5);
+  }
+  o += `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="5" fill="${body}" stroke="${C.deep}" stroke-width="2"/>`;
+  o += `<path d="M${-w / 2} -7 a7 7 0 0 1 0 14" fill="${C.paper}" stroke="${C.deep}" stroke-width="1.6"/>` + dot(-w / 2 + 14, h / 2 - 10, 3, C.lilac, 0);
+  o += pix(-pixW(label, p) / 2, -3.5 * p, label, p, C.cream, { stroke: C.deep, sw: p * .26 });
+  return o;
+}
+function resistor(len, bands) {
+  let o = `<path d="M${-len / 2} 0 H${len / 2}" stroke="${C.ink}" stroke-width="5" stroke-linecap="round"/><path d="M${-len / 2} 0 H${len / 2}" stroke="${C.silver}" stroke-width="2.4" stroke-linecap="round"/>`;
+  const bw = len * .46;
+  o += box(-bw / 2, -9, bw, 18, C.peach2, 2.2, 8);
+  bands.forEach((c, i) => { o += box(-bw / 2 + 8 + i * (bw - 18) / (bands.length - 1) - 2, -9, 4.4, 18, c, 1.1); });
+  o += dot(-len / 2, 0, 5.5, C.butter, 1.8) + dot(len / 2, 0, 5.5, C.butter, 1.8) + dot(-len / 2, 0, 1.8, C.ink, 0) + dot(len / 2, 0, 1.8, C.ink, 0);
+  return o;
+}
+function capTop(z) {                                     // an electrolytic capacitor from above: a can, its stripe, the vent
+  let o = dot(0, 0, z, C.blue, 2.2);
+  o += `<path d="M${n1(z * .5)} ${n1(-z * .86)} A${z} ${z} 0 0 1 ${n1(z * .5)} ${n1(z * .86)} Q${n1(z * .78)} 0 ${n1(z * .5)} ${n1(-z * .86)}Z" fill="${C.ink}"/>`;
+  o += `<path d="M${n1(z * .62)} ${n1(-z * .3)} v4 M${n1(z * .66)} ${n1(z * .2)} v4" stroke="${C.cream}" stroke-width="1.6"/>`;
+  o += `<path d="M${n1(-z * .42)} ${n1(-z * .1)} H${n1(z * .2)} M${n1(-z * .11)} ${n1(-z * .42)} V${n1(z * .22)}" ${ink(1.2)}/>`;
+  return o + T(-z - 8, -z + 2, '+', { s: 13, w: 800, fill: C.rose });
+}
+function disc(z, label) {                                // a ceramic capacitor: a disc on two legs
+  return `<path d="M-4 ${z - 2} L-6 ${z + 16} M4 ${z - 2} L7 ${z + 14}" ${ink(2.2)}/>` + dot(0, 0, z, C.coral, 2) + T(0, 3.5, label, { s: 9, w: 800, anchor: 'middle' });
+}
+function led(fill, rays = [-150, -96, -40]) {            // a 5 mm LED from the side, shining
+  let o = `<path d="M-4 8 V26 M4 8 V20 L7 23" fill="none" ${ink(2)}/>`;
+  o += `<path d="M-9 8 V-4 a9 9 0 0 1 18 0 V8Z" fill="${fill}" ${ink(2)}/>` + box(-11, 6, 22, 5, fill, 1.8, 1.5);
+  o += `<path d="M-5 -4 a5 5 0 0 1 4 -5" fill="none" stroke="${C.white}" stroke-width="2" stroke-linecap="round"/>`;
+  rays.forEach(a => { const [x0, y0] = pt(0, -3, 15, a), [x1, y1] = pt(0, -3, 22 + r() * 4, a); o += `<path d="M${x0} ${y0} L${x1} ${y1}" ${ink(1.8)}/>`; });
+  return o;
+}
+function crystal(label) {
+  return `<path d="M-14 9 V18 M14 9 V16" ${ink(2)}/>` + box(-30, -11, 60, 22, C.silver, 2.2, 11) + box(-24, -6, 48, 12, C.white, 1, 6) + T(0, 3.5, label, { s: 8.5, w: 800, anchor: 'middle' });
+}
+function circuit() {
+  keep(46, 326, 438, 526);
+  let o = '';
+  o += g(156, 392, -3, 1, chip(140, 56, 8, 'LOVE-01', 2.6)) + T(80, 352, 'U1', { s: 10, fill: C.violet });
+  o += g(372, 404, 90, 1, chip(104, 44, 6, 'TIM-2.0', 2.2)) + T(392, 344, 'U2', { s: 10, fill: C.violet });
+  o += g(258, 482, 6, 1, crystal('14.02 MHz')) + T(218, 466, 'X1', { s: 10, fill: C.violet });
+  o += g(116, 490, 0, 1, resistor(116, [C.rose, C.violet, C.gold, C.teal])) + T(74, 512, 'R1 · 220Ω', { s: 9.5, fill: C.violet });
+  o += g(286, 352, -24, 1, resistor(88, [C.coral, C.ink, C.sky, C.gold])) + T(240, 342, 'R2', { s: 10, fill: C.violet });
+  o += g(328, 474, 0, 1, capTop(18)) + T(350, 506, 'C3', { s: 10, fill: C.violet });
+  o += g(224, 432, -8, 1, disc(12, '104'));
+  o += g(68, 438, -10, 1, led(C.mint)) + g(420, 486, 12, 1, led(C.pink, [-120, -70, -28]));
+  o += T(98, 446, 'D1 ♥', { s: 10, fill: C.violet }) + T(392, 522, 'D2', { s: 10, fill: C.violet });
+  o += g(186, 448, 0, 1, screw(7, 25, true)) + g(56, 336, 0, 1, screw(6, 140, false));
+  return o;
+}
+
+/* ---- a blueprint of a little robot, bottom left, with notes in hand ---- */
+function robotSketch() {
+  const L = `fill="${C.blue2}" stroke="${C.ink}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"`;
+  let o = `<path d="M2 -150 Q-2 -160 4 -168" fill="none" ${ink(2.2)}/>` + g(5, -174, 10, 1, heart(13, C.pink, 1.6));
+  o += `<rect x="-38" y="-138" width="8" height="18" rx="2" ${L}/><rect x="30" y="-136" width="8" height="16" rx="2" ${L}/>`;
+  o += `<rect x="-31" y="-151" width="62" height="47" rx="13" ${L}/>`;
+  o += dot(-12, -130, 6.2, C.ink, 0) + dot(12, -131, 5.6, C.ink, 0) + dot(-10, -132, 1.8, C.white, 0) + dot(14, -133, 1.6, C.white, 0);
+  o += `<path d="M-7 -116 Q1 -110 9 -117" fill="none" ${ink(2)}/>` + dot(-21, -118, 3.4, C.pink, 0) + dot(21, -119, 3, C.pink, 0);
+  o += `<rect x="-8" y="-104" width="16" height="9" ${L}/><rect x="-35" y="-96" width="70" height="60" rx="11" ${L}/>`;
+  o += g(0, -68, 0, 1, heart(24, C.pink, 1.8)) + dot(-22, -84, 2.6, C.ink, 0) + dot(-22, -76, 2.6, C.butter, 1);
+  o += `<path d="M35 -86 L54 -104 L60 -122" fill="none" stroke="${C.ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="M35 -86 L54 -104 L60 -122" fill="none" stroke="${C.blue2}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` + dot(61, -127, 6.5, C.blue2, 2.2);
+  o += `<path d="M-35 -86 L-50 -62 L-49 -50" fill="none" stroke="${C.ink}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="M-35 -86 L-50 -62 L-49 -50" fill="none" stroke="${C.blue2}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>` + dot(-49, -45, 6, C.blue2, 2.2);
+  o += `<rect x="-24" y="-37" width="15" height="26" rx="3" ${L}/><rect x="9" y="-37" width="15" height="26" rx="3" ${L}/>`;
+  o += `<rect x="-31" y="-12" width="26" height="12" rx="5" ${L}/><rect x="6" y="-12" width="27" height="12" rx="5" ${L}/>`;
+  return o;
+}
+function blueprint() {
+  keep(44, 524, 412, 768);
+  const w = 346, h = 218, x0 = -w / 2, y0 = -h / 2;
+  let o = box(x0 + 6, y0 + 6, w, h, C.ink, 0, 8) + box(x0, y0, w, h, '#d8eafb', 2.4, 8);
+  for (let x = x0 + 13; x < w / 2 - 2; x += 15) o += `<path d="M${n1(x)} ${y0 + 25} V${-y0 - 2}" stroke="#b7d5f1" stroke-width="1"/>`;
+  for (let y = y0 + 38; y < -y0 - 2; y += 15) o += `<path d="M${x0 + 2} ${n1(y)} H${w / 2 - 2}" stroke="#b7d5f1" stroke-width="1"/>`;
+  o += `<path d="M${x0} ${y0 + 24} V${y0 + 8} a8 8 0 0 1 8 -8 H${-x0 - 8} a8 8 0 0 1 8 8 V${y0 + 24}Z" fill="${C.sky}" ${ink(2.4)}/>`;
+  o += T(x0 + 12, y0 + 16.5, 'BẢN VẼ KỸ THUẬT  ·  ROBOT BIẾT YÊU', { s: 10, ls: 1.4, fill: C.cream }) + T(-x0 - 10, y0 + 16.5, 'No. 1402', { s: 10, anchor: 'end', fill: C.butter });
+  o += g(-96, 96, 0, .84, robotSketch());
+  const note = (x, y, str, sz = 16) => T(x, y, str, { f: F.note, w: 400, s: fit(str, 400, F.note, sz, -x0 - x - 8), fill: C.ink });
+  o += `<path d="M-88 -52 Q-50 -64 -16 -56" fill="none" ${ink(1.5)}/>` + note(-12, -52, 'ăng-ten: bắt sóng nhớ em');
+  o += `<path d="M-66 -16 Q-40 -22 -16 -14" fill="none" ${ink(1.5)}/>` + note(-12, -9, 'bộ nhớ: chỉ lưu mỗi em');
+  o += `<path d="M-84 39 Q-48 30 -16 34" fill="none" ${ink(1.5)}/>` + note(-12, 39, 'pin: sạc bằng nụ cười');
+  o += `<path d="M-158 -60 V94 M-163 -60 H-153 M-163 94 H-153 M-158 -60 l-3.5 8 M-158 -60 l3.5 8 M-158 94 l-3.5 -8 M-158 94 l3.5 -8" fill="none" ${ink(1.5)}/>`;
+  o += g(-164, 17, -90, 1, T(0, 0, 'chiều cao: vừa đủ để ôm', { f: F.note, w: 400, s: 13.5, anchor: 'middle', fill: C.rose }));
+  o += box(28, 58, 136, 44, C.cream, 1.6, 3) + `<path d="M28 72.5 H164 M28 87 H164 M96 58 V72.5" ${ink(1)}/>`;
+  o += T(33, 69, 'THIẾT KẾ: ANH', { s: 7.6, w: 800 }) + T(101, 69, 'TỶ LỆ 1:1', { s: 7.6, w: 800 }) + T(33, 83.5, 'DUYỆT: EM', { s: 7.6, w: 800, fill: C.rose }) + T(33, 98, 'BẢN SỬA: MÃI MÃI', { s: 7.6, w: 800 });
+  o += g(-6, 80, -14, 1, `<ellipse rx="30" ry="15" fill="none" stroke="${C.rose}" stroke-width="2.2"/><ellipse rx="25.5" ry="10.6" fill="none" stroke="${C.rose}" stroke-width="1"/>` + T(0, 3.6, 'ĐÃ DUYỆT ♥', { s: 8, w: 900, anchor: 'middle', fill: C.rose }));
+  return g(230, 646, -2, 1, o);
+}
+
+/* ---- bottom right: a floppy holding love, a warning tag, the battery, a spring ---- */
+function floppy() {
+  keep(870, 524, 1048, 704);
+  const s = 148, h = s / 2;
+  let o = `<path d="M${-h + 7} ${-h + 7} H${h - 7} L${h + 7} ${-h + 21} V${h + 7} H${-h + 7}Z" fill="${C.ink}"/>`;
+  o += `<path d="M${-h} ${-h} H${h - 14} L${h} ${-h + 14} V${h} H${-h}Z" fill="${C.blue}" ${ink(2.6)}/>`;
+  o += box(-36, -h, 72, 50, C.silver, 2.2, 3) + box(6, -h + 8, 18, 34, C.ink, 0, 2) + box(-h + 8, -h + 8, 11, 11, C.paper, 1.8, 1);
+  o += box(-h + 13, -14, s - 26, h + 2, C.cream, 2.2, 4);
+  [26, 44].forEach(y => { o += `<path d="M${-h + 22} ${y} H${h - 20}" stroke="${C.pink}" stroke-width="1.4"/>`; });
+  o += pix(-h + 22, -4, 'LOVE.EXE', 2.3, C.rose, { sw: .6 });
+  o += T(-h + 23, 40, 'tình mình ♥', { f: F.note, w: 400, s: 19 });
+  o += g(h - 24, -h + 32, 14, 1, heart(16, C.rose)) + T(-28, -h + 42, '1.44 MB', { s: 7.5, w: 800, fill: C.ink });
+  return g(958, 612, -8, 1, o);
+}
+function warning() {
+  keep(1046, 516, 1246, 662);
+  const w = 186, h = 104, x0 = -w / 2, y0 = -h / 2;
+  let o = `<path d="M${x0 + 6} ${y0 + 6} H${-x0 - 20} L${-x0 + 6} ${y0 + 32} V${-y0 + 6} H${x0 + 6}Z" fill="${C.ink}"/>`;
+  o += `<path d="M${x0} ${y0} H${-x0 - 26} L${-x0} ${y0 + 26} V${-y0} H${x0}Z" fill="${C.butter2}" ${ink(2.4)}/>`;
+  o += `<clipPath id="hz"><rect x="${x0 + 1.5}" y="${y0 + 1.5}" width="${w - 30}" height="22.5"/></clipPath><g clip-path="url(#hz)">`;
+  for (let x = x0 - 30, i = 0; x < -x0; i++) { const sw = 8 + r() * 9; o += `<path d="M${n1(x)} ${y0 + 25} L${n1(x + 22)} ${y0} L${n1(x + 22 + sw)} ${y0} L${n1(x + sw)} ${y0 + 25}Z" fill="${i % 2 ? C.butter : C.ink}"/>`; x += sw; }
+  o += `</g><path d="M${x0} ${y0 + 24} H${-x0 - 28}" ${ink(2)}/>`;
+  o += box(x0 + 12, y0 + 4, 86, 17, C.cream, 1.6, 3) + T(x0 + 55, y0 + 16.8, 'CẢNH BÁO', { s: 11.5, ls: 1.5, anchor: 'middle' });
+  o += dot(-x0 - 16, y0 + 18, 5.5, C.paper, 1.8) + `<path d="M${-x0 - 18} ${y0 + 13} C${-x0 - 4} ${y0 - 6} ${-x0 - 40} ${y0 - 10} ${-x0 - 30} ${y0 - 28}" fill="none" stroke="${C.rose}" stroke-width="2.2" stroke-linecap="round"/>`;
+  o += `<path d="M${x0 + 14} ${y0 + 84} L${x0 + 35} ${y0 + 44} L${x0 + 56} ${y0 + 84}Z" fill="${C.butter}" ${ink(2.2)}/>` + T(x0 + 35, y0 + 79, '!', { s: 21, w: 900, anchor: 'middle' });
+  o += T(x0 + 66, y0 + 62, 'dễ thương', { f: F.hand, w: 700, s: 26, fill: C.rose }) + T(x0 + 82, y0 + 92, 'quá mức!', { f: F.hand, w: 700, s: 24 });
+  return g(1140, 592, 7, 1, o);
+}
+function battery() {
+  keep(1044, 670, 1244, 764);
+  let o = T(-80, -34, 'PIN TÌNH YÊU  ·  100%', { s: 10.5, ls: 1.8, fill: C.rose });
+  o += box(-74, -20, 152, 50, C.ink, 0, 10) + box(-80, -26, 152, 50, C.cream, 2.6, 10) + box(72, -12, 10, 22, C.silver, 2, 3);
+  let x = -72;
+  [30, 24, 28, 22, 26].forEach((w, i) => { o += box(x, -18, w, 34, i % 2 ? C.teal : C.mint, 1.6, 4); x += w + 3.5; });
+  o += `<path d="M2 -24 L-14 4 H0 L-8 30 L18 -4 H4 L12 -24Z" fill="${C.butter}" ${ink(2)}/>`;
+  return g(1138, 718, -4, 1, o);
+}
+function springs() {
+  keep(898, 712, 1036, 758);
+  return g(922, 742, -3, 1, spring(8, 92, 10, C.silver));
+}
+
+/* ---- the stage: a charging pad, the dance floor where the two robots stand ---- */
+function pad(cx, cy, rx, ry) {
+  OVALS.push([cx, cy, rx, ry]);
+  let o = `<ellipse cx="${cx + 6}" cy="${cy + 7}" rx="${rx}" ry="${ry}" fill="${C.ink}"/>`;
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${C.lilac}" ${ink(2.6)}/>`;
+  for (let a = r() * 6; a < 360; a += 6.4 + r() * 5.2) {
+    o += dot(cx + Math.cos(rad(a)) * rx * .93, cy + Math.sin(rad(a)) * ry * .905, 2.5 + r() * 2.3, pick([C.butter, C.cream, C.mint, C.pink, C.blue]), 1.1);
+  }
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(rx * .86)}" ry="${n1(ry * .82)}" fill="${C.ink}"/>`;
+  const kx = .8, ky = .762, ra = rx * kx, rb = ry * ky;
+  o += `<defs><path id="ring" d="M${n1(cx - ra)} ${cy} A${n1(ra)} ${n1(rb)} 0 1 0 ${n1(cx + ra)} ${cy} A${n1(ra)} ${n1(rb)} 0 1 0 ${n1(cx - ra)} ${cy}"/></defs>`;
+  const perim = Math.PI * (3 * (ra + rb) - Math.sqrt((3 * ra + rb) * (ra + 3 * rb)));
+  const words = 'SÀN NHẢY  ·  TRẠM SẠC TÌNH YÊU  ·  2 ROBOT  ·  100%  ·  KẾT NỐI TRÁI TIM  ·  BÍP BÍP  ·  ';
+  const ls = n1((perim * .99 - measure(words, `800 11.5px "${F.sans}"`)) / words.length);
+  o += `<text font-family="${F.sans}" font-weight="800" font-size="11.5" letter-spacing="${ls}" fill="${C.cream}" dy="4"><textPath href="#ring">${words}</textPath></text>`;
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(rx * .735)}" ry="${n1(ry * .7)}" fill="${C.mint2}" ${ink(2)}/>`;
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(rx * .63)}" ry="${n1(ry * .595)}" fill="none" stroke="${C.teal}" stroke-width="2" stroke-dasharray="2 6 11 6" stroke-linecap="round"/>`;
+  for (let i = 0; i < 46; i++) {                         // solder dots on the floor, between the rings
+    const a = r() * 360, k = .5 + r() * .19, x = cx + Math.cos(rad(a)) * rx * k, y = cy + Math.sin(rad(a)) * ry * k * .98;
+    o += r() < .7 ? dot(x, y, 2 + r() * 2.2, pick([C.butter, C.white, C.pink, C.lilac]), 1) : plus(x, y, 2.6, pick([C.butter, C.blue]));
+  }
+  for (const [a, c] of [[200, C.lilac], [232, C.peach], [318, C.blue], [-14, C.butter], [148, C.pink]]) {   // short traces into the middle
+    const [x0, y0] = [cx + Math.cos(rad(a)) * rx * .7, cy + Math.sin(rad(a)) * ry * .67], [x1, y1] = [cx + Math.cos(rad(a)) * rx * .5, cy + Math.sin(rad(a)) * ry * .49];
+    const mx = n1(x1), my = n1(y0);
+    o += `<path d="M${n1(x0)} ${n1(y0)} L${mx} ${my} L${n1(x1)} ${n1(y1)}" fill="none" stroke="${C.ink}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>`;
+    o += `<path d="M${n1(x0)} ${n1(y0)} L${mx} ${my} L${n1(x1)} ${n1(y1)}" fill="none" stroke="${c}" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>` + dot(x1, y1, 4.6, C.butter, 1.6);
+  }
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(rx * .49)}" ry="${n1(ry * .47)}" fill="${C.butter2}" ${ink(2)}/>`;
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(rx * .42)}" ry="${n1(ry * .4)}" fill="none" stroke="${C.rose}" stroke-width="1.8" stroke-dasharray="9 5 2 5" stroke-linecap="round"/>`;
+  o += pix(cx - 3.5 * 6, cy - 44, '♥', 6, (i, j) => (i === 1 && j === 1 ? C.white : j > 3 ? C.rose : C.pink), { sw: 1.3 });
+  o += T(cx, cy + 18, 'hai chú robot', { f: F.note, w: 400, s: 21, anchor: 'middle' }) + T(cx + 4, cy + 40, 'đứng ở đây', { f: F.note, w: 400, s: 21, anchor: 'middle', fill: C.rose });
+  o += sparkle(cx - 60, cy - 22, 6, C.butter) + sparkle(cx + 62, cy - 8, 5, C.lilac) + plus(cx + 42, cy - 38, 3, C.mint);
+  return o;
+}
+function ribbon(cx, cy, w, h, fill, text) {             // the instruction on a ribbon with notched tails
+  const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, f = 22;
+  keep(x0 - f - 4, y0 - 8, x1 + f + 4, y1 + 10);
+  let s = `<path d="M${n1(x0 - f)} ${n1(y0 + 7)} L${n1(x0 + 6)} ${n1(y0 + 7)} L${n1(x0 + 6)} ${n1(y1 + 7)} L${n1(x0 - f)} ${n1(y1 + 7)} L${n1(x0 - f + 10)} ${n1(cy + 7)}Z" fill="${C.rose}" ${ink(2)}/>`;
+  s += `<path d="M${n1(x1 + f)} ${n1(y0 + 7)} L${n1(x1 - 6)} ${n1(y0 + 7)} L${n1(x1 - 6)} ${n1(y1 + 7)} L${n1(x1 + f)} ${n1(y1 + 7)} L${n1(x1 + f - 10)} ${n1(cy + 7)}Z" fill="${C.rose}" ${ink(2)}/>`;
+  s += `<path d="M${n1(x0)} ${n1(y0)} Q${cx} ${n1(y0 - 8)} ${n1(x1)} ${n1(y0)} L${n1(x1)} ${n1(y1)} Q${cx} ${n1(y1 - 8)} ${n1(x0)} ${n1(y1)}Z" fill="${fill}" ${ink(2.4)}/>`;
+  return s + T(cx, cy + 5, text, { s: 15, w: 800, anchor: 'middle' });
+}
+
+/* ---- the circuit's traces: they wander with right-angle turns, chamfered corners, and end on pads ---- */
+const CELL = 10, GW = 128, GH = 80, occ = new Int16Array(GW * GH);
+const D4 = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+const empty = (i, j) => i > 4 && j > 4 && i < GW - 5 && j < GH - 5 && !occ[j * GW + i] && !blocked(i * CELL, j * CELL, 9, 1);
+function wander(i, j, dir, id, turns) {
+  if (!empty(i, j)) return null;
+  const pts = [[i, j]]; occ[j * GW + i] = id;
+  let cells = 0;
+  for (let t = 0; t < turns; t++) {
+    const len = 2 + (r() * 8 | 0); let k = 0;
+    for (; k < len; k++) {
+      const ni = i + D4[dir][0], nj = j + D4[dir][1];
+      if (!empty(ni, nj)) break;
+      const side = [D4[(dir + 1) % 4], D4[(dir + 3) % 4], D4[dir]].some(([a, b]) => { const v = occ[(nj + b) * GW + ni + a]; return v && v !== id; });
+      if (side) break;
+      i = ni; j = nj; occ[j * GW + i] = id; cells++;
+    }
+    if (k) pts.push([i, j]);
+    if (k < len) break;
+    dir = (dir + (r() < .5 ? 1 : 3)) % 4;
+  }
+  if (cells < 3) { pts.forEach(([a, b]) => { if (occ[b * GW + a] === id) occ[b * GW + a] = 0; }); return null; }
+  return pts;
+}
+function trace(pts, col) {
+  const P = pts.map(([i, j]) => [i * CELL, j * CELL]);
+  let d = `M${P[0][0]} ${P[0][1]}`;
+  for (let k = 1; k < P.length - 1; k++) {
+    const [ax, ay] = P[k - 1], [bx, by] = P[k], [cx, cy] = P[k + 1];
+    const c = Math.min(6, Math.hypot(bx - ax, by - ay) / 2, Math.hypot(cx - bx, cy - by) / 2);
+    d += ` L${n1(bx - Math.sign(bx - ax) * c)} ${n1(by - Math.sign(by - ay) * c)} L${n1(bx + Math.sign(cx - bx) * c)} ${n1(by + Math.sign(cy - by) * c)}`;
+  }
+  d += ` L${P[P.length - 1][0]} ${P[P.length - 1][1]}`;
+  let s = `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="6.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>`;
+  [P[0], P[P.length - 1]].forEach(([x, y], k) => {
+    s += k && r() < .35 ? box(x - 5, y - 5, 10, 10, C.silver, 1.6, 1.5) + dot(x, y, 1.8, C.ink, 0) : dot(x, y, 5, pick([C.butter, C.gold, C.silver]), 1.7) + dot(x, y, 1.8, C.ink, 0);
+  });
+  return s;
+}
+function traces(tries) {
+  let s = '';
+  for (let n = 0, id = 1; n < tries; n++) {
+    const pts = wander(5 + (r() * (GW - 10) | 0), 5 + (r() * (GH - 10) | 0), (r() * 4) | 0, id, 2 + (r() * 4 | 0));
+    if (pts) { s += trace(pts, pick([C.mint, C.lilac, C.peach, C.blue, C.butter, C.pink])); id++; }
+  }
+  return s;
+}
+
+/* ---- confetti of small things wherever there is paper left ---- */
+const BITS = ['01001100', '01001111', '01010110', '01000101', '0x14', '0x02', '0xFF', '1402', 'OK ♥', 'R7', 'C2', 'BÍP', '♥ = 1', 'IC-07', '5V', 'ON'];
+function scatter(count) {
+  let s = '';
+  const placed = [], onTrace = (x, y) => { const ci = Math.round(x / CELL), cj = Math.round(y / CELL); return [-1, 0, 1].some(a => [-1, 0, 1].some(b => occ[(cj + b) * GW + ci + a])); };
+  for (let i = 0; i < count; i++) {
+    const x = 54 + r() * 1172, y = 54 + r() * 692, k = r();
+    if (blocked(x, y, 10, 8) || onTrace(x, y) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 22)) continue;
+    if (k < .1) {                                         // a word of binary or a label: it needs room
+      const str = pick(BITS), w = measure(str, `700 9.5px "${F.sans}"`) + 6;
+      if (blocked(x - w / 2, y, 6, 6) || blocked(x + w / 2, y, 6, 6) || onTrace(x - w / 2, y) || onTrace(x + w / 2, y) || placed.some(([px, py]) => Math.abs(py - y) < 16 && Math.abs(px - x) < w / 2 + 14)) continue;
+      placed.push([x - w / 2, y], [x, y], [x + w / 2, y]);
+      s += T(x, y + 3, str, { s: 9.5, w: 700, ls: .5, anchor: 'middle', fill: pick([C.violet, C.teal, C.rose, C.ink]) });
+      continue;
+    }
+    placed.push([x, y]);
+    if (k < .3) s += g(x, y, (r() - .5) * 50, 1, heart(9 + r() * 7, pick([C.rose, C.pink, C.coral, C.lilac])));
+    else if (k < .44) s += sparkle(x, y, 5 + r() * 5, pick([C.butter, C.lilac, C.mint, C.pink]));
+    else if (k < .57) s += plus(x, y, 3 + r() * 1.6, pick([C.butter, C.mint, C.blue, C.pink, C.lilac]));
+    else if (k < .7) s += dot(x, y, 3.6 + r() * 2.2, pick([C.butter, C.silver, C.mint]), 1.6) + dot(x, y, 1.5, C.ink, 0);
+    else if (k < .8) s += g(x, y, 0, 1, screw(5 + r() * 3, r() * 180, r() < .5));
+    else if (k < .9) s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(2 + r() * 2.4)}" fill="${pick([C.rose, C.violet, C.teal, C.gold, C.sky])}"/>`;
+    else s += g(x, y, r() * 90, 1, box(-8, -5, 16, 10, pick([C.ink, C.violet, C.teal]), 1.2, 2) + `<path d="M-5 -5 v-3 M0 -5 v-3 M5 -5 v-3 M-5 5 v3 M0 5 v3 M5 5 v3" ${ink(1.4)}/>`);
+  }
+  return s;
+}
+
+const FACES = [`900 100px "${F.sans}"`, `800 14px "${F.sans}"`, `700 14px "${F.sans}"`, `600 14px "${F.sans}"`, `700 30px "${F.hand}"`, `400 16px "${F.note}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Robot biết yêu ĐẶT ữ Ơ … ♥'))).then(() => {
+  let out = sheet();
+  const parts = [title(), crt(), dialog(), gears(), progress(), bigHeart(), circuit(), blueprint(), floppy(), warning(), battery(), springs()];
+  const stage = pad(640, 565, 215, 150), note = ribbon(640, 744, 470, 32, C.cream, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây');
+  out += traces(420) + scatter(900) + parts.join('') + stage + note;
+  document.getElementById('card').innerHTML = out;
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

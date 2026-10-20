@@ -39,13 +39,18 @@ describe('the shop pages', () => {
   it('product: the card, its price and its form; not found when it is not on sale', async () => {
     const { default: ProductPage, generateMetadata } = await import('../cards/[productId]/page');
     getProduct.mockResolvedValue(product);
-    getTemplateInfo.mockResolvedValue({ id: 'mochi', name: 'Mochi', kind: '3d', aspect: 0.625, chapters: 2, form });
+    getTemplateInfo.mockResolvedValue({ id: 'mochi', name: 'Mochi', kind: '3d', aspect: 0.625, chapters: 2, form,
+      credits: [{ model: 'KayKit Adventurers', author: 'Kay Lousberg', license: 'CC0 1.0', url: 'https://kaylousberg.itch.io/kaykit-adventurers' }] });
     render(await ProductPage(params({ productId: 'mochi' }) as PageProps<'/cards/[productId]'>));
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Mochi');
     expect(screen.getByTestId('form').textContent).toBe('mochi');
+    const credit = screen.getByRole('link', { name: 'KayKit Adventurers' });                // who made the free 3D models
+    expect(credit.getAttribute('href')).toBe('https://kaylousberg.itch.io/kaykit-adventurers');
+    expect(credit.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(credit.parentElement?.textContent).toContain('(Kay Lousberg, CC0 1.0)');
     expect(await generateMetadata(params({ productId: 'mochi' }) as PageProps<'/cards/[productId]'>)).toMatchObject({ title: 'Mochi' });
     cleanup();
-    getTemplateInfo.mockResolvedValue({ id: 'mochi', name: 'Mochi', kind: '3d', aspect: 0.625, chapters: 2, form: null });
+    getTemplateInfo.mockResolvedValue({ id: 'mochi', name: 'Mochi', kind: '3d', aspect: 0.625, chapters: 2, form: null, credits: [] });
     render(await ProductPage(params({ productId: 'mochi' }) as PageProps<'/cards/[productId]'>));
     expect(screen.getByText(/chưa mở bán/)).toBeTruthy();
     getProduct.mockResolvedValue({ ...product, active: false });

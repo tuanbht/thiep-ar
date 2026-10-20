@@ -1,0 +1,27 @@
+{
+  "name": "Robot biết yêu",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "Two little robots fall in love (RobotExpressive, CC0, the same file twice: he keeps his own colours, she is recoloured rose with a bow in story.js). Stop 1: he walks in and waves at the phone, she beams in beside the card and hops over, his face goes surprised, a \"!\" turns into a pixel heart, he gives a shy thumbs-up and a note with the card's first words (slot note1) opens out of the heart. Stop 2: he gathers sparks into a glowing LED heart and holds it out, she nods yes, he jumps for joy and the heart floats up and projects the card's photo as a hologram polaroid with its caption (slot caption). Stop 3: the photo is saved into the heart, which rises into a disco light; they dance under sweeping coloured lights and heart confetti, then hold hands as a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "bot": "models/bot.glb",
+    "botgirl": "models/botgirl.glb"
+  },
+  "credits": [
+    {
+      "model": "RobotExpressive",
+      "author": "Tomás Laulhé (Quaternius), facial morphs by Don McCurdy",
+      "license": "CC0 1.0",
+      "url": "https://github.com/mrdoob/three.js/tree/r170/examples/models/gltf/RobotExpressive"
+    }
+  ]
+}

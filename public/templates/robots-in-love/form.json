@@ -1,0 +1,24 @@
+{
+  "label": "Robot biết yêu (3D: hai chú robot nhảy múa và trao trái tim)",
+  "preset": {
+    "title": "Robot biết yêu",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Từ ngày gặp em, mọi mạch điện trong anh đều chạy về một hướng.",
+      "Không cần sạc pin, chỉ cần em cười là anh tràn đầy năng lượng."
+    ],
+    "from": "Robot của em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi hai chú robot gặp nhau)", "value": "Hệ thống báo: anh đã phải lòng em", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Dữ liệu quý nhất của anh", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Yêu em 100%!", "max": 32 }]
+      ]
+    }
+  ]
+}

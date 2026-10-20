@@ -49,6 +49,18 @@ export default async function ProductPage({ params }: PageProps<'/cards/[product
       {info?.form
         ? <CustomizeForm product={product} form={info.form} />
         : <p className="mx-auto mb-20 max-w-xl px-4 text-center italic text-paper/70">{S.product.noForm}</p>}
+      {!!info?.credits.length && (
+        <p className="mx-auto -mt-16 mb-24 w-full max-w-7xl px-4 text-xs text-paper/55 sm:px-8 lg:-mt-8">
+          {S.product.credits}:{' '}
+          {info.credits.map((c, i) => (
+            <span key={c.model}>
+              {i > 0 && ' · '}
+              {c.url ? <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:text-gold hover:underline">{c.model}</a> : c.model}
+              {' '}({c.author}, {c.license})
+            </span>
+          ))}
+        </p>
+      )}
     </>
   );
 }

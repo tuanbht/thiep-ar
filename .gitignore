@@ -6,6 +6,8 @@ coverage/
 test-results/
 playwright-report/
 .playwright-mcp/
+.cache/
+print-designs/out/
 *.tsbuildinfo
 next-env.d.ts
 *.tmp

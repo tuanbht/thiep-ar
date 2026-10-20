@@ -1,0 +1,17 @@
+{
+  "boy": {
+    "from": "kaykit/Knight",
+    "drop": ["1H_Sword", "1H_Sword_Offhand", "2H_Sword", "Badge_Shield", "Rectangle_Shield", "Round_Shield", "Spike_Shield", "Knight_Helmet", "Knight_Cape"],
+    "clips": ["Idle", "Walking_A", "Interact", "Sit_Chair_Down", "Sit_Chair_Idle", "Sit_Chair_StandUp", "Cheer"]
+  },
+  "girl": {
+    "from": "kaykit/Mage",
+    "drop": ["Spellbook", "Spellbook_open", "1H_Wand", "2H_Staff", "Mage_Cape"],
+    "clips": ["Idle", "Walking_A", "Sit_Chair_Down", "Sit_Chair_Idle", "Sit_Chair_StandUp", "Cheer"]
+  },
+  "table": { "from": "restaurant/table_round_A" },
+  "chair": { "from": "restaurant/chair_B" },
+  "plate": { "from": "restaurant/plate" },
+  "food": { "from": "restaurant/food_dinner" },
+  "mug": { "from": "kaykit-props/mug_full" }
+}

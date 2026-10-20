@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     env: localEnv as Record<string, string>,
-    include: ['{lib,components,app}/**/*.test.{ts,tsx}'],
+    include: ['{lib,components,app}/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
     exclude: ['node_modules/**', 'e2e/**', '.next/**'],
     setupFiles: ['./vitest.setup.ts'],
     coverage: {

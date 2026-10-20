@@ -1,0 +1,24 @@
+{
+  "label": "Hẹn hò dưới sao (3D: hai bạn nhỏ gặp nhau, ngồi ngắm sao và trao nụ hôn)",
+  "preset": {
+    "title": "Hẹn hò dưới sao",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Có những buổi tối chỉ cần ngồi cạnh nhau, ngước nhìn trời sao là đủ.",
+      "Cảm ơn em vì đã đến bên anh."
+    ],
+    "from": "Thương em, anh"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi hai bạn gặp nhau)", "value": "Ngày đầu gặp nhau, tim anh lỡ một nhịp", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Mình của những ngày đầu", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Thương em nhiều lắm!", "max": 32 }]
+      ]
+    }
+  ]
+}

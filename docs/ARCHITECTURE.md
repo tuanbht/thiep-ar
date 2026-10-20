@@ -60,6 +60,8 @@ RLS is on for every table with no policies: only the server (secret key) reads a
 | `lib/player/**`, `components/player/**` | the AR player (three.js + MindAR, no A-Frame) | player |
 | `app/**` (not `app/api`), `components/shop/**`, `app/globals.css` | the shop's pages and design | shop |
 | `public/templates/<id>/` | template assets, served as they are | assets |
+| `public/templates/_acts/lovestory.js`, `public/templates/<love card>/story.js` | the love story cards' shared act and each card's story | assets |
+| `scripts/pack-models.mjs`, `scripts/models/`, `scripts/print-card.mjs`, `print-designs/`, `scripts/shoot-card.mjs` | making a 3D card: free models trimmed to what it uses, its print and tracking target, pictures of every stop | tools |
 
 ## Conventions
 - Server-only modules start with `import 'server-only'`; the secret key never reaches the browser.

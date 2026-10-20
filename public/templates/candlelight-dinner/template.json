@@ -1,0 +1,38 @@
+{
+  "name": "Bữa tối nến hồng",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": "story.js",
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A candlelit dinner for two (KayKit Adventurers, CC0: the Knight without his helmet or cape and the Mage, her hat made smaller, weapons and books dropped by scripts/pack-models.mjs; KayKit Restaurant Bits for the round table, two chairs, gold chargers and dinner plates; a KayKit tavern mug each). Stop 1: rose petals drift down and the table drops in piece by piece; he leads her in by the hand and pulls out her chair while she lights the three pink candles with a flick of sparks; she sits, he goes round to his seat and a menu card with the card's first words (slot note1) flips open. Stop 2: two mugs drop from the sky into their hands, they clink and sip, and the card's photo slides along the string lights on a clothes peg with its caption (slot caption). Stop 3: the plates vanish, a heart-shaped cake rises out of the table, they stand and cheer under heart-shaped fireworks, a banner with the last words (slot note2) rises and they end cheek to cheek. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb",
+    "table": "models/table.glb",
+    "chair": "models/chair.glb",
+    "plate": "models/plate.glb",
+    "food": "models/food.glb",
+    "mug": "models/mug.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    },
+    {
+      "model": "KayKit Restaurant Bits",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/restaurant-bits"
+    }
+  ]
+}

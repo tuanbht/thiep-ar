@@ -1,0 +1,24 @@
+{
+  "label": "Tổ ấm nhỏ (3D: căn phòng tự dựng lên và hai bạn nhỏ về chung nhà)",
+  "preset": {
+    "title": "Tổ ấm nhỏ",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Căn phòng nhỏ thôi, nhưng có em là đủ ấm.",
+      "Mình cùng nhau vun vén tổ ấm này, em nhé."
+    ],
+    "from": "Thương em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (khi hai bạn về đến nhà)", "value": "Nhà là nơi có em", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Tổ ấm của hai đứa mình", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng)", "value": "Mình về chung một nhà nhé!", "max": 32 }]
+      ]
+    }
+  ]
+}

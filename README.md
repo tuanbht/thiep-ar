@@ -78,6 +78,29 @@ Vietcombank, VietinBank, Shinhan or Sacombank; this shop's account is a personal
   fonts, targets.mind for tracking, template.json, form.json). Served as they are.
 - `public/thumbs/<id>.jpg`: the shop's pictures of each printed design (960 px). The full-size print files are in git
   history (commit 52160e0 and earlier, under `prints/`) for printing the physical cards.
+- `print-designs/<id>.html`: the printed designs of the love story cards (1280 × 800). `scripts/print-card.mjs` draws one
+  into the print (`print-designs/out/<id>.png`, 2560 px, not committed), the shop's picture and the card's `targets.mind`.
+
+## Love story cards
+
+Five 3D cards (`starry-date`, `bouquet-surprise`, `candlelight-dinner`, `our-little-home`, `robots-in-love`) are short love
+stories told by one shared act, `public/templates/_acts/lovestory.js`, and each card's own `story.js`: about eighteen
+seconds in three chapters, each ending at a stop that holds the card's words or photo until a tap. The act's header
+comment is its API (models and their clips, `hold`, `aim` and `bend` for gestures the clips lack, signs, the polaroid,
+particles, glows, lights).
+
+Their characters and props are free models that need no account: KayKit's chibi Adventurers with their own 76
+animations, KayKit's furniture and restaurant props, and the RobotExpressive robot, all CC0
+(`scripts/models/sources.mjs` pins each pack to a commit; the product page credits the authors anyway).
+
+```bash
+node scripts/pack-models.mjs <id>    # scripts/models/recipes/<id>.json -> public/templates/<id>/models/*.glb with only the parts
+                                     # and clips the card uses (a character ~450 KB), plus template.json "models" and "credits"
+node scripts/print-card.mjs <id>     # print-designs/<id>.html -> the print, public/thumbs/<id>.jpg and targets.mind (with its
+                                     # feature count; parallel runs queue on .cache/compile.lock)
+node scripts/shoot-card.mjs <id>     # plays the card on the dev player (pnpm dev running) in a headless browser and keeps a
+                                     # picture of every stop and a few on the way, in .cache/shots/<id>/
+```
 
 ## Tests
 
@@ -121,4 +144,4 @@ Any Next.js host (Vercel works as is) plus a Supabase project: `supabase link`, 
 ## The old kit
 
 The authoring tools (the Vite Studio, print and tracking compilers, the 3D bake, render scenes, the A-Frame player)
-were removed when this became a shop. They are in git: tag `kit-snapshot` (`git show kit-snapshot:<path>`).
+were removed when this became a shop. They are in git: commit `d595adc` (`git show d595adc:<path>`).
