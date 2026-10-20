@@ -55,6 +55,21 @@ describe('ProductCard', () => {
 });
 
 describe('OrderStatus', () => {
+  it('lets the draft go once the order made from it is paid, and keeps it otherwise', () => {
+    const paid = view({ status: 'paid', paidAt: '2026-10-16T03:05:00Z', giftUrl: 'https://thiep.example/g/AbC123xyz0' });
+    localStorage.setItem('gc:draft:mochi', '{"v":1,"orderId":"o1"}');
+    const waiting = render(<OrderStatus initial={view()} />);
+    expect(localStorage.getItem('gc:draft:mochi')).not.toBeNull();            // back to edit before paying: still there
+    waiting.unmount();
+    localStorage.setItem('gc:draft:mochi', '{"v":1,"orderId":"o9"}');         // a newer draft, made into another order
+    const old = render(<OrderStatus initial={paid} />);                       // an old order reopened for its link
+    expect(localStorage.getItem('gc:draft:mochi')).not.toBeNull();
+    old.unmount();
+    localStorage.setItem('gc:draft:mochi', '{"v":1,"orderId":"o1"}');
+    render(<OrderStatus initial={paid} />);
+    expect(localStorage.getItem('gc:draft:mochi')).toBeNull();
+  });
+
   it('shows the gift link, its QR code and how to send it once paid', async () => {
     render(<OrderStatus initial={view({ status: 'paid', paidAt: '2026-10-16T03:05:00Z', giftUrl: 'https://thiep.example/g/AbC123xyz0' })} />);
     expect(screen.getByTestId('gift-url').textContent).toBe('https://thiep.example/g/AbC123xyz0');

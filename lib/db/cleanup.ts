@@ -19,8 +19,10 @@ export async function cleanupAbandoned(olderThanHours = 24, db: Db = getAdminCli
   if (error) throw new RepositoryError(`clean up abandoned orders: ${error.message}`, error);
   const r = data as { orders: number; gift_cards: number; photos: string[] };
   const cutoff = now.getTime() - olderThanHours * 3600_000;
-  const stale = new Set(r.photos);
-  for (const path of await oldDrafts(db, cutoff)) if (!(await isReferenced(db, path))) stale.add(path);
+  const stale = new Set<string>();                                     // a photo goes only when no card is left that shows it:
+  for (const path of [...r.photos, ...(await oldDrafts(db, cutoff))]) {   // a kept draft can share one with a paid card
+    if (!stale.has(path) && !(await isReferenced(db, path))) stale.add(path);
+  }
   const paths = [...stale];
   for (let i = 0; i < paths.length; i += PAGE) {
     const { error: e } = await db.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + PAGE));

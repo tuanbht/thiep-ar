@@ -4,7 +4,7 @@
    template's own rules (customize.ts); "Mua" places the order and goes to the checkout. */
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { Controller, useFieldArray, useForm, useWatch, type Control, type FieldPath } from 'react-hook-form';
 import type { CreateOrderResponse } from '@/lib/api/dto';
 import { LIMITS } from '@/lib/api/dto';
@@ -13,12 +13,14 @@ import { toCard } from '@/lib/content/toCard';
 import type { Product } from '@/lib/domain/types';
 import type { PlayerEvent } from '@/components/player/types';
 import { allFields, customizeSchema, fieldKey, formDefaults, orderRequest, toContent, type CustomizeValues } from './customize';
+import { DraftNote } from './DraftNote';
 import { track } from './events';
 import { Field, Section } from './fields';
 import { formatVnd } from './format';
 import { PhotoField, type PhotoState } from './PhotoField';
 import { PreviewPanel } from './PreviewPanel';
 import { S } from './strings';
+import { useDraft } from './useDraft';
 
 export interface CustomizeFormProps {
   product: Product;
@@ -45,9 +47,10 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
   const router = useRouter();
   const fields = useMemo(() => allFields(form.groups), [form.groups]);
   const schema = useMemo(() => customizeSchema(fields), [fields]);
-  const { control, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<CustomizeValues>({
+  const defaults = useMemo(() => formDefaults(form), [form]);
+  const { control, handleSubmit, setError, reset, getValues, formState: { errors, isSubmitting } } = useForm<CustomizeValues>({
     resolver: zodResolver(schema),
-    defaultValues: formDefaults(form),
+    defaultValues: defaults,
     mode: 'onTouched'
   });
   const paragraphs = useFieldArray({ control, name: 'body' });
@@ -59,6 +62,12 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const showPreview = desktop || previewOpen;
   const started = useRef(false), previewed = useRef(false), first = useRef(true);
+  const draft = useDraft({                                              // a reload brings the card back (this browser only)
+    productId: product.id, fields, defaults, values, photo, read: getValues,
+    restore: useCallback((v: CustomizeValues, p: PhotoState) => { started.current = true; reset(v); setPhoto(p); }, [reset])
+  });
+  const startOver = () => { reset(defaults); setPhoto({ path: null, previewUrl: null }); draft.discard(); };
+  useLayoutEffect(() => () => setLeaving(false), []);                  // Back from the checkout: this page again, ready to buy
 
   const content = useMemo(() => toContent(values, fields, photo.path), [values, fields, photo.path]);
   const card = useMemo(() => toCard(content, product, photo.previewUrl), [content, product, photo.previewUrl]);
@@ -87,6 +96,7 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
       });
       const json = (await res.json().catch(() => ({}))) as Partial<CreateOrderResponse> & { error?: string };
       if (!res.ok || !json.checkoutUrl) throw new Error(json.error || S.product.orderFailed);
+      if (json.orderId) draft.ordered(json.orderId);
       setLeaving(true);
       router.push(json.checkoutUrl);
     } catch (e) {
@@ -116,6 +126,7 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
 
       <div className="grain ruled relative bg-paper px-5 py-8 text-ink shadow-[var(--shadow-paper)] sm:px-10 sm:py-12 lg:order-1">
         <div className="airmail absolute inset-x-0 top-0 h-1.5" aria-hidden="true" />
+        <DraftNote status={draft} dirty={draft.dirty} busy={uploading} onStartOver={startOver} />
         <div className="space-y-12">
           <Section n="01" id="opening" title={S.product.sections.opening} note={S.product.sections.openingNote}>
             <FormText control={control} name="title" label={S.product.fields.title} max={LIMITS.title} required />
@@ -163,7 +174,7 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
           </Section>
 
           <Section n="04" id="photo" title={S.product.sections.photo} note={S.product.sections.photoNote}>
-            <PhotoField value={photo} onChange={setPhoto} onBusy={setUploading} />
+            <PhotoField value={photo} onChange={setPhoto} onBusy={setUploading} lost={draft.photoLost} />
           </Section>
         </div>
 

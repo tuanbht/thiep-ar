@@ -67,6 +67,18 @@ describe.skipIf(!configured)('cleanupAbandoned', () => {
     expect(await kept(paidPhoto)).toBe(true);
   });
 
+  it('keeps a photo an abandoned try shares with a card someone paid for', async () => {
+    const shared = await photo();                                     // a draft kept the photo: the first try was left, the second paid
+    const left = await purchase(2 * DAY, 'pending', shared);
+    const paid = await purchase(2 * DAY, 'paid', shared);
+
+    await cleanupAbandoned(24, db, new Date(Date.now() + 2 * DAY));
+
+    expect(await exists('orders', left.order)).toBe(false);
+    expect(await exists('gift_cards', paid.card)).toBe(true);
+    expect(await kept(shared)).toBe(true);
+  });
+
   it('refuses a cut-off under an hour', async () => {
     await expect(cleanupAbandoned(0.5, db)).rejects.toThrow('at least an hour');
   });

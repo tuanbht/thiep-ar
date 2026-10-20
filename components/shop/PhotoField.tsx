@@ -1,6 +1,7 @@
 'use client';
 /* The letter's photo: picked, shown at once (a local preview), uploaded to the server (POST /api/uploads); the form
-   keeps the stored path, the preview keeps the local picture. */
+   keeps the stored path, the preview keeps the local picture. The local picture is let go when another replaces it or
+   the photo is removed, not when the page is left: the shop's router keeps the page and shows it again on Back. */
 import { useEffect, useId, useRef, useState } from 'react';
 import { LIMITS, type UploadResponse } from '@/lib/api/dto';
 import { S } from './strings';
@@ -9,14 +10,21 @@ const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export interface PhotoState { path: string | null; previewUrl: string | null }
 
-export function PhotoField({ value, onChange, onBusy }: { value: PhotoState; onChange(v: PhotoState): void; onBusy?(busy: boolean): void }) {
+export interface PhotoFieldProps {
+  value: PhotoState;
+  onChange(v: PhotoState): void;
+  onBusy?(busy: boolean): void;
+  /** the draft had a photo that could not come back: ask for it again */
+  lost?: boolean;
+}
+
+export function PhotoField({ value, onChange, onBusy, lost = false }: PhotoFieldProps) {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const objectUrl = useRef<string | null>(null);
 
-  useEffect(() => () => { if (objectUrl.current) URL.revokeObjectURL(objectUrl.current); }, []);
   useEffect(() => { onBusy?.(busy); }, [busy, onBusy]);   // the form holds "Buy" until the photo is in
 
   async function pick(file: File | undefined) {
@@ -62,7 +70,9 @@ export function PhotoField({ value, onChange, onBusy }: { value: PhotoState; onC
             {value.previewUrl
               // eslint-disable-next-line @next/next/no-img-element -- a local blob: preview, not a page image
               ? <img src={value.previewUrl} alt="" className={`h-full w-full object-cover transition-opacity ${busy ? 'opacity-50' : ''}`} />
-              : <span className="font-hand text-3xl text-ink-3" aria-hidden="true">ảnh</span>}
+              : lost
+                ? <span className="px-3 text-center text-xs italic leading-snug text-post">{S.product.draft.photoLost}</span>
+                : <span className="font-hand text-3xl text-ink-3" aria-hidden="true">ảnh</span>}
           </div>
         </div>
         <div className="flex flex-col items-start gap-2">

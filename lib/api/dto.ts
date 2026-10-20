@@ -24,6 +24,9 @@ export const LIMITS = {
 
 const trimmed = (max: number) => z.string().trim().max(max);
 
+/** where POST /api/uploads keeps a photo while the card is being written */
+export const PHOTO_PATH = /^drafts\/[0-9a-f-]{36}\.(jpg|png|webp)$/;
+
 export const giftContentInputSchema = z.object({
   title: trimmed(LIMITS.title).min(1),
   intro: trimmed(LIMITS.intro).default(''),
@@ -35,7 +38,7 @@ export const giftContentInputSchema = z.object({
   /** slot name -> words; checked against the product's form on the server (unknown slots refused, lengths capped) */
   slots: z.record(z.string(), z.string()).default({}),
   /** a path returned by POST /api/uploads, or null */
-  photoPath: z.string().regex(/^drafts\/[0-9a-f-]{36}\.(jpg|png|webp)$/).nullable().default(null)
+  photoPath: z.string().regex(PHOTO_PATH).nullable().default(null)
 });
 export type GiftContentInput = z.input<typeof giftContentInputSchema>;
 

@@ -24,7 +24,7 @@ With `PAYMENT_PROVIDER=test` (the default) the checkout pays at once, so the who
 | page | what happens |
 |---|---|
 | `/` | the shelf: every active product, 3D acts first, then films |
-| `/cards/[productId]` | the form from the template's `form.json` beside a live preview; photo upload; "Mua thiệp" creates the order |
+| `/cards/[productId]` | the form from the template's `form.json` beside a live preview; photo upload; "Mua thiệp" creates the order; the card being written is kept as a draft in the browser (localStorage) until its order is paid, so a reload loses nothing |
 | `/checkout/[orderId]` | the order slip and "Thanh toán" |
 | `/orders/[orderId]` | waits for the payment, then shows the gift link, its QR code, copy and share |
 | `/g/[slug]` | the gift: camera (MindAR tracks the printed card) or without the camera; the letter at the end |
@@ -94,7 +94,8 @@ particles, glows, lights).
 
 Their characters and props are free models that need no account: KayKit's chibi Adventurers with their own 76
 animations, KayKit's furniture and restaurant props, and the RobotExpressive robot, all CC0
-(`scripts/models/sources.mjs` pins each pack to a commit; the product page credits the authors anyway).
+(`scripts/models/sources.mjs` pins each pack to a commit; `template.json` notes each pack's author, and the shop shows
+no credits).
 
 ```bash
 node scripts/pack-models.mjs <id>    # scripts/models/recipes/<id>.json -> public/templates/<id>/models/*.glb with only the parts

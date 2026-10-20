@@ -31,9 +31,7 @@ describe('createTemplateCatalog', () => {
   beforeAll(async () => {
     dir = await mkdtemp(path.join(os.tmpdir(), 'catalog-'));
     const put = async (id: string, file: string, body: string) => { await mkdir(path.join(dir, id), { recursive: true }); await writeFile(path.join(dir, id, file), body); };
-    await put('ok', 'template.json', JSON.stringify({ kind: '3d', chapters: [0], aspect: 0.7, credits: [
-      { model: 'KayKit Adventurers', author: 'Kay Lousberg', license: 'CC0 1.0', url: 'https://kaylousberg.itch.io/kaykit-adventurers' },
-      { model: 'Evil', author: 'x', license: 'CC0', url: 'javascript:alert(1)' }, { model: '' }, 'nonsense'] }));
+    await put('ok', 'template.json', JSON.stringify({ kind: '3d', chapters: [0], aspect: 0.7 }));
     await put('ok', 'form.json', JSON.stringify({ label: 'OK', preset: {}, groups: [] }));
     await put('bad-form', 'template.json', JSON.stringify({ chapters: [1.5] }));
     await put('bad-form', 'form.json', JSON.stringify({ groups: 'no' }));
@@ -46,12 +44,6 @@ describe('createTemplateCatalog', () => {
     const t = await createTemplateCatalog(dir).getTemplateInfo('ok');
     expect(t).toMatchObject({ name: 'ok', kind: '3d', aspect: 0.7, chapters: 1 });
     expect(t!.form).toEqual({ label: 'OK', preset: { title: '', intro: '', to: '', body: [], from: '' }, groups: [] });
-  });
-
-  it('keeps the well-formed model credits only (an https link or none)', async () => {
-    expect((await createTemplateCatalog(dir).getTemplateInfo('ok'))!.credits).toEqual([
-      { model: 'KayKit Adventurers', author: 'Kay Lousberg', license: 'CC0 1.0', url: 'https://kaylousberg.itch.io/kaykit-adventurers' }]);
-    expect((await createTemplateCatalog(dir).getTemplateInfo('torn'))).toBeNull();
   });
 
   it('keeps a template whose form is broken, without the form, and says so in the log', async () => {

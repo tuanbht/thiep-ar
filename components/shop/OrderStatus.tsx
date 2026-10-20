@@ -1,9 +1,10 @@
 'use client';
 /* An order's state, kept fresh: while it waits for payment it asks the server every 2 s (for up to 2 min); once paid
-   it shows the gift's link. */
+   it shows the gift's link, and the draft this order was made from is let go (the next card starts afresh). */
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { OrderView } from '@/lib/api/dto';
+import { releaseDraft } from './draftStore';
 import { formatDateTime, formatVnd } from './format';
 import { GiftLink } from './GiftLink';
 import { S } from './strings';
@@ -14,6 +15,8 @@ export function OrderStatus({ initial }: { initial: OrderView }) {
   const [view, setView] = useState(initial);
   const [gaveUp, setGaveUp] = useState(false);
   const [round, setRound] = useState(0);              // "check again" starts another two minutes of asking
+
+  useEffect(() => { if (view.status === 'paid') releaseDraft(view.product.id, view.id); }, [view.status, view.product.id, view.id]);
 
   useEffect(() => {
     if (view.status !== 'pending') return;

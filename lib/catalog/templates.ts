@@ -4,7 +4,6 @@
 import 'server-only';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod';
 import { formSpecSchema, type FormSpec } from './form';
 import { kindOf, parseTemplate } from '../player/core/template';
 import type { Kind } from '../domain/types';
@@ -19,18 +18,6 @@ export interface TemplateInfo {
   /** the template's own hint at each stop */
   /** null when the template has no form.json (or a broken one): it cannot be customised */
   form: FormSpec | null;
-  /** who made the free 3D models the act uses (template.json "credits", written by scripts/pack-models.mjs) */
-  credits: Credit[];
-}
-
-export interface Credit { model: string; author: string; license: string; url?: string }
-
-const creditSchema = z.object({ model: z.string().min(1).max(80), author: z.string().min(1).max(120), license: z.string().min(1).max(40),
-  url: z.url({ protocol: /^https$/ }).max(300).optional() });
-
-/** the credits that are well formed; a broken one is left out rather than breaking the page */
-function creditsOf(raw: unknown): Credit[] {
-  return Array.isArray(raw) ? raw.flatMap(c => { const r = creditSchema.safeParse(c); return r.success ? [r.data] : []; }).slice(0, 6) : [];
 }
 
 const ID = /^[a-z0-9][a-z0-9_-]*$/i;
@@ -65,8 +52,7 @@ export function createTemplateCatalog(dir: string, { cache = true }: { cache?: b
       kind: kindOf(tpl),
       aspect: tpl.aspect,
       chapters: tpl.chapters.length,
-      form,
-      credits: creditsOf(tpl.credits)
+      form
     };
   }
 

@@ -69,7 +69,15 @@ export const S = {
     photoFailed: 'Chưa tải được ảnh lên. Thử lại nhé.',
     orderFailed: 'Chưa tạo được đơn. Thử lại sau một chút.',
     noForm: 'Tấm thiệp này chưa mở bán.',
-    credits: 'Mô hình 3D miễn phí'
+    draft: {
+      idle: 'Bản nháp tự lưu trên máy này',
+      saved: (when: string) => `Đã lưu nháp ${when}`,
+      restored: (when: string) => `Đã mở lại bản nháp ${when}`,
+      failed: 'Máy này không lưu được bản nháp',
+      photoLost: 'Ảnh của bản nháp không mở lại được, chọn lại ảnh nhé.',
+      startOver: 'Viết lại từ đầu',
+      confirm: 'Bấm lần nữa để xoá'
+    }
   },
 
   checkout: {

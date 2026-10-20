@@ -1,6 +1,6 @@
 /* Where the 3D cards' models come from: free packs that allow selling the cards (CC0), each read from a fixed commit so
    a rebuild gets the same bytes. A recipe names a model as "<source>/<file>", e.g. "kaykit/Knight". Nothing here needs
-   an account. Credits are not required by CC0; the cards credit the authors anyway (template.json "credits"). */
+   an account. CC0 asks for no credit; template.json "credits" still notes each pack's author, for us, not the shop. */
 const gh = (repo, sha, dir) => `https://raw.githubusercontent.com/${repo}/${sha}/${dir}/`;
 
 export const SOURCES = {
