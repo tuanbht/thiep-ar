@@ -22,7 +22,20 @@ export const S = {
     shelfLead: 'Mỗi tấm có bản in riêng: điện thoại nhận ra đúng tấm thiệp đó.',
     groups: { '3d': 'Màn diễn 3D', film: 'Phim trên thiệp' },
     empty: 'Kệ đang trống. Quay lại sau một chút nhé.',
-    unavailable: 'Chưa mở được kệ thiệp. Thử tải lại trang.'
+    unavailable: 'Chưa mở được kệ thiệp. Thử tải lại trang.',
+    search: {
+      label: 'Tìm thiệp',
+      placeholder: 'mưa, biển, cầu hôn, sinh nhật…',
+      clear: 'Xoá chữ đã gõ',
+      categories: 'Chủ đề',
+      all: 'Tất cả',
+      found: (n: number) => `${n} thiệp`,
+      forWords: (q: string) => `cho “${q}”`,
+      inCategory: (name: string) => `trong ${name}`,
+      reset: 'Xem cả kệ',
+      none: 'Chưa có tấm thiệp nào như vậy.',
+      noneHint: 'Thử một từ khác, hoặc chọn một chủ đề bên trên.'
+    }
   },
 
   kind: { '3d': 'Diễn 3D', film: 'Phim' },

@@ -12,7 +12,8 @@ vi.mock('../PreviewPanel', () => ({ PreviewPanel: ({ card }: { card: { slots: Re
 const { CustomizeForm } = await import('../CustomizeForm');
 const { releaseDraft } = await import('../draftStore');
 
-const product: Product = { id: 'flower-letter', template: 'flower-letter', design: null, name: 'Thư hoa', blurb: null, kind: '3d', priceVnd: 49000, active: true, sort: 0 };
+const product: Product = { id: 'flower-letter', template: 'flower-letter', design: null, name: 'Thư hoa', blurb: null, kind: '3d', priceVnd: 49000, active: true, sort: 0,
+  tags: [], categories: [] };
 const form: FormSpec = {
   label: 'Thư hoa',
   preset: { title: 'Thư hoa', intro: 'Lay the card flat', to: 'Dear you,', body: ['Some flowers'], from: 'With love' },

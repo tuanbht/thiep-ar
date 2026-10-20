@@ -9,5 +9,7 @@
   "reveal": null,
   "boardDefault": "Happy birthday!",
   "boardColor": "#ff8a1f",
-  "notes": "Astro Bun, a chubby bunny astronaut in a white suit with orange trim, a glass bubble helmet its long ears poke out of, and a little orange jetpack with a blinking antenna. Built from primitives in character.js (no model to download); the ears swing on springs. The 15-second show is the shared templates/_acts/showtime.js: it hovers down out of the card and salutes, waves, bounds round the card in slow moon leaps, does the moon bounce, a jetpack backflip with two little flames, cheers while confetti cannons, fireworks and the board with the card's words come up, then points at the letter as it rises. One stop: a tap opens the letter. The printed card (scenes/astro-bun/card.html) is a retro space-party poster."
+  "notes": "Astro Bun, a chubby bunny astronaut in a white suit with orange trim, a glass bubble helmet its long ears poke out of, and a little orange jetpack with a blinking antenna. Built from primitives in character.js (no model to download); the ears swing on springs. The 15-second show is the shared templates/_acts/showtime.js: it hovers down out of the card and salutes, waves, bounds round the card in slow moon leaps, does the moon bounce, a jetpack backflip with two little flames, cheers while confetti cannons, fireworks and the board with the card's words come up, then points at the letter as it rises. One stop: a tap opens the letter. The printed card (scenes/astro-bun/card.html) is a retro space-party poster.",
+  "categories": ["fun", "birthday", "encourage"],
+  "tags": ["thỏ", "phi hành gia", "vũ trụ", "tên lửa", "dễ thương"]
 }

@@ -9,5 +9,7 @@
   "reveal": null,
   "boardDefault": "Happy birthday!",
   "boardColor": "#e63946",
-  "notes": "Biscuit, a chubby corgi pup in a red bandana, built from primitives in character.js (no model to download). The 15-second show is the shared templates/_acts/showtime.js: Biscuit pops out of the card with a woof, sits up pretty and waves a paw, does zoomies round the card, a play bow and butt wiggle, chases its own tail two turns round and goes dizzy, bounces and howls while the confetti cannons fire and the board with the card's words comes up, then sits and points its nose at the rising letter. One stop: a tap opens the letter. The printed card (scenes/biscuit/card.html) is a sunny dog-park birthday: bones, tennis balls and paw prints."
+  "notes": "Biscuit, a chubby corgi pup in a red bandana, built from primitives in character.js (no model to download). The 15-second show is the shared templates/_acts/showtime.js: Biscuit pops out of the card with a woof, sits up pretty and waves a paw, does zoomies round the card, a play bow and butt wiggle, chases its own tail two turns round and goes dizzy, bounces and howls while the confetti cannons fire and the board with the card's words comes up, then sits and points its nose at the rising letter. One stop: a tap opens the letter. The printed card (scenes/biscuit/card.html) is a sunny dog-park birthday: bones, tennis balls and paw prints.",
+  "categories": ["fun", "birthday"],
+  "tags": ["cún con", "chó corgi", "tinh nghịch", "chúc mừng", "dễ thương"]
 }

@@ -14,7 +14,8 @@ const { OrderStatus } = await import('../OrderStatus');
 const { GiftLink } = await import('../GiftLink');
 const { PhotoField } = await import('../PhotoField');
 
-const product: Product = { id: 'mochi', template: 'mochi', design: null, name: 'Mochi', blurb: 'A rice cake runs', kind: '3d', priceVnd: 49000, active: true, sort: 1 };
+const product: Product = { id: 'mochi', template: 'mochi', design: null, name: 'Mochi', blurb: 'A rice cake runs', kind: '3d', priceVnd: 49000, active: true, sort: 1,
+  tags: [], categories: [] };
 const view = (over: Partial<OrderView> = {}): OrderView => ({
   id: 'o1', code: 'GC-261016-ABCDE', status: 'pending', amountVnd: 49000, product: { id: 'mochi', name: 'Mochi', template: 'mochi' },
   createdAt: '2026-10-16T03:00:00Z', paidAt: null, giftUrl: null, ...over

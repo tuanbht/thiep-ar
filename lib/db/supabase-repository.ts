@@ -3,7 +3,7 @@
    (confirm_order_payment), so the order, its gift card and the payment change together or not at all. */
 import 'server-only';
 import { z } from 'zod';
-import type { AnalyticsEvent, GiftCard, GiftContent, Order, Payment, PaymentProviderId, Product } from '../domain/types';
+import type { AnalyticsEvent, GiftCard, GiftContent, Order, Payment, PaymentProviderId, Product, ProductFilter, ShelfCategory } from '../domain/types';
 import type { Db } from './client';
 import type { Database, Json } from './database.types';
 import { RepositoryError, StateError, UniqueViolation, type ConfirmedPayment, type NewGiftCard, type NewOrder, type PaymentConfirmation, type Repository } from './repository';
@@ -29,9 +29,12 @@ function fail(what: string, e: PgError): never {
   throw new RepositoryError(`${what}: ${e.message}`, e);
 }
 
-export const toProduct = (r: ProductRow): Product => ({
-  id: r.id, template: r.template, design: r.design, name: r.name, blurb: r.blurb, kind: r.kind === '3d' ? '3d' : 'film',
-  priceVnd: r.price_vnd, active: r.active, sort: r.sort
+type ProductFields = Pick<ProductRow, 'id' | 'template' | 'design' | 'name' | 'blurb' | 'kind' | 'price_vnd' | 'active' | 'sort' | 'tags'>;
+const PRODUCT_FIELDS = 'id, template, design, name, blurb, kind, price_vnd, active, sort, tags';
+
+export const toProduct = (r: ProductFields, categories: string[]): Product => ({
+  id: r.id, template: r.template, design: r.design ?? null, name: r.name, blurb: r.blurb ?? null, kind: r.kind === '3d' ? '3d' : 'film',
+  priceVnd: r.price_vnd, active: r.active, sort: r.sort, tags: r.tags ?? [], categories
 });
 
 /** What a gift card's content column must hold; a row that does not is an error here, not a crash in the player. */
@@ -62,16 +65,31 @@ export const toPayment = (r: PaymentRow): Payment => ({
 export class SupabaseRepository implements Repository {
   constructor(private readonly db: Db) {}
 
-  async listProducts(): Promise<Product[]> {
-    const { data, error } = await this.db.from('products').select('*').eq('active', true).order('sort').order('id');
+  /** search_products() (the migration categories_search) does the matching: full-text, accents optional. Control
+      characters are taken out first: Postgres refuses a NUL in text (a scanner's ?q=%00). */
+  async listProducts({ query, category }: ProductFilter = {}): Promise<Product[]> {
+    const words = query?.replace(/\p{Cc}+/gu, ' ').trim();
+    const { data, error } = await this.db.rpc('search_products', { p_query: words || undefined, p_category: category || undefined })
+      .order('rank', { ascending: false }).order('sort').order('id');
     if (error) fail('list products', error);
-    return data.map(toProduct);
+    return data.map(r => toProduct(r, r.categories ?? []));
+  }
+
+  async listCategories(): Promise<ShelfCategory[]> {
+    const { data, error } = await this.db.rpc('shelf_categories');
+    if (error) fail('list categories', error);
+    return data.map(c => ({ id: c.id, name: c.name, blurb: c.blurb ?? null, sort: c.sort, count: c.products }));
   }
 
   async getProduct(id: string): Promise<Product | null> {
-    const { data, error } = await this.db.from('products').select('*').eq('id', id).maybeSingle();
+    const { data, error } = await this.db.from('products').select(`${PRODUCT_FIELDS}, product_categories(category_id, categories(sort))`)
+      .eq('id', id).maybeSingle();
     if (error) fail(`product ${id}`, error);
-    return data ? toProduct(data) : null;
+    if (!data) return null;
+    const categories = [...data.product_categories]
+      .sort((a, b) => (a.categories?.sort ?? 0) - (b.categories?.sort ?? 0) || a.category_id.localeCompare(b.category_id))
+      .map(c => c.category_id);
+    return toProduct(data, categories);
   }
 
   async createGiftCard(input: NewGiftCard): Promise<GiftCard> {

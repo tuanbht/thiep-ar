@@ -23,7 +23,7 @@ With `PAYMENT_PROVIDER=test` (the default) the checkout pays at once, so the who
 
 | page | what happens |
 |---|---|
-| `/` | the shelf: every active product, 3D acts first, then films |
+| `/` | the shelf: every active product, 3D acts first, then films; search it by words (`?q=`) and by category (`?c=`) |
 | `/cards/[productId]` | the form from the template's `form.json` beside a live preview; photo upload; "Mua thiệp" creates the order; the card being written is kept as a draft in the browser (localStorage) until its order is paid, so a reload loses nothing |
 | `/checkout/[orderId]` | the order slip and "Thanh toán" |
 | `/orders/[orderId]` | waits for the payment, then shows the gift link, its QR code, copy and share |
@@ -39,7 +39,15 @@ and who owns which code.
 `gift-photos` bucket, and `confirm_order_payment`, the one function that marks an order paid, activates its gift card
 and records the payment in one transaction (and safely ignores a repeated callback). Row level security is on with no
 policies: only the server, with the secret key, reads or writes. Prices are in `products.price_vnd` (49 000 ₫ each to
-start); `pnpm db:seed` regenerates `supabase/seed.sql` from the templates.
+start); `pnpm db:seed` regenerates `supabase/seed.sql` from the templates (a template is sold once it has `form.json`,
+its print's `targets.mind` and its shop picture `public/thumbs/<id>.jpg`).
+
+Search and categories: the shelf's categories are `supabase/categories.json` (seeded into `categories`, in that order);
+each template names its own in `template.json` (`"categories": ["love", "couple"]`) with its search words
+(`"tags": ["mưa", "chiếc ô"]`). Adding a category or moving a card is a data change, not a migration. Search is
+Postgres full-text (`search_products()`): a card's name, tags, categories and blurb are folded to plain lowercase
+(`unaccent`, so "tinh yeu" finds "Tình yêu") into an indexed `products.search` that triggers keep fresh; every word
+typed must begin a word of the card, the name counts most, and the words exactly as typed rank first.
 
 Events (`events` table) count the funnel and the gift's use. Browsers may report `product_view`, `customize_start`,
 `preview_open`, `checkout_start`, `ar_start`, `card_found`, `chapter_reached`, `letter_open` and `preview_mode`; only the

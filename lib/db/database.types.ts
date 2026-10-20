@@ -23,7 +23,21 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "events": {
+            "categories": {
+                  Row: {
+                    "blurb": string | null,"id": string,"name": string,"sort": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "blurb"?: string | null,"id": string,"name": string,"sort"?: number
+                  }
+                  Update: {
+                    "blurb"?: string | null,"id"?: string,"name"?: string,"sort"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"events": {
                   Row: {
                     "gift_card_id": string | null,"id": number,"name": string,"occurred_at": string,"order_id": string | null,"product_id": string | null,"props": NonNullable<Json>,"referrer": string | null,"session_id": string | null,"user_agent": string | null
                   }
@@ -115,16 +129,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"products": {
+                },"product_categories": {
                   Row: {
-                    "active": boolean,"blurb": string | null,"created_at": string,"design": string | null,"id": string,"kind": string,"name": string,"price_vnd": number,"sort": number,"template": string,"updated_at": string
+                    "category_id": string,"product_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"blurb"?: string | null,"created_at"?: string,"design"?: string | null,"id": string,"kind": string,"name": string,"price_vnd": number,"sort"?: number,"template": string,"updated_at"?: string
+                    "category_id": string,"product_id": string
                   }
                   Update: {
-                    "active"?: boolean,"blurb"?: string | null,"created_at"?: string,"design"?: string | null,"id"?: string,"kind"?: string,"name"?: string,"price_vnd"?: number,"sort"?: number,"template"?: string,"updated_at"?: string
+                    "category_id"?: string,"product_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "product_categories_category_id_fkey"
+      columns: ["category_id"]
+isOneToOne: false
+      referencedRelation: "categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_categories_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"products": {
+                  Row: {
+                    "active": boolean,"blurb": string | null,"created_at": string,"design": string | null,"id": string,"kind": string,"name": string,"price_vnd": number,"search": unknown,"sort": number,"tags": (string)[],"template": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"blurb"?: string | null,"created_at"?: string,"design"?: string | null,"id": string,"kind": string,"name": string,"price_vnd": number,"search"?: unknown,"sort"?: number,"tags"?: (string)[],"template": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"blurb"?: string | null,"created_at"?: string,"design"?: string | null,"id"?: string,"kind"?: string,"name"?: string,"price_vnd"?: number,"search"?: unknown,"sort"?: number,"tags"?: (string)[],"template"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -140,6 +180,28 @@ isOneToOne: false
                            },
 "confirm_order_payment":
 { Args: { "p_amount": number,"p_order_id": string,"p_paid_at": string,"p_provider": string,"p_raw": Json,"p_ref": string }; Returns: Json
+                           },
+"fold":
+{ Args: { "t": string }; Returns: string
+                           },
+"product_search_doc":
+{ Args: { "p_blurb": string,"p_id": string,"p_name": string,"p_tags": (string)[] }; Returns: unknown
+                           },
+"search_products":
+{ Args: { "p_category"?: string,"p_query"?: string }; Returns: {
+              "active": boolean,"blurb": string,"categories": (string)[],"design": string,"id": string,"kind": string,"name": string,"price_vnd": number,"rank": number,"sort": number,"tags": (string)[],"template": string
+            }[]
+                           },
+"search_query":
+{ Args: { "p_text": string }; Returns: unknown
+                           },
+"search_words":
+{ Args: { "t": string }; Returns: string
+                           },
+"shelf_categories":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "blurb": string,"id": string,"name": string,"products": number,"sort": number
+            }[]
                            }
           }
           Enums: {

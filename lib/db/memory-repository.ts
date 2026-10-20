@@ -1,24 +1,41 @@
 /* The Repository in memory, for the unit tests. Same rules as Supabase's
    (unique slugs and codes, confirmPayment atomic and idempotent); every value handed out is a copy. */
 import { randomUUID } from 'node:crypto';
-import type { AnalyticsEvent, GiftCard, Order, Payment, Product } from '../domain/types';
+import type { AnalyticsEvent, Category, GiftCard, Order, Payment, Product, ProductFilter, ShelfCategory } from '../domain/types';
+import { queryWords, score } from './memory-search';
 import { RepositoryError, StateError, UniqueViolation, type ConfirmedPayment, type NewGiftCard, type NewOrder, type PaymentConfirmation, type Repository } from './repository';
 
 const copy = <T>(v: T): T => structuredClone(v);
 
 export class MemoryRepository implements Repository {
   private readonly products = new Map<string, Product>();
+  private readonly categories = new Map<string, Category>();
   private readonly gifts = new Map<string, GiftCard>();
   private readonly orders = new Map<string, Order>();
   private readonly payments: Payment[] = [];
   readonly events: AnalyticsEvent[] = [];
 
-  constructor(products: Product[] = [], private readonly now: () => Date = () => new Date()) {
+  constructor(products: Product[] = [], private readonly now: () => Date = () => new Date(), categories: Category[] = []) {
     for (const p of products) this.products.set(p.id, copy(p));
+    for (const c of categories) this.categories.set(c.id, copy(c));
   }
 
-  async listProducts(): Promise<Product[]> {
-    return [...this.products.values()].filter(p => p.active).sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id)).map(copy);
+  async listProducts({ query, category }: ProductFilter = {}): Promise<Product[]> {
+    const words = queryWords(query);
+    return [...this.products.values()]
+      .filter(p => p.active && (!category || p.categories.includes(category)))
+      .map(p => ({ p, rank: words.length ? score(p, query ?? '', words, this.categories) : 1 }))
+      .filter(r => r.rank > 0)
+      .sort((a, b) => b.rank - a.rank || a.p.sort - b.p.sort || a.p.id.localeCompare(b.p.id))
+      .map(r => copy(r.p));
+  }
+
+  async listCategories(): Promise<ShelfCategory[]> {
+    const onSale = [...this.products.values()].filter(p => p.active);
+    return [...this.categories.values()]
+      .map(c => ({ ...copy(c), count: onSale.filter(p => p.categories.includes(c.id)).length }))
+      .filter(c => c.count > 0)
+      .sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));
   }
 
   async getProduct(id: string): Promise<Product | null> {

@@ -1,7 +1,7 @@
 /* Where the platform keeps its data. Business code depends on this interface only; Supabase implements it in
    production (lib/db/supabase-repository.ts), memory in tests (lib/db/memory-repository.ts). Every method throws
    RepositoryError on a storage failure; "not found" is null, never an error. */
-import type { AnalyticsEvent, Buyer, GiftCard, GiftContent, Order, Payment, PaymentProviderId, Product } from '../domain/types';
+import type { AnalyticsEvent, Buyer, GiftCard, GiftContent, Order, Payment, PaymentProviderId, Product, ProductFilter, ShelfCategory } from '../domain/types';
 
 export class RepositoryError extends Error {
   constructor(message: string, readonly cause?: unknown) { super(message); }
@@ -48,8 +48,11 @@ export interface ConfirmedPayment {
 }
 
 export interface Repository {
-  /** the active products, in shop order */
-  listProducts(): Promise<Product[]>;
+  /** the active products, in shop order; with words, those matching every word, best match first; with a category,
+      only its products */
+  listProducts(filter?: ProductFilter): Promise<Product[]>;
+  /** the categories that have products on sale, in shop order, with how many */
+  listCategories(): Promise<ShelfCategory[]>;
   getProduct(id: string): Promise<Product | null>;
 
   /** a draft gift card (status "draft") with its unique slug; RepositoryError if the slug is taken */

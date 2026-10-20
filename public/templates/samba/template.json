@@ -10,5 +10,7 @@
   "chapters": [0, 1],
   "reveal": null,
   "boardDefault": "Congratulations!",
-  "notes": "Michelle (Mixamo, via the three.js examples; check the licence before selling): a textured dancer with one clip, SambaDance. She keeps dancing; the board rises on a stand beside her. Uses the Party Monkey card for tracking."
+  "notes": "Michelle (Mixamo, via the three.js examples; check the licence before selling): a textured dancer with one clip, SambaDance. She keeps dancing; the board rises on a stand beside her. Uses the Party Monkey card for tracking.",
+  "categories": ["fun"],
+  "tags": ["nhảy", "khiêu vũ", "vũ điệu", "hộp quà", "sôi động"]
 }

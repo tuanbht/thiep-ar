@@ -15,6 +15,31 @@ export interface Product {
   priceVnd: number;
   active: boolean;
   sort: number;
+  /** words a buyer might search for ("mưa", "cầu hôn") */
+  tags: string[];
+  /** the ids of the shelf categories it is in, in shelf order */
+  categories: string[];
+}
+
+/** A shelf category ("Tình yêu", "Sinh nhật"); a product can be in several. */
+export interface Category {
+  id: string;
+  name: string;
+  blurb: string | null;
+  sort: number;
+}
+
+/** A category as the shelf offers it: with how many products on sale are in it. */
+export interface ShelfCategory extends Category {
+  count: number;
+}
+
+/** What the shelf asks for; both optional. */
+export interface ProductFilter {
+  /** words typed: each must begin a word of the product (its name, tags, categories or blurb), accents optional */
+  query?: string;
+  /** a category id */
+  category?: string;
 }
 
 /** What the buyer writes: the words the act shows, the letter at the end, an optional photo. */

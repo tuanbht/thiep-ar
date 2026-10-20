@@ -5,7 +5,7 @@ import { Postmark, WaxSeal } from '@/components/shop/motifs';
 import { Shelf, ShelfSkeleton } from '@/components/shop/Shelf';
 import { S } from '@/components/shop/strings';
 
-export default function HomePage() {
+export default function HomePage({ searchParams }: PageProps<'/'>) {
   return (
     <>
       <Hero />
@@ -17,7 +17,7 @@ export default function HomePage() {
             <p className="max-w-xl text-lg italic leading-relaxed text-ink-2 md:justify-self-end">{S.home.shelfLead}</p>
           </header>
           <Suspense fallback={<ShelfSkeleton />}>
-            <Shelf />
+            <Shelf searchParams={searchParams} />
           </Suspense>
         </div>
       </section>

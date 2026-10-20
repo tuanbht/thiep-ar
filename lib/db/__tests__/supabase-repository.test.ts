@@ -4,7 +4,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { randomBytes } from 'node:crypto';
 import type { OrderStatus, PaymentProviderId } from '../../domain/types';
 import { createAdminClient, supabaseConfig, ConfigError } from '../client';
-import { repositoryContract, runId, testProducts } from './repository.contract';
+import { repositoryContract, runId, testCategories, testProducts } from './repository.contract';
 import { RepositoryError } from '../repository';
 import { SupabaseRepository } from '../supabase-repository';
 
@@ -21,18 +21,29 @@ describe('supabaseConfig', () => {
 
 describe.skipIf(!configured)('Supabase', () => {
   const run = runId();
-  const products = testProducts(run);
+  const products = testProducts(run), categories = testCategories(run);
   const db = configured ? createAdminClient() : null!;
   const sessions = new Set<string>();   // the events this run recorded, to delete afterwards
 
   repositoryContract('SupabaseRepository', async () => {
-    const { error } = await db.from('products').insert([products.first, products.second, products.hidden].map(p => ({
-      id: p.id, template: p.template, design: p.design, name: p.name, blurb: p.blurb, kind: p.kind, price_vnd: p.priceVnd, active: p.active, sort: p.sort
-    })));
-    if (error) throw new Error(`could not add the test products: ${error.message}`);
+    const all = [products.first, products.second, products.hidden];
+    const steps = [
+      () => db.from('categories').insert([categories.main, categories.spare]),
+      () => db.from('products').insert(all.map(p => ({
+        id: p.id, template: p.template, design: p.design, name: p.name, blurb: p.blurb, kind: p.kind, price_vnd: p.priceVnd, active: p.active,
+        sort: p.sort, tags: p.tags
+      }))),
+      () => db.from('product_categories').insert(all.flatMap(p => p.categories.map(c => ({ product_id: p.id, category_id: c }))))
+    ];
+    for (const step of steps) {
+      const { error } = await step();
+      if (error) throw new Error(`could not add the test products: ${error.message}`);
+    }
     return {
       repo: new SupabaseRepository(db),
+      run,
       products,
+      categories,
       async setOrderStatus(orderId: string, status: OrderStatus) {
         const { error: e } = await db.from('orders').update({ status }).eq('id', orderId);
         if (e) throw new Error(e.message);
@@ -47,11 +58,14 @@ describe.skipIf(!configured)('Supabase', () => {
   });
 
   const anon = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
-  it.skipIf(!anon)('keeps the public roles out: a public key reads nothing', async () => {
+  it.skipIf(!anon)('keeps the public roles out: a public key reads nothing and searches nothing', async () => {
     const { createClient } = await import('@supabase/supabase-js');
     const pub = createClient(process.env.SUPABASE_URL!, anon!, { auth: { persistSession: false } });
-    const { data, error } = await pub.from('products').select('id').limit(1);
-    expect(error ?? data?.length === 0).toBeTruthy();
+    for (const table of ['products', 'categories', 'product_categories']) {
+      const { data, error } = await pub.from(table).select('*').limit(1);
+      expect(error ?? data?.length === 0, table).toBeTruthy();
+    }
+    for (const fn of ['search_products', 'shelf_categories']) expect((await pub.rpc(fn)).error, fn).toBeTruthy();
   });
 
   it('takes any provider the app names, with no migration, and refuses a malformed one', async () => {
@@ -84,6 +98,7 @@ describe.skipIf(!configured)('Supabase', () => {
       await db.from('events').delete().in('gift_card_id', giftIds);
       await db.from('gift_cards').delete().in('id', giftIds);
     }
-    await db.from('products').delete().in('id', ids);
+    await db.from('products').delete().in('id', ids);                     // their category links go with them
+    await db.from('categories').delete().in('id', [categories.main.id, categories.spare.id]);
   });
 });

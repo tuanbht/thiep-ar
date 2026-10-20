@@ -8,10 +8,10 @@ import type { PhotoExt, PhotoStore } from '../photo';
 import { OrdersService, type OrdersDeps } from '../service';
 
 export const PRODUCTS: Product[] = [
-  { id: 'flower-letter', template: 'flower-letter', design: null, name: 'Thư hoa', blurb: 'Hoa nở từ phong bì', kind: '3d', priceVnd: 49000, active: true, sort: 1 },
-  { id: 'mochi', template: 'mochi', design: null, name: 'Mochi', blurb: null, kind: '3d', priceVnd: 59000, active: true, sort: 2 },
-  { id: 'retired', template: 'pip', design: null, name: 'Pip (old)', blurb: null, kind: '3d', priceVnd: 39000, active: false, sort: 3 },
-  { id: 'ghost', template: 'no-such-template', design: null, name: 'Ghost', blurb: null, kind: '3d', priceVnd: 1000, active: true, sort: 4 }
+  { id: 'flower-letter', template: 'flower-letter', design: null, name: 'Thư hoa', blurb: 'Hoa nở từ phong bì', kind: '3d', priceVnd: 49000, active: true, sort: 1, tags: [], categories: [] },
+  { id: 'mochi', template: 'mochi', design: null, name: 'Mochi', blurb: null, kind: '3d', priceVnd: 59000, active: true, sort: 2, tags: [], categories: [] },
+  { id: 'retired', template: 'pip', design: null, name: 'Pip (old)', blurb: null, kind: '3d', priceVnd: 39000, active: false, sort: 3, tags: [], categories: [] },
+  { id: 'ghost', template: 'no-such-template', design: null, name: 'Ghost', blurb: null, kind: '3d', priceVnd: 1000, active: true, sort: 4, tags: [], categories: [] }
 ];
 
 export const FIXED_NOW = new Date('2026-10-16T18:30:00Z');   // 01:30 on 17 Oct in Vietnam

@@ -7,7 +7,8 @@ MindAR, Supabase (Postgres + Storage). Payments go through a provider slot: `tes
 ## The buy workflow
 
 ```
-/                      shop: the cards for sale (products)              event product_view
+/                      shop: the cards for sale (products), searched by ?q=words and ?c=category
+                         (search_products(): Postgres full-text, accents optional)  event product_view
 /cards/[productId]     write the card: form (from the template's form.json) beside a live 3D/film preview
                        photo -> POST /api/uploads (Storage, private bucket, drafts/<uuid>.<ext>)
                        "Buy" -> POST /api/orders {productId, content, buyer}
@@ -34,7 +35,9 @@ same provider reference (a provider may call back more than once).
 
 | table | what |
 |---|---|
-| products | what is sold: template (+ design), name, kind, price in VND, active, sort |
+| products | what is sold: template (+ design), name, kind, price in VND, active, sort, tags (search words), search (tsvector, kept by triggers) |
+| categories | the shelf's categories (id, name, blurb, sort), from supabase/categories.json |
+| product_categories | which product is in which category (a product can be in several) |
 | gift_cards | the buyer's content (jsonb), slug (unique, unguessable), status draft/active/disabled |
 | orders | code, amount, status, buyer contact, access token hash, payment provider + ref, paid_at |
 | payments | every confirmed payment, with the provider's raw payload |

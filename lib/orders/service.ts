@@ -9,7 +9,7 @@ import type { TemplateInfo } from '../catalog/templates';
 import { validateContent } from '../content/validate';
 import { toCard } from '../content/toCard';
 import { StateError, UniqueViolation, type ConfirmedPayment, type PaymentConfirmation, type Repository } from '../db/repository';
-import type { AnalyticsEvent, GiftCard, Order, Product } from '../domain/types';
+import type { AnalyticsEvent, GiftCard, Order, Product, ProductFilter, ShelfCategory } from '../domain/types';
 import type { PaymentProvider } from '../payments/provider';
 import type { Card } from '../player/core/card';
 import { randomToken, safeEqualHex, sha256Hex } from '../server/security';
@@ -47,7 +47,10 @@ export class OrdersService {
     this.now = d.now ?? (() => new Date());
   }
 
-  listProducts(): Promise<Product[]> { return this.d.repo.listProducts(); }
+  /** the shelf: what is on sale, matching the words typed and the category picked, if any */
+  listProducts(filter?: ProductFilter): Promise<Product[]> { return this.d.repo.listProducts(filter); }
+
+  listCategories(): Promise<ShelfCategory[]> { return this.d.repo.listCategories(); }
 
   getProduct(id: string): Promise<Product | null> { return this.d.repo.getProduct(id); }
 
