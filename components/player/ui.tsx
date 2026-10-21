@@ -10,6 +10,7 @@ import {
 import type { Card } from "@/lib/player/core/card";
 import s from "./playerClasses";
 import { T } from "./strings";
+import Image from "next/image";
 
 const cx = (...c: (string | false | null | undefined)[]) =>
   c.filter(Boolean).join(" ");
@@ -102,6 +103,7 @@ const IN_APP =
 
 export function Intro(p: {
   title: string;
+  template: string;
   lead: string;
   ready: boolean;
   onStart(): void;
@@ -111,6 +113,14 @@ export function Intro(p: {
     typeof navigator !== "undefined" && IN_APP.test(navigator.userAgent);
   return (
     <section className={s.ui} aria-label={p.title} data-ui>
+      <Image
+        src={`/thumbs/${p.template}.jpg`}
+        alt=""
+        width={960}
+        height={600}
+        sizes={"(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+        className="aspect-[16/10] mb-10 h-auto w-full max-w-240 object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] motion-safe:group-hover:scale-[1.04]"
+      />
       <p className={s.eyebrow}>{T.eyebrow}</p>
       <h1 className={s.title} id="title">
         {p.title}

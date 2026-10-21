@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Dancing_Script, Lora } from "next/font/google";
 import { S } from "@/components/shop/strings";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const barlow = Barlow_Condensed({
   weight: ["500", "700", "800"],
@@ -47,7 +49,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="vi"
       className={`${barlow.variable} ${lora.variable} ${dancing.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <Analytics />
+        <SpeedInsights />
+        {children}
+      </body>
     </html>
   );
 }
