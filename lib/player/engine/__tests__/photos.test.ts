@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { mergeCard } from "../../core/card";
-import { paintPhotos, quadPoint, shuffled, type PhotoImage } from "../photos";
+import {
+  fillPlaces,
+  paintPhotos,
+  photoTurn,
+  quadPoint,
+  shuffled,
+  type PhotoImage,
+} from "../photos";
 import { createWordsPainter } from "../words";
 import type { PhotoOverlay, PhotoPlace, PhotoQuad, Slots } from "../types";
 
@@ -281,7 +288,7 @@ describe("paintPhotos, for a place given by its four corners", () => {
     );
     const W = scratch.width,
       H = scratch.height;
-    expect(W / H).toBeCloseTo(2);
+    expect([W, H]).toEqual([200, 100]); // made at the place's size on screen: drawn down far, a photo turns jagged
     expect(pic.calls.find((c) => c.op === "drawImage")).toMatchObject({
       args: [expect.anything(), 0, 0, 400, 200, 0, 0, W, H],
     }); // the photo's crop first
@@ -369,6 +376,32 @@ describe("paintPhotos, for a place given by its four corners", () => {
       3,
     );
     expect(clip).toBeLessThan(calls.findIndex((c) => c.op === "drawImage"));
+  });
+});
+
+describe("fillPlaces", () => {
+  it("gives every place one of the buyer's photos, repeating them when there are fewer", () => {
+    expect(fillPlaces(["a", "b"], 5)).toEqual(["a", "b", "a", "b", "a"]);
+    expect(fillPlaces(["a", "b", "c"], 2)).toEqual(["a", "b"]);
+  });
+
+  it("leaves every place to the film's own picture when there are no photos", () => {
+    expect(fillPlaces([], 4)).toEqual([]);
+  });
+});
+
+describe("photoTurn", () => {
+  it("shows each photo for a turn, fading into the next over its last moments, round and round", () => {
+    expect(photoTurn(0, 3)).toEqual({ index: 0, next: 1, mix: 0 });
+    expect(photoTurn(1, 3)).toEqual({ index: 0, next: 1, mix: 0 });
+    expect(photoTurn(2.5, 3).mix).toBeCloseTo(0.5); // 2.2 s in, the fade begins; 0.6 s later the next is in
+    expect(photoTurn(2.9, 3)).toMatchObject({ index: 1, next: 2, mix: 0 });
+    expect(photoTurn(8.5, 3)).toMatchObject({ index: 0, next: 1 }); // after the third, the first again
+  });
+
+  it("holds one photo still when there is only one, or none", () => {
+    expect(photoTurn(10, 1)).toEqual({ index: 0, next: 0, mix: 0 });
+    expect(photoTurn(10, 0)).toEqual({ index: 0, next: 0, mix: 0 });
   });
 });
 

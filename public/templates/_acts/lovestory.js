@@ -203,8 +203,8 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   }
 
   /* ── the card's photos, in polaroids (a heart doodle when there are none). They are shuffled each play; a card's first
-     polaroid starts on the first, its second on the second (polaroid({ photo: i }) picks one). While the act waits at a
-     stop, a polaroid in view shows them in turn, fading from one to the next, so every photo is seen. ── */
+     polaroid starts on the first, its second on the second (polaroid({ photo: i }) picks one). A polaroid in view
+     shows them in turn, fading from one to the next, so every photo is seen, while the act plays and while it waits. ── */
   const shuffle = list => { const out = [...list]; for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; };
   const photoUrls = Array.isArray(card.photos) && card.photos.length ? card.photos : card.photo ? [card.photo] : [];
   const PHOTO_PX = 640;                                                // a photo is kept this big at most: ten full-size ones fill a phone
@@ -237,7 +237,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     const width = o.width ?? .24, cv = document.createElement('canvas'); cv.width = 512; cv.height = 620;
     const tex = keep(new THREE.CanvasTexture(cv)); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
     const start = o.photo ?? polaroids.size;
-    let shown = start, mix = 0, heldSince = null, from = start;        // the photo it shows, and how far into the next
+    let shown = start, mix = 0, seenSince = null, from = start;        // the photo it shows, and how far into the next
     const drawPhoto = (c, img, x, y, s, alpha) => {
       const k = Math.max(s / img.width, s / img.height), w = img.width * k, h = img.height * k;
       c.save(); c.globalAlpha = alpha; c.beginPath(); c.rect(x, y, s, s); c.clip(); c.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h); c.restore();
@@ -271,19 +271,19 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       halo.position.set(0, width * 620 / 512 / 2, -.012); halo.renderOrder = 3; root.add(halo);
     }
     polaroids.add({
-      /** at a stop (held) and in view: the photos in turn, from the one it showed when the act stopped */
-      turn(held, T) {
-        if (photoImgs.length < 2 || !held || !inView(root)) {
-          heldSince = null;
+      /** in view: the photos in turn, from the one it showed when it came into view */
+      turn(T) {
+        if (photoImgs.length < 2 || !inView(root)) {
+          seenSince = null;
           if (mix > 0) { if (mix >= .5) shown += 1; mix = 0; paint(); }   // left in the middle of a fade: settle on one photo
           return;
         }
-        if (heldSince === null) { heldSince = T; from = shown; }
-        const k = (T - heldSince) / PHOTO_TURN, step = Math.floor(k), into = (k - step) * PHOTO_TURN;
+        if (seenSince === null) { seenSince = T; from = shown; }
+        const k = (T - seenSince) / PHOTO_TURN, step = Math.floor(k), into = (k - step) * PHOTO_TURN;
         const m = into > PHOTO_TURN - PHOTO_FADE ? (into - PHOTO_TURN + PHOTO_FADE) / PHOTO_FADE : 0;
         if (from + step !== shown || Math.abs(m - mix) > .02 || (m === 0 && mix !== 0)) { shown = from + step; mix = m; paint(); }
       },
-      rewind() { shown = from = start; mix = 0; heldSince = null; paint(); },
+      rewind() { shown = from = start; mix = 0; seenSince = null; paint(); },
       repaint: paint
     });
     return { root, width, height: width * 620 / 512, halo };
@@ -582,7 +582,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       untouch();                                                       // last frame's gestures off, then the clips on
       mixers.forEach(m => m.update(state.paused ? 0 : dt));
       try { story.pose(f); } catch (e) { errors.push(e && e.message ? e.message : String(e)); story = null; console.error('[lovestory]', e); }
-      polaroids.forEach(p => p.turn(f.held, f.T));
+      polaroids.forEach(p => p.turn(f.T));
       window.__storyClock = f.g;                                        // for tests: where the story is (scripts/shoot-card.mjs)
       if (!state.stopped && !state.paused && state.chapter >= 0 && state.t >= seconds[state.chapter]) { state.stopped = true; onStop(state.chapter); }
     }

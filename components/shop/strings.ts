@@ -90,7 +90,7 @@ export const S = {
           ? "Ảnh của bạn sẽ nằm trong lá thư cuối thiệp."
           : n === 1
             ? "Ảnh của bạn thay nhau hiện trong khung ảnh của thiệp, và nằm trong lá thư cuối."
-            : `Thiệp có ${n} chỗ cho ảnh: mỗi lần mở, ảnh được xếp ngẫu nhiên; chỗ nào chưa có ảnh của bạn sẽ giữ hình có sẵn.`,
+            : `Thiệp có ${n} chỗ cho ảnh: mỗi lần mở, ảnh của bạn được xếp ngẫu nhiên vào mọi chỗ (ít ảnh thì ảnh lặp lại), và nằm trong lá thư cuối.`,
     },
     required: "Cần điền",
     tooLong: (max: number) => `Tối đa ${max} ký tự`,

@@ -1,9 +1,17 @@
 /* A film template on the card (Night Mail and the twelve scenes): the film plays on the printed card, the card's words
    are painted over it at each board's place, and after the reveal chapter an envelope rises off the card with the
-   greeting (and the photo beside it). The film stops at each chapter's end second and waits there for a tap.
+   greeting (and the buyer's photos beside it, in turn). The film stops at each chapter's end second and waits there for
+   a tap. The buyer's photos fill the film's photo places, if it has any.
    Built on the card frame (x across, y up the card, z out of it, 1 = the card's width). */
 import * as THREE from "three";
-import { loadPhotos, shuffled, type PhotoImage } from "./photos";
+import {
+  drawCover,
+  fillPlaces,
+  loadPhotos,
+  photoTurn,
+  shuffled,
+  type PhotoImage,
+} from "./photos";
 import { createWordsPainter } from "./words";
 import type { FilmAct, FilmActOptions } from "./types";
 
@@ -202,24 +210,28 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     facesWait: FACES_WAIT,
   });
 
-  /* ── the buyer's photos in the film's photo places: in a new order each play; one that comes in late takes the next
-     free place, so a photo never jumps from one place to another while the film plays ── */
+  /* ── the buyer's photos, in a new order each play: they fill every one of the film's photo places (repeated when
+     there are fewer), and rise with the envelope. One that comes in late goes after the others. ── */
   const places = slots?.photos?.length ?? 0;
   let photosIn: PhotoImage[] = [],
     order: PhotoImage[] = [];
-  const placePhotos = (): void => painter.setPhotos(order.slice(0, places));
+  const placePhotos = (): void => {
+    if (places) painter.setPhotos(fillPlaces(order, places));
+  };
+  const photosLoad = card.photos.length
+    ? loadPhotos(shuffled(card.photos), {
+        waitMs: PHOTOS_WAIT,
+        maxPx: 640,
+        onPhoto: (img) => {
+          if (disposed) return;
+          photosIn = [...photosIn, img];
+          order = [...order, img];
+          placePhotos();
+        },
+      })
+    : null;
   const photosReady =
-    places && card.photos.length
-      ? loadPhotos(shuffled(card.photos), {
-          waitMs: PHOTOS_WAIT,
-          onPhoto: (img) => {
-            if (disposed) return;
-            photosIn = [...photosIn, img];
-            order = [...order, img];
-            placePhotos();
-          },
-        }).ready
-      : Promise.resolve();
+    places && photosLoad ? photosLoad.ready : Promise.resolve(); // only a film that shows them waits
 
   /* ── the envelope that rises off the card after the reveal chapter (lit as the old A-Frame scene lit it) ── */
   const lights = new THREE.Group();
@@ -281,43 +293,46 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
   const greeting = textPlane(card.greeting, "#f4ecd8", 1.1, 0.12, 0.035, owned);
   greeting.position.set(0, 0.2, 0);
   env.add(greeting);
-  if (card.photo) {
-    // a photo floats beside the envelope when it rises
-    const photoMat = keep(
+  /* the buyer's photos float beside the envelope when it rises, in turn, fading from one to the next */
+  const PHOTO_W = 512,
+    PHOTO_H = Math.round((PHOTO_W * 0.26) / 0.34);
+  const photoCanvas = Object.assign(document.createElement("canvas"), {
+    width: PHOTO_W,
+    height: PHOTO_H,
+  });
+  const photoTex = keep(new THREE.CanvasTexture(photoCanvas));
+  photoTex.colorSpace = THREE.SRGBColorSpace;
+  const photo = new THREE.Mesh(
+    keep(new THREE.PlaneGeometry(0.34, 0.26)),
+    keep(
       new THREE.MeshBasicMaterial({
+        map: photoTex,
         side: THREE.DoubleSide,
         transparent: true,
         toneMapped: false,
       }),
+    ),
+  );
+  photo.position.set(-0.42, 0.02, 0);
+  photo.rotation.y = THREE.MathUtils.degToRad(18);
+  photo.visible = false;
+  env.add(photo);
+  let revealedAt = 0,
+    photoShown = ""; // what the canvas holds now: painted again only when that changes
+  function turnEnvelopePhoto(now: number): void {
+    photo.visible = order.length > 0;
+    if (!order.length) return;
+    const { index, next, mix } = photoTurn(
+      (now - revealedAt) / 1000,
+      order.length,
     );
-    const photo = new THREE.Mesh(
-      keep(new THREE.PlaneGeometry(0.34, 0.26)),
-      photoMat,
-    );
-    photo.position.set(-0.42, 0.02, 0);
-    photo.rotation.y = THREE.MathUtils.degToRad(18);
-    photo.visible = false;
-    env.add(photo);
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
-    loader.load(
-      card.photo,
-      (tex) => {
-        if (disposed) {
-          tex.dispose();
-          return;
-        }
-        tex.colorSpace = THREE.SRGBColorSpace;
-        keep(tex);
-        photoMat.map = tex;
-        photoMat.needsUpdate = true;
-        photo.visible = true;
-      },
-      undefined,
-      () => {
-        /* no photo: the envelope rises alone */
-      },
-    );
+    const key = `${order.length}:${index}:${mix.toFixed(2)}`;
+    const c = key === photoShown ? null : photoCanvas.getContext("2d");
+    if (!c) return;
+    photoShown = key;
+    drawCover(c, order[index], 0, 0, PHOTO_W, PHOTO_H);
+    if (mix > 0) drawCover(c, order[next], 0, 0, PHOTO_W, PHOTO_H, mix);
+    photoTex.needsUpdate = true;
   }
   card3d.add(env);
 
@@ -332,6 +347,8 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
   function reveal(): void {
     tweens = [];
     env.visible = true;
+    revealedAt = performance.now();
+    photoShown = "";
     const s0 = env.scale.x,
       y0 = env.position.y,
       z0 = env.position.z;
@@ -465,6 +482,7 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     update(_dt: number, now: number) {
       if (!reduced)
         spinner.rotation.y = ((now % SPIN_MS) / SPIN_MS) * Math.PI * 2; // one turn every 9 s, as before; still for reduced motion
+      if (env.visible) turnEnvelopePhoto(now);
       if (!tweens.length) return;
       tweens = tweens.filter((t) => {
         const k = Math.min(1, Math.max(0, (now - t.t0) / t.ms));

@@ -167,13 +167,13 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     return { b, L, R, r, y, ph };
   });
 
-  /* ── the polaroid: the card's photos, in a white frame with a small heart. They are shuffled each play; while the act
-     waits at the photo's stop they show in turn, fading from one to the next. ── */
+  /* ── the polaroid: the card's photos, in a white frame with a small heart. They are shuffled each play; while the
+     polaroid is up they show in turn, fading from one to the next. ── */
   const polCanvas = document.createElement('canvas'); polCanvas.width = 512; polCanvas.height = 620;
   const polTex = keep(new THREE.CanvasTexture(polCanvas)); polTex.colorSpace = THREE.SRGBColorSpace; polTex.anisotropy = 4;
   const shuffle = list => { const out = [...list]; for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; };
-  const TURN = 2.8, FADE = .6;                                          // seconds a photo shows at the stop, and its fade to the next
-  let photos = [], shown = 0, mix = 0, heldSince = null, from = 0;
+  const TURN = 2.8, FADE = .6;                                          // seconds a photo shows, and its fade to the next
+  let photos = [], shown = 0, mix = 0, seenSince = null, from = 0;
   const drawPhoto = (c, img, x, y, s, alpha) => {
     const k = Math.max(s / img.width, s / img.height), w = img.width * k, h = img.height * k;
     c.save(); c.globalAlpha = alpha; c.beginPath(); c.rect(x, y, s, s); c.clip(); c.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h); c.restore();
@@ -214,15 +214,15 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     if (!left) res();
     loads.forEach(p => p.then(ok => { if (ok || --left === 0) res(); }));
   }), new Promise(r => setTimeout(r, 8000))]);
-  /** at the photo's stop: the photos in turn, from the one shown when the act stopped there */
-  function turnPhotos(held, T) {
-    if (photos.length < 2 || !held) {
-      heldSince = null;
+  /** while the polaroid is up: the photos in turn, from the one it showed when it came up */
+  function turnPhotos(up, T) {
+    if (photos.length < 2 || !up) {
+      seenSince = null;
       if (mix > 0) { if (mix >= .5) shown += 1; mix = 0; paintPolaroid(); }   // left in the middle of a fade: settle on one photo
       return;
     }
-    if (heldSince === null) { heldSince = T; from = shown; }
-    const k = (T - heldSince) / TURN, step = Math.floor(k), into = (k - step) * TURN;
+    if (seenSince === null) { seenSince = T; from = shown; }
+    const k = (T - seenSince) / TURN, step = Math.floor(k), into = (k - step) * TURN;
     const m = into > TURN - FADE ? (into - TURN + FADE) / FADE : 0;
     if (from + step !== shown || Math.abs(m - mix) > .02 || (m === 0 && mix !== 0)) { shown = from + step; mix = m; paintPolaroid(); }
   }
@@ -313,13 +313,13 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       petals.update(dt, state.T); hearts.update(dt, state.T);
     }
     if (state.loop == null && !state.stopped && !state.paused && state.t >= DUR[state.chapter]) { state.stopped = true; onStop(state.chapter); }
-    turnPhotos(state.loop == null && ch === 1 && state.stopped, state.T);
+    turnPhotos(polaroid.scale.x > .05, state.T);
     if (!disposed) raf = requestAnimationFrame(tick);
   }
   raf = requestAnimationFrame(tick);
 
   return {
-    play(i) { if (i === 0) { resetFx(); photos = shuffle(photos); shown = from = 0; mix = 0; heldSince = null; paintPolaroid(); } state.loop = null; state.chapter = i; state.t = 0; state.stopped = false; state.paused = false; last = performance.now(); },
+    play(i) { if (i === 0) { resetFx(); photos = shuffle(photos); shown = from = 0; mix = 0; seenSince = null; paintPolaroid(); } state.loop = null; state.chapter = i; state.t = 0; state.stopped = false; state.paused = false; last = performance.now(); },
     pause() { state.paused = true; },
     resume() { state.paused = false; last = performance.now(); },
     turn(rad) { spin.rotation.y += rad; },

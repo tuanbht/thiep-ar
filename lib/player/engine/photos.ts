@@ -10,7 +10,7 @@ import type { PhotoBox, PhotoOverlay, PhotoPlace, PhotoQuad } from "./types";
 export type PhotoImage = CanvasImageSource & { width: number; height: number };
 
 const DEFAULT_BLANK = "#ddd6c8";
-/** a photo with the film's light laid over it is drawn this big at most first */
+/** a photo with the film's light laid over it is made at its place's size on screen first, and never bigger than this */
 const PICTURE_PX = 1024;
 
 /** The list in a new order (Fisher-Yates); the list itself is left as it was. */
@@ -24,6 +24,52 @@ export function shuffled<T>(
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+/** The photos for a film's places, in this order: every place gets one of the buyer's photos, repeating them when there
+    are fewer photos than places; none when there are none (then the film's own pictures show). */
+export function fillPlaces<T>(photos: readonly T[], places: number): T[] {
+  return photos.length
+    ? Array.from({ length: places }, (_, k) => photos[k % photos.length])
+    : [];
+}
+
+/** seconds each photo shows when photos take turns, and the last part of it spent fading into the next */
+export const PHOTO_TURN = 2.8,
+  PHOTO_FADE = 0.6;
+
+/** Which photo shows after `seconds` of showing `count` photos in turn: its index, the next one's, and how far it has
+    faded into the next (0 to 1). One photo, or none, stays still. */
+export function photoTurn(
+  seconds: number,
+  count: number,
+): { index: number; next: number; mix: number } {
+  if (count < 2) return { index: 0, next: 0, mix: 0 };
+  const k = Math.max(0, seconds) / PHOTO_TURN,
+    step = Math.floor(k),
+    into = (k - step) * PHOTO_TURN;
+  const mix =
+    into > PHOTO_TURN - PHOTO_FADE
+      ? (into - (PHOTO_TURN - PHOTO_FADE)) / PHOTO_FADE
+      : 0;
+  return { index: step % count, next: (step + 1) % count, mix };
+}
+
+/** Draws a photo filling a box (x, y, w, h) at an opacity: its middle, cropped to the box's shape, never stretched. */
+export function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: PhotoImage,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  alpha = 1,
+): void {
+  const src = coverCrop(img, w / h);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(img, src.x, src.y, src.w, src.h, x, y, w, h);
+  ctx.restore();
 }
 
 export interface PhotoLoad {
@@ -143,6 +189,7 @@ function paintTurned(
     develop,
     light,
     c.scratch,
+    Math.max(w, h),
   );
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -195,6 +242,7 @@ function paintQuad(
     develop,
     light,
     c.scratch,
+    longestSide(q),
   ); // its own shape: a turning page never zooms it
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -245,12 +293,14 @@ function picture(
   place: PhotoPlace,
   develop: number,
   light: readonly PhotoOverlay[],
-  scratch?: HTMLCanvasElement,
+  scratch: HTMLCanvasElement | undefined,
+  seenPx: number,
 ): Picture {
   const src = coverCrop(img, shape);
   const c = light.length ? scratch?.getContext("2d") : null;
   if (!scratch || !c) return { img, src, whole: false };
-  const k = Math.min(1, PICTURE_PX / Math.max(src.w, src.h));
+  const px = Math.min(PICTURE_PX, Math.max(8, seenPx)); // its size on screen: drawn down far, a photo turns jagged
+  const k = Math.min(1, px / Math.max(src.w, src.h));
   const W = Math.max(1, Math.round(src.w * k)),
     H = Math.max(1, Math.round(src.h * k));
   if (scratch.width !== W || scratch.height !== H) {
@@ -259,6 +309,7 @@ function picture(
   }
   c.save();
   c.globalAlpha = 1;
+  c.imageSmoothingQuality = "high"; // the one big step down, from the photo to its place's size
   c.clearRect(0, 0, W, H);
   if (develop < 1) {
     c.fillStyle = place.blank ?? DEFAULT_BLANK;
@@ -333,6 +384,15 @@ function coverCrop(img: PhotoImage, shape: number): Crop {
     h = w / shape;
   return { x: (img.width - w) / 2, y: (img.height - h) / 2, w, h };
 }
+
+/** The longest edge of a place given by its four corners, in film pixels. */
+const longestSide = (q: PhotoQuad): number =>
+  Math.max(
+    Math.hypot(q[2] - q[0], q[3] - q[1]),
+    Math.hypot(q[4] - q[2], q[5] - q[3]),
+    Math.hypot(q[6] - q[4], q[7] - q[5]),
+    Math.hypot(q[0] - q[6], q[1] - q[7]),
+  );
 
 /** A parallelogram: a flat place, turned or tilted, maps exactly with one transform. */
 const isFlat = (q: PhotoQuad) =>
