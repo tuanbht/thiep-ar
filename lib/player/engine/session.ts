@@ -49,6 +49,8 @@ export class CardSession {
     camera: THREE.Quaternion | null;
   } | null = null;
   private readonly gyro = new Gyro();
+  /** the gyroscope's answer, asked from the tap that starts the camera (see prepareGyroscope) */
+  private gyroAsked: Promise<boolean> | null = null;
   private readonly raycaster = new THREE.Raycaster();
   private paper: THREE.Mesh | null = null;
   private paperAspect = 0;
@@ -298,10 +300,17 @@ export class CardSession {
 
   /* ── pin ── */
 
+  /** From inside the tap that starts the camera: iOS gives a page the gyroscope only when asked from a tap, and the
+      act pins itself later, when the card is found, outside one. Asks once; later pins reuse the answer. */
+  prepareGyroscope() {
+    this.gyroAsked ??= askForGyroscope();
+  }
+
   async pin(): Promise<boolean> {
     if (this.pinnedAt || this.mode !== "ar" || !this.frame.visible)
       return false;
-    const gyro = await askForGyroscope();
+    const gyro = await (this.gyroAsked ?? askForGyroscope());
+    if (this.pinnedAt || this.mode !== "ar") return false; // pinned or stopped while it asked
     this.pinnedAt = { base: this.frame.matrix.clone(), scale: 1, camera: null };
     if (gyro) this.gyro.start();
     return true;

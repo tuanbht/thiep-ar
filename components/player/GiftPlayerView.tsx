@@ -9,6 +9,7 @@ import { CardSession, type Mode } from "@/lib/player/engine/session";
 import type { Act, FilmAct } from "@/lib/player/engine/types";
 import { fontVars } from "./fonts";
 import { LoadError, loadTemplateFor, type Loaded } from "./loadTemplate";
+import { GestureGuide } from "./GestureGuide";
 import { PhotoStrip } from "./PhotoStrip";
 import s from "./playerClasses";
 import { T, T_BLUSH, wordsFor } from "./strings";
@@ -46,6 +47,8 @@ declare global {
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** how long after the camera finds the card the act pins itself: long enough for the tracking to settle */
+const AUTO_PIN_MS = 900;
 
 /** the tests' hooks on window (scenes' checks, e2e): never in a production build */
 const TEST_HOOKS = process.env.NODE_ENV !== "production";
@@ -65,6 +68,12 @@ export default function GiftPlayerView({
   const [pinned, setPinned] = useState(false);
   const [zoomed, setZoomed] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
+  const [guide, setGuide] = useState(false);
+  /** the modes the guide has opened in by itself (once each); the "?" opens it any time */
+  const guided = useRef(new Set<Mode>());
+  /** this camera run pinned itself once: after an unpin, pinning is left to the reader */
+  const autoPinned = useRef(false);
+  const pinTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [why, setWhy] = useState("");
   /** the stops are being passed with the keys: each new stop's button takes the focus */
   const [keys, setKeys] = useState(false);
@@ -123,6 +132,18 @@ export default function GiftPlayerView({
   const sound =
     act && isAct3d(act) && act.api.sound?.has ? act.api.sound : null;
 
+  const showGuideOnce = useCallback((m: Mode) => {
+    if (guided.current.has(m)) return;
+    guided.current.add(m);
+    setGuide(true);
+  }, []);
+  useEffect(
+    () => () => {
+      if (pinTimer.current) clearTimeout(pinTimer.current);
+    },
+    [],
+  );
+
   const startPreview = useCallback(async () => {
     if (!session || !flow || !act || !loaded || previewFor.current === act)
       return;
@@ -138,11 +159,12 @@ export default function GiftPlayerView({
       await Promise.race([act.ready, wait(8000)]); // a model starts dancing once it stands on the card
       if (previewFor.current !== act || session.mode !== "preview") return; // the camera (or another act) took over meanwhile
       flow.found();
+      showGuideOnce("preview");
     } catch (e) {
       console.error("[player] the act did not start", e);
       flow.fail(T.sceneFailed);
     }
-  }, [session, flow, act, loaded]);
+  }, [session, flow, act, loaded, showGuideOnce]);
 
   const showFallback = useCallback(
     (reason: string) => {
@@ -158,8 +180,28 @@ export default function GiftPlayerView({
     [kind, startPreview, session, flow],
   );
 
+  /** The camera found the card: the act pins itself a moment later (the first time this camera run), so it stays put
+      when the phone turns away from the print; then the guide says what the fingers do. */
+  const autoPin = useCallback(() => {
+    if (autoPinned.current || pinTimer.current) return;
+    pinTimer.current = setTimeout(() => {
+      pinTimer.current = null;
+      if (!session || !flow || autoPinned.current || session.mode !== "ar")
+        return;
+      void (async () => {
+        if (!session.pinned && (await session.pin())) {
+          autoPinned.current = true;
+          setPinned(true);
+          flow.pinned(true);
+        }
+        showGuideOnce("ar");
+      })();
+    }, AUTO_PIN_MS);
+  }, [session, flow, showGuideOnce]);
+
   const start = useCallback(async () => {
     if (!session || !flow || !act || !loaded) return;
+    autoPinned.current = false;
     if (!navigator.mediaDevices?.getUserMedia)
       return showFallback(T.noCameraApi);
     await act.unlock(); // iOS: a video may only start inside the tap
@@ -172,6 +214,7 @@ export default function GiftPlayerView({
         onFound: () => {
           flow.found();
           emit.current?.("card_found");
+          autoPin();
         },
         onLost: () => flow.lost(),
       });
@@ -182,9 +225,11 @@ export default function GiftPlayerView({
       console.error("[player] the camera did not start", e);
       showFallback(T.cameraFailed);
     }
-  }, [session, flow, act, loaded, showFallback]);
+  }, [session, flow, act, loaded, showFallback, autoPin]);
 
   const stopCamera = useCallback(() => {
+    if (pinTimer.current) clearTimeout(pinTimer.current);
+    pinTimer.current = null;
     session?.stopCamera();
     setPinned(false);
     setRunning(false);
@@ -236,6 +281,7 @@ export default function GiftPlayerView({
     zoom: true,
     onTap: (x, y) => {
       sound?.enable(); // a preview that started on its own gets its sound from the first tap
+      if (guide) return setGuide(false); // the first tap puts the guide away; the next one plays on
       const hit = session?.pick(x, y) ?? null; // a photo opens big; what the act took itself is not a tap on
       if (hit && "photo" in hit) setZoomed(hit.photo);
       else if (!hit) flow?.tap();
@@ -306,6 +352,7 @@ export default function GiftPlayerView({
           words={words}
           photos={card.photos}
           onStart={() => {
+            session?.prepareGyroscope(); // iOS: asked from this tap, used when the act pins itself
             sound?.enable();
             void start();
           }}
@@ -359,7 +406,10 @@ export default function GiftPlayerView({
               <button
                 type="button"
                 id="use-camera"
-                onClick={() => void start()}
+                onClick={() => {
+                  session?.prepareGyroscope();
+                  void start();
+                }}
               >
                 {T.useCamera}
               </button>
@@ -384,6 +434,29 @@ export default function GiftPlayerView({
           />
           {phase === "reading" && (
             <ReadView card={loaded.card} onClose={() => flow?.closeLetter()} />
+          )}
+          {phase !== "reading" && (
+            <button
+              type="button"
+              id="help"
+              className={s.help}
+              aria-label={T.guideOpen}
+              aria-expanded={guide}
+              title={T.guideOpen}
+              data-ui
+              onClick={() => setGuide((g) => !g)}
+            >
+              ?
+            </button>
+          )}
+          {guide && phase !== "reading" && (
+            <GestureGuide
+              mode={mode}
+              kind={loaded.kind}
+              pinned={pinned}
+              photos={loaded.kind === "3d" && loaded.card.photos.length > 0}
+              onClose={() => setGuide(false)}
+            />
           )}
           {zoomed && <PhotoZoom src={zoomed} onClose={() => setZoomed(null)} />}
         </>

@@ -1,0 +1,134 @@
+/* The gesture guide (GestureGuide.tsx): a card above the hint and the stops, where the eye goes when the act comes up.
+   Night by default; blush on a love card. */
+.gp-guide {
+  position: absolute;
+  left: 50%;
+  bottom: calc(6.4rem + env(safe-area-inset-bottom, 0px));
+  z-index: 25;
+  width: min(calc(100% - 2 * max(16px, env(safe-area-inset-left, 0px))), 25rem);
+  translate: -50% 0;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.1rem 1.2rem 1.2rem;
+  color: #fbf5e8;
+  background: rgba(14, 18, 44, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(242, 193, 78, 0.35);
+  border-radius: 18px;
+  box-shadow: 0 1.2rem 2.6rem rgba(0, 0, 0, 0.35);
+  animation: gp-guide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.gp-guide h2 {
+  margin: 0;
+  font: 700 0.95rem/1.2 var(--f-sign);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f2c14e;
+}
+.gp-guide-note {
+  margin: 0;
+  font: italic 0.88rem/1.45 var(--f-text);
+  opacity: 0.9;
+}
+.gp-guide ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+.gp-guide li {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  align-items: center;
+  gap: 0.7rem;
+  font: 0.95rem/1.35 var(--f-text);
+}
+.gp-guide-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0.25rem;
+  color: #f2c14e;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+.gp-guide .gp-btn {
+  justify-self: stretch;
+  margin-top: 0.2rem;
+}
+@keyframes gp-guide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.gp-blush .gp-guide {
+  color: #4a2232;
+  background: rgba(255, 250, 252, 0.94);
+  border-color: rgba(194, 55, 95, 0.3);
+  box-shadow: 0 1.2rem 2.6rem rgba(194, 55, 95, 0.22);
+}
+.gp-blush .gp-guide h2 {
+  color: #a92d52;
+}
+.gp-blush .gp-guide-icon {
+  color: #c2375f;
+  background: #ffe3ec;
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .gp-guide {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.5rem;
+    padding: 0.8rem 1rem;
+  }
+  .gp-guide li {
+    gap: 0.5rem;
+  }
+}
+/* the "?" that opens it again: round, in the bottom corner, clear of the hint and the stops */
+.gp-help {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 24;
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font: 800 1.15rem/1 var(--f-sign);
+  color: #f2c14e;
+  background: rgba(14, 18, 44, 0.72);
+  border: 1px solid rgba(242, 193, 78, 0.55);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.3);
+}
+.gp-help:focus-visible {
+  outline: 3px solid #f2c14e;
+  outline-offset: 2px;
+}
+.gp-help[aria-expanded="true"] {
+  color: #141838;
+  background: #f2c14e;
+}
+.gp-blush .gp-help {
+  color: #fff;
+  background: #c2375f;
+  border-color: transparent;
+  box-shadow: 0 0.4rem 1rem rgba(194, 55, 95, 0.35);
+}
+.gp-blush .gp-help:focus-visible {
+  outline-color: #6d2140;
+}
+.gp-blush .gp-help[aria-expanded="true"] {
+  color: #c2375f;
+  background: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-guide {
+    animation: none;
+  }
+}

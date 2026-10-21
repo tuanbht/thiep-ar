@@ -2,6 +2,7 @@
 import "./player.css";
 import "./blush.css";
 import "./photos.css";
+import "./guide.css";
 
 const s = {
   root: "gp",
@@ -11,6 +12,10 @@ const s = {
   stripPhoto: "gp-strip-photo",
   photoFan: "gp-photo-fan",
   zoom: "gp-zoom",
+  guide: "gp-guide",
+  guideNote: "gp-guide-note",
+  guideIcon: "gp-guide-icon",
+  help: "gp-help",
   introArt: "gp-intro-art",
   stage: "gp-stage",
   filmDom: "gp-film-dom",
