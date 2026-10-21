@@ -181,8 +181,14 @@ isOneToOne: false
 "confirm_order_payment":
 { Args: { "p_amount": number,"p_order_id": string,"p_paid_at": string,"p_provider": string,"p_raw": Json,"p_ref": string }; Returns: Json
                            },
+"content_photos":
+{ Args: { "c": Json }; Returns: string[]
+                           },
 "fold":
 { Args: { "t": string }; Returns: string
+                           },
+"photos_in_use":
+{ Args: { "p_paths": (string)[] }; Returns: (string)[]
                            },
 "product_search_doc":
 { Args: { "p_blurb": string,"p_id": string,"p_name": string,"p_tags": (string)[] }; Returns: unknown

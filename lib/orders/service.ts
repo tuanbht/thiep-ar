@@ -65,8 +65,8 @@ export class OrdersService {
       throw new NotFound('Mẫu thiệp này không còn bán.');
     }
     const content = validateContent(req.content, info.form);
-    if (content.photoPath && !(await this.d.photos.exists(content.photoPath)))
-      throw new InvalidInput(['Ảnh đã tải lên không còn nữa. Vui lòng chọn lại ảnh.']);
+    if ((await Promise.all(content.photoPaths.map(p => this.d.photos.exists(p)))).some(kept => !kept))
+      throw new InvalidInput(['Có ảnh đã tải lên không còn nữa. Vui lòng chọn lại ảnh đó.']);
 
     const gift = await this.retry('slug', () => this.d.repo.createGiftCard({ slug: makeSlug(this.d.random), productId: product.id,
       template: product.template, design: product.design, content }));
@@ -184,19 +184,19 @@ export class OrdersService {
 
   /* ── the gift ── */
 
-  /** an active gift by its link, as the player's card (the photo as a link valid for an hour); null otherwise */
+  /** an active gift by its link, as the player's card (each photo as a link valid for an hour, one that cannot be signed
+      left out); null otherwise */
   async getGift(slug: string): Promise<{ giftCard: GiftCard; product: Product; card: Card } | null> {
     if (!SLUG_RE.test(slug)) return null;
     const giftCard = await this.d.repo.getGiftCardBySlug(slug);
     if (!giftCard || giftCard.status !== 'active') return null;
     const product = await this.d.repo.getProduct(giftCard.productId);
     if (!product) { console.error(`[orders] gift ${giftCard.id} names product ${giftCard.productId}, which is gone`); return null; }
-    let photoUrl: string | null = null;
-    if (giftCard.content.photoPath) {
-      try { photoUrl = await this.d.photos.signedUrl(giftCard.content.photoPath, PHOTO_LINK_SECONDS); }
-      catch (e) { console.error(`[orders] the photo of gift ${giftCard.id} could not be signed`, e); }
-    }
-    return { giftCard, product, card: toCard(giftCard.content, giftCard, photoUrl) };
+    const links = await Promise.all(giftCard.content.photoPaths.map(async p => {
+      try { return await this.d.photos.signedUrl(p, PHOTO_LINK_SECONDS); }
+      catch (e) { console.error(`[orders] a photo of gift ${giftCard.id} could not be signed`, e); return null; }
+    }));
+    return { giftCard, product, card: toCard(giftCard.content, giftCard, links.filter((l): l is string => !!l)) };
   }
 
   /** the id of an active or draft gift by its link, for events; null for anything else */

@@ -122,13 +122,13 @@ describe('CustomizeForm', () => {
   });
 
   describe('the draft kept in this browser', () => {
-    const PATH = 'drafts/0b5c2a52-6a8e-4a43-9c7f-3d2b1e0f9a11.jpg';
+    const PATH = 'drafts/0b5c2a52-6a8e-4a43-9c7f-3d2b1e0f9a11.jpg', PATH2 = 'drafts/1b5c2a52-6a8e-4a43-9c7f-3d2b1e0f9a11.jpg';
     const quiet = () => vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
     const ordering = () => vi.fn().mockImplementation(async (url: string) => url === '/api/orders'
       ? new Response(JSON.stringify({ orderId: 'o1', code: 'GC-1', checkoutUrl: '/checkout/o1' }), { status: 201 })
       : new Response(null, { status: 204 }));
     const saved = () => JSON.parse(localStorage.getItem('gc:draft:flower-letter') ?? 'null');
-    const keep = (over: object = {}) => localStorage.setItem('gc:draft:flower-letter', JSON.stringify({ v: 1, savedAt: Date.now() - 60_000, photo: null,
+    const keep = (over: object = {}) => localStorage.setItem('gc:draft:flower-letter', JSON.stringify({ v: 2, savedAt: Date.now() - 60_000, photos: [],
       values: { title: 'Gửi Hanna', intro: '', to: 'Em ơi,', body: [{ text: 'Đoạn một' }, { text: 'Đoạn hai' }], from: 'Anh', words: { board: 'Thương em' } },
       ...over }));
     const title = () => (screen.getByLabelText(/Tiêu đề/) as HTMLInputElement).value;
@@ -152,12 +152,13 @@ describe('CustomizeForm', () => {
       expect(screen.getByText('Bản nháp tự lưu trên máy này')).toBeTruthy();   // the line is there before any save: nothing jumps
       fireEvent.change(screen.getByLabelText(/Tiêu đề/), { target: { value: 'Gửi Hanna' } });
       await act(async () => { await vi.advanceTimersByTimeAsync(600); });
-      expect(saved()).toMatchObject({ v: 1, values: { title: 'Gửi Hanna', words: { board: "Happy Women's Day!" } }, photo: null });
+      expect(saved()).toMatchObject({ v: 2, values: { title: 'Gửi Hanna', words: { board: "Happy Women's Day!" } }, photos: [] });
       expect(screen.getByText(/^Đã lưu nháp lúc \d\d:\d\d$/)).toBeTruthy();
     });
 
-    it('brings the draft back after a reload with its photo, sends that photo, and ties the draft to the order', async () => {
-      keep({ photo: { path: PATH, preview: 'data:image/jpeg;base64,AAAA', uploadedAt: Date.now() - 60_000 } });
+    it('brings the draft back after a reload with its photos, sends them, and ties the draft to the order', async () => {
+      keep({ photos: [{ path: PATH, preview: 'data:image/jpeg;base64,AAAA', uploadedAt: Date.now() - 60_000 },
+        { path: PATH2, preview: 'data:image/jpeg;base64,BBBB', uploadedAt: Date.now() - 60_000 }] });
       const fetch = ordering();
       vi.stubGlobal('fetch', fetch);
       render(<CustomizeForm product={product} form={form} />);
@@ -165,11 +166,26 @@ describe('CustomizeForm', () => {
       expect((screen.getByLabelText(/Đoạn 2/) as HTMLTextAreaElement).value).toBe('Đoạn hai');
       expect(screen.getByTestId('preview').textContent).toBe('Thương em');
       expect(screen.getByText(/^Đã mở lại bản nháp lúc/)).toBeTruthy();
-      expect(document.querySelector('img[src^="data:image/jpeg"]')).toBeTruthy();
+      expect(document.querySelectorAll('img[src^="data:image/jpeg"]')).toHaveLength(2);
       await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Mua thiệp/ })); });
       await waitFor(() => expect(push).toHaveBeenCalledWith('/checkout/o1'));
-      expect(JSON.parse(calls(fetch, '/api/orders')[0][1].body).content.photoPath).toBe(PATH);
+      expect(JSON.parse(calls(fetch, '/api/orders')[0][1].body).content.photoPaths).toEqual([PATH, PATH2]);
       expect(saved().orderId).toBe('o1');                              // paying that order lets the draft go
+    });
+
+    it('lets a photo taken out of a draft go from the draft and from the order', async () => {
+      keep({ photos: [{ path: PATH, preview: 'data:image/jpeg;base64,AAAA', uploadedAt: Date.now() - 60_000 },
+        { path: PATH2, preview: 'data:image/jpeg;base64,BBBB', uploadedAt: Date.now() - 60_000 }] });
+      const fetch = ordering();
+      vi.stubGlobal('fetch', fetch);
+      render(<CustomizeForm product={product} form={form} />);
+      await waitFor(() => expect(document.querySelectorAll('img[src^="data:image/jpeg"]')).toHaveLength(2));
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Bỏ ảnh 1' })); });
+      await waitFor(() => expect(saved()?.photos?.map((x: { path: string }) => x.path)).toEqual([PATH2]));
+      expect(saved().photos[0].preview).toBe('data:image/jpeg;base64,BBBB');    // the one kept keeps its preview
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Mua thiệp/ })); });
+      await waitFor(() => expect(push).toHaveBeenCalledWith('/checkout/o1'));
+      expect(JSON.parse(calls(fetch, '/api/orders')[0][1].body).content.photoPaths).toEqual([PATH2]);
     });
 
     it('starts over when asked twice', async () => {
@@ -189,15 +205,16 @@ describe('CustomizeForm', () => {
     it.each([
       ['too old to keep', { path: PATH, preview: 'data:image/jpeg;base64,AAAA', uploadedAt: Date.now() - 2 * 24 * 3600_000 }],
       ['kept without its preview', { path: PATH, preview: null, uploadedAt: Date.now() - 60_000 }]
-    ])('asks for the photo again when the draft\'s is %s, and sends none', async (_, photo) => {
-      keep({ photo });
+    ])('asks for a photo again when the draft\'s is %s, and sends none (an older draft, one photo)', async (_, photo) => {
+      localStorage.setItem('gc:draft:flower-letter', JSON.stringify({ v: 1, savedAt: Date.now() - 60_000, photo,
+        values: { title: 'Gửi Hanna', intro: '', to: 'Em ơi,', body: [{ text: 'Đoạn một' }], from: 'Anh', words: { board: 'Thương em' } } }));
       const fetch = ordering();
       vi.stubGlobal('fetch', fetch);
       render(<CustomizeForm product={product} form={form} />);
-      expect(await screen.findByText(/chọn lại ảnh/)).toBeTruthy();
+      expect(await screen.findByText(/1 ảnh của bản nháp không mở lại được/)).toBeTruthy();
       await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Mua thiệp/ })); });
       await waitFor(() => expect(push).toHaveBeenCalledWith('/checkout/o1'));
-      expect(JSON.parse(calls(fetch, '/api/orders')[0][1].body).content.photoPath ?? null).toBeNull();
+      expect(JSON.parse(calls(fetch, '/api/orders')[0][1].body).content.photoPaths).toEqual([]);
     });
 
     it('keeps an uploaded photo in the draft', async () => {
@@ -207,7 +224,7 @@ describe('CustomizeForm', () => {
       render(<CustomizeForm product={product} form={form} />);
       await opened();
       pickPhoto();
-      await waitFor(() => expect(saved()?.photo?.path).toBe(PATH));
+      await waitFor(() => expect(saved()?.photos?.[0]?.path).toBe(PATH));
     });
 
     it('will not start over while a photo is uploading (it would come back when the upload ends)', async () => {

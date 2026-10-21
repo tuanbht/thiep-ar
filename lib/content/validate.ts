@@ -45,6 +45,6 @@ export function validateContent(input: ParsedContent, form: FormSpec | null): Gi
     intro: cleanText(input.intro).trim(),
     letter,
     slots,
-    photoPath: input.photoPath
+    photoPaths: [...new Set([...input.photoPaths, ...(input.photoPath ? [input.photoPath] : [])])].slice(0, LIMITS.photos)
   };
 }

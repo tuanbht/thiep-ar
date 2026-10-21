@@ -3,6 +3,7 @@
    greeting (and the photo beside it). The film stops at each chapter's end second and waits there for a tap.
    Built on the card frame (x across, y up the card, z out of it, 1 = the card's width). */
 import * as THREE from 'three';
+import { loadPhotos, shuffled, type PhotoImage } from './photos';
 import { createWordsPainter } from './words';
 import type { FilmAct, FilmActOptions } from './types';
 
@@ -11,6 +12,7 @@ const ENV_UP = new THREE.Vector3(0, 0.46, 0.22);
 const HIDDEN = 0.001;
 const SPIN_MS = 9000;
 const FACES_WAIT = 2500, META_WAIT = 4000;
+const PHOTOS_WAIT = 6000;                                            // the film starts without a photo slower than this (it shows when it comes)
 
 const easeOutBack = (t: number): number => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
 const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
@@ -98,6 +100,18 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     facesWait: FACES_WAIT
   });
 
+  /* ── the buyer's photos in the film's photo places: in a new order each play; one that comes in late takes the next
+     free place, so a photo never jumps from one place to another while the film plays ── */
+  const places = slots?.photos?.length ?? 0;
+  let photosIn: PhotoImage[] = [], order: PhotoImage[] = [];
+  const placePhotos = (): void => painter.setPhotos(order.slice(0, places));
+  const photosReady = places && card.photos.length
+    ? loadPhotos(shuffled(card.photos), { waitMs: PHOTOS_WAIT, onPhoto: img => {
+        if (disposed) return;
+        photosIn = [...photosIn, img]; order = [...order, img]; placePhotos();
+      } }).ready
+    : Promise.resolve();
+
   /* ── the envelope that rises off the card after the reveal chapter (lit as the old A-Frame scene lit it) ── */
   const lights = new THREE.Group(); lights.name = 'film-act-lights';
   const ambient = new THREE.AmbientLight(0xbbbbbb, Math.PI);           // A-Frame's default lights, in today's physical units
@@ -176,7 +190,7 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     sources[sources.length - 1].addEventListener('error', done, { once: true });   // every source failed
     setTimeout(done, META_WAIT);
   });
-  const ready = Promise.all([painter.facesReady, metadata]);
+  const ready = Promise.all([painter.facesReady, photosReady, metadata]);
   painter.facesReady.then(() => { if (!disposed && chapter < 0) painter.draw(0); });   // the first frame's words, before anything plays
 
   return {
@@ -189,6 +203,7 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     },
     play(i: number) {
       if (disposed || !chapters[i]) return;
+      if (i === 0 && chapter >= 0 && photosIn.length > 1) { order = shuffled(photosIn); placePhotos(); }   // played again: a new order
       chapter = i; playing = true;
       if (i === 0) { hide(); o.onReveal?.(false); }
       video.currentTime = i ? chapters[i - 1].end : 0;

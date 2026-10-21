@@ -83,6 +83,12 @@
 .gp-fallback video { width: 100%; max-width: 40rem; border-radius: 8px; background: #000; margin-top: 1rem; }
 .gp-letter { width: 100%; max-width: 33rem; margin-top: 1.25rem; background: var(--paper); color: var(--ink); padding: 1.4rem; border-radius: 4px; }
 .gp-letter img { display: block; width: 100%; max-height: 14rem; object-fit: cover; border-radius: 3px; margin-bottom: 1rem; }
+/* several photos: a strip of prints, tilted a little each, that scrolls sideways */
+.gp-letter .gp-photos { display: flex; gap: .9rem; overflow-x: auto; scroll-snap-type: x mandatory; padding: .5rem .3rem 1.1rem; margin: -.5rem -.3rem .3rem; }
+.gp-letter .gp-photos img { flex: 0 0 auto; width: 8.5rem; height: 8.5rem; margin: 0; border-radius: 1px; background: #fff; border: .4rem solid #fff; border-bottom-width: 1.3rem;
+  box-shadow: 0 .35rem .9rem rgba(0, 0, 0, .18); scroll-snap-align: center; transform: rotate(-2deg); }
+.gp-letter .gp-photos img:nth-child(even) { transform: rotate(1.6deg); }
+.gp-letter .gp-photos img:nth-child(3n) { transform: rotate(-.8deg); }
 .gp-letter h2 { font: 700 1.6rem/1.2 var(--f-text); margin-bottom: .6rem !important; }
 .gp-letter p { font-size: 1rem; line-height: 1.6; white-space: pre-line; }
 .gp-letter p + p { margin-top: .7em; }

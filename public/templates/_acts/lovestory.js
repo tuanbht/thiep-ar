@@ -25,7 +25,7 @@
    moving (vx, vy) on screen points along rot = Math.atan2(vx, -vy). A headless browser renders slowly and dt is clamped
    to .05 s, so there the story runs slower than the wall clock.
    kit: THREE, stage, card ({ width, depth }), clamp, lerp, seg, ease, rng, tween(t, keys), hop(t, every, height),
-     words(slot, fallback), model(name), sign(opts), polaroid(opts), particles(opts: shapes heart, petal, glow, sparkle,
+     words(slot, fallback), model(name), sign(opts), polaroid(opts: the card's photos, see below), particles(opts: shapes heart, petal, glow, sparkle,
      drop, star, leaf, note), glow(opts), picture(draw, opts), canvasTexture(w, h, draw), backdrop(draw, opts),
      lights ({ hemi, sun }: dim them for a night), heartPath(ctx, x, y, size), once(key), keep(x).
      model(name).play(clip, { once, fade, speed, key }): called every frame; a new key plays the same clip again.
@@ -202,23 +202,52 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     return { root, width, height, set(t) { text = String(t ?? ''); paint(); } };
   }
 
-  /* ── the card's photo, in a polaroid (a heart doodle when there is none) ── */
-  let photoImg = null;
-  const photoReady = card.photo
-    ? Promise.race([new Promise(res => {
-      const img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = () => { photoImg = img; res(); }; img.onerror = () => res(); img.src = card.photo;
-    }), new Promise(r => setTimeout(r, 8000))])
-    : Promise.resolve();
+  /* ── the card's photos, in polaroids (a heart doodle when there are none). They are shuffled each play; a card's first
+     polaroid starts on the first, its second on the second (polaroid({ photo: i }) picks one). While the act waits at a
+     stop, a polaroid in view shows them in turn, fading from one to the next, so every photo is seen. ── */
+  const shuffle = list => { const out = [...list]; for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; };
+  const photoUrls = Array.isArray(card.photos) && card.photos.length ? card.photos : card.photo ? [card.photo] : [];
+  const PHOTO_PX = 640;                                                // a photo is kept this big at most: ten full-size ones fill a phone
+  const small = img => {
+    const k = Math.min(1, PHOTO_PX / Math.max(img.width, img.height));
+    if (k === 1) return img;
+    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    return cv;
+  };
+  let photoImgs = [];
+  const polaroids = new Set();
+  const loads = shuffle(photoUrls).map(url => new Promise(res => {      // each one after the others as it comes in, so none moves
+    const img = new Image(), late = setTimeout(() => res(false), 20000);
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { clearTimeout(late); photoImgs = [...photoImgs, small(img)]; polaroids.forEach(p => p.repaint()); res(true); };
+    img.onerror = () => { clearTimeout(late); res(false); };
+    img.src = url;
+  }));
+  /** the act may start once the first photo is in (or none can come, or 8 s went by): the others come in while it plays */
+  const photoReady = Promise.race([new Promise(res => {
+    let left = loads.length;
+    if (!left) res();
+    loads.forEach(p => p.then(ok => { if (ok || --left === 0) res(); }));
+  }), new Promise(r => setTimeout(r, 8000))]);
+  const PHOTO_TURN = 2.8, PHOTO_FADE = .6;                             // seconds a photo shows at a stop, and its fade to the next
+  /** a polaroid in view: it and everything it hangs from visible, and not shrunk to nothing */
+  const inView = obj => { for (let o = obj; o; o = o.parent) if (!o.visible) return false; return obj.matrixWorld.getMaxScaleOnAxis() > 1e-3; };
   function polaroid(o = {}) {
     const width = o.width ?? .24, cv = document.createElement('canvas'); cv.width = 512; cv.height = 620;
     const tex = keep(new THREE.CanvasTexture(cv)); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    const start = o.photo ?? polaroids.size;
+    let shown = start, mix = 0, heldSince = null, from = start;        // the photo it shows, and how far into the next
+    const drawPhoto = (c, img, x, y, s, alpha) => {
+      const k = Math.max(s / img.width, s / img.height), w = img.width * k, h = img.height * k;
+      c.save(); c.globalAlpha = alpha; c.beginPath(); c.rect(x, y, s, s); c.clip(); c.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h); c.restore();
+    };
     function paint() {
-      const c = cv.getContext('2d'), x = 30, y = 30, s = 452;
+      const c = cv.getContext('2d'), x = 30, y = 30, s = 452, n = photoImgs.length;
       c.fillStyle = '#ffffff'; c.fillRect(0, 0, 512, 620);
-      if (photoImg) {
-        const k = Math.max(s / photoImg.width, s / photoImg.height), w = photoImg.width * k, h = photoImg.height * k;
-        c.save(); c.beginPath(); c.rect(x, y, s, s); c.clip(); c.drawImage(photoImg, x + (s - w) / 2, y + (s - h) / 2, w, h); c.restore();
+      if (n) {
+        drawPhoto(c, photoImgs[shown % n], x, y, s, 1);
+        if (mix > 0) drawPhoto(c, photoImgs[(shown + 1) % n], x, y, s, mix);
       } else {
         c.fillStyle = o.empty ?? '#fde4ea'; c.fillRect(x, y, s, s); c.fillStyle = '#f39ab4'; heartPath(c, 256, 262, 240); c.fill();
       }
@@ -241,6 +270,22 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
         color: o.haloColor ?? 0xffd9a0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })));
       halo.position.set(0, width * 620 / 512 / 2, -.012); halo.renderOrder = 3; root.add(halo);
     }
+    polaroids.add({
+      /** at a stop (held) and in view: the photos in turn, from the one it showed when the act stopped */
+      turn(held, T) {
+        if (photoImgs.length < 2 || !held || !inView(root)) {
+          heldSince = null;
+          if (mix > 0) { if (mix >= .5) shown += 1; mix = 0; paint(); }   // left in the middle of a fade: settle on one photo
+          return;
+        }
+        if (heldSince === null) { heldSince = T; from = shown; }
+        const k = (T - heldSince) / PHOTO_TURN, step = Math.floor(k), into = (k - step) * PHOTO_TURN;
+        const m = into > PHOTO_TURN - PHOTO_FADE ? (into - PHOTO_TURN + PHOTO_FADE) / PHOTO_FADE : 0;
+        if (from + step !== shown || Math.abs(m - mix) > .02 || (m === 0 && mix !== 0)) { shown = from + step; mix = m; paint(); }
+      },
+      rewind() { shown = from = start; mix = 0; heldSince = null; paint(); },
+      repaint: paint
+    });
     return { root, width, height: width * 620 / 512, halo };
   }
 
@@ -537,6 +582,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       untouch();                                                       // last frame's gestures off, then the clips on
       mixers.forEach(m => m.update(state.paused ? 0 : dt));
       try { story.pose(f); } catch (e) { errors.push(e && e.message ? e.message : String(e)); story = null; console.error('[lovestory]', e); }
+      polaroids.forEach(p => p.turn(f.held, f.T));
       window.__storyClock = f.g;                                        // for tests: where the story is (scripts/shoot-card.mjs)
       if (!state.stopped && !state.paused && state.chapter >= 0 && state.t >= seconds[state.chapter]) { state.stopped = true; onStop(state.chapter); }
     }
@@ -546,7 +592,11 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
 
   return {
     play(i) {
-      if (i === 0) { fired.clear(); mixers.forEach(m => m.stopAllAction()); try { story?.reset?.(); } catch (e) { errors.push(String(e)); } }
+      if (i === 0) {
+        fired.clear(); mixers.forEach(m => m.stopAllAction());
+        photoImgs = shuffle(photoImgs); polaroids.forEach(p => p.rewind());   // a new order of photos each play
+        try { story?.reset?.(); } catch (e) { errors.push(String(e)); }
+      }
       state.chapter = i; state.t = 0; state.stopped = false; state.paused = false; last = performance.now();
       if (!story && i >= 0) ready.then(() => { if (!story && !disposed && state.chapter === i && !state.stopped) { state.stopped = true; onStop(i); } });
     },

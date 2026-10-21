@@ -115,5 +115,5 @@ export function issuesOf(error: { issues: { path: PropertyKey[] }[] }): string[]
 
 const FIELD: Record<string, string> = {
   title: 'Tiêu đề', intro: 'Lời mở đầu', 'letter.to': 'Lời gọi', 'letter.body': 'Nội dung thư', 'letter.from': 'Lời ký tên',
-  slots: 'Chữ trên thiệp', photoPath: 'Ảnh', productId: 'Mẫu thiệp', buyer: 'Thông tin người mua', name: 'Loại sự kiện'
+  slots: 'Chữ trên thiệp', photoPaths: 'Ảnh', photoPath: 'Ảnh', productId: 'Mẫu thiệp', buyer: 'Thông tin người mua', name: 'Loại sự kiện'
 };

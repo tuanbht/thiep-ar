@@ -37,6 +37,9 @@ describe('createTemplateCatalog', () => {
     await put('bad-form', 'form.json', JSON.stringify({ groups: 'no' }));
     await put('torn', 'template.json', '{ not json');
     await put('no-stops', 'template.json', JSON.stringify({ chapters: [] }));
+    await put('film-photos', 'template.json', JSON.stringify({ chapters: [1], photos: 7 }));
+    await put('many-photos', 'template.json', JSON.stringify({ chapters: [1], photos: 99 }));
+    await put('odd-photos', 'template.json', JSON.stringify({ chapters: [1], photos: '3' }));
   });
   afterAll(() => rm(dir, { recursive: true, force: true }));
 
@@ -59,6 +62,12 @@ describe('createTemplateCatalog', () => {
     expect(await c.getTemplateInfo('torn')).toBeNull();
     expect(await c.getTemplateInfo('no-stops')).toBeNull();
     log.mockRestore();
+  });
+
+  it('knows how many photo places a card has: none unless it says, never more than twenty', async () => {
+    const c = createTemplateCatalog(dir);
+    const places = async (id: string) => (await c.getTemplateInfo(id))?.photoPlaces;
+    expect([await places('ok'), await places('film-photos'), await places('many-photos'), await places('odd-photos')]).toEqual([0, 7, 20, 0]);
   });
 
   it('reads each template once when caching, every time when not', async () => {

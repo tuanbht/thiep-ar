@@ -15,4 +15,11 @@ describe('card', () => {
     expect(safeId(undefined)).toBe('');
   });
 
+  it('takes the photos as a list, or the one photo of a card made before lists; photo is always the first', () => {
+    expect(mergeCard({ photos: ['https://p/1.jpg', 7, '', 'https://p/2.jpg'] })).toMatchObject({ photo: 'https://p/1.jpg', photos: ['https://p/1.jpg', 'https://p/2.jpg'] });
+    expect(mergeCard({ photo: 'https://p/old.jpg' })).toMatchObject({ photo: 'https://p/old.jpg', photos: ['https://p/old.jpg'] });
+    expect(mergeCard({ photo: 'https://p/old.jpg', photos: ['https://p/new.jpg'] }).photos).toEqual(['https://p/new.jpg']);
+    expect(mergeCard({ photos: [] })).toMatchObject({ photo: '', photos: [] });
+  });
+
 });

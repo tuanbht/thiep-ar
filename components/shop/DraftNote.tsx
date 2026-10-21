@@ -18,10 +18,11 @@ export interface DraftNoteProps {
   onStartOver(): void;
 }
 
-function line({ restoredAt, savedAt, failed }: DraftStatus): string {
+function line({ restoredAt, savedAt, failed, photosUnsaved }: DraftStatus): string {
   if (failed) return S.product.draft.failed;
   if (restoredAt !== null && (savedAt === null || savedAt <= restoredAt)) return S.product.draft.restored(formatWhen(restoredAt));
-  return savedAt !== null ? S.product.draft.saved(formatWhen(savedAt)) : S.product.draft.idle;
+  if (savedAt === null) return S.product.draft.idle;
+  return photosUnsaved ? S.product.draft.savedWithoutPhotos(formatWhen(savedAt)) : S.product.draft.saved(formatWhen(savedAt));
 }
 
 export function DraftNote({ status, dirty, busy, onStartOver }: DraftNoteProps) {

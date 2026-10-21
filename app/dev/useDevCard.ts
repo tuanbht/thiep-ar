@@ -1,5 +1,6 @@
 'use client';
-/* A card for the dev pages: ?t=<template> with the words its form starts with (?words= sets a 3D act's board). */
+/* A card for the dev pages: ?t=<template> with the words its form starts with (?words= sets a 3D act's board, each
+   ?photo= adds a photo, in order). */
 import { useEffect, useState } from 'react';
 import { formSpecSchema } from '@/lib/catalog/form';
 import { presetContent, toCard } from '@/lib/content/toCard';
@@ -14,7 +15,7 @@ export function useDevCard(): { card: Card | null; params: URLSearchParams | nul
       const content = presetContent(formSpecSchema.parse(raw));
       if (params.get('words')) content.slots = { ...content.slots, board: params.get('words') ?? '' };
       if (!content.title) content.title = 'Gửi Hanna';
-      setState({ card: toCard(content, { template: t, design: null }, params.get('photo')), params });
+      setState({ card: toCard(content, { template: t, design: null }, params.getAll('photo').filter(Boolean)), params });
     }, (e: unknown) => console.error('[dev] no form for', t, e));
   }, []);
   return state;

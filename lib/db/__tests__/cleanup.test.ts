@@ -13,7 +13,9 @@ const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 describe.skipIf(!configured)('cleanupAbandoned', () => {
   const db = configured ? createAdminClient() : null!;
   const made = { orders: [] as string[], cards: [] as string[], photos: [] as string[] };
-  const content = (photoPath: string | null) => ({ title: 't', intro: '', letter: { to: 'a', body: ['b'], from: 'c' }, slots: {}, photoPath });
+  /** a card's content with its photo list; `legacy`: as cards were kept before photo lists, one photoPath */
+  const content = (photos: string | string[] | null, legacy = false) => ({ title: 't', intro: '', letter: { to: 'a', body: ['b'], from: 'c' }, slots: {},
+    ...(legacy ? { photoPath: photos } : { photoPaths: photos === null ? [] : [photos].flat() }) });
 
   async function photo(): Promise<string> {
     const path = `drafts/${randomUUID()}.png`;
@@ -23,11 +25,11 @@ describe.skipIf(!configured)('cleanupAbandoned', () => {
     return path;
   }
 
-  async function purchase(ageMs: number, status: 'pending' | 'paid', photoPath: string | null) {
+  async function purchase(ageMs: number, status: 'pending' | 'paid', photoPath: string | string[] | null, legacy = false) {
     const at = new Date(Date.now() - ageMs).toISOString();
     const slug = `Cl${randomUUID().replace(/-/g, '').slice(0, 8)}`;
     const { data: card, error: e1 } = await db.from('gift_cards').insert({ slug, product_id: 'mochi', template: 'mochi', design: null,
-      content: content(photoPath), status: status === 'paid' ? 'active' : 'draft', created_at: at }).select('id').single();
+      content: content(photoPath, legacy), status: status === 'paid' ? 'active' : 'draft', created_at: at }).select('id').single();
     if (e1) throw e1;
     const { data: order, error: e2 } = await db.from('orders').insert({ code: `GC-CLEAN-${randomUUID().slice(0, 8)}`, gift_card_id: card.id,
       product_id: 'mochi', amount_vnd: 49000, status, access_token_hash: 'x'.repeat(64), created_at: at, paid_at: status === 'paid' ? at : null })
@@ -77,6 +79,35 @@ describe.skipIf(!configured)('cleanupAbandoned', () => {
     expect(await exists('orders', left.order)).toBe(false);
     expect(await exists('gift_cards', paid.card)).toBe(true);
     expect(await kept(shared)).toBe(true);
+  });
+
+  it('reads both ways a card keeps its photos: a list, or one photo from before lists', async () => {
+    const [listed, older, shared] = [await photo(), await photo(), await photo()];
+    const left = await purchase(2 * DAY, 'pending', listed);
+    const leftOld = await purchase(2 * DAY, 'pending', older, true);
+    await purchase(2 * DAY, 'pending', shared, true);                 // left long ago, but a paid card shows the same photo
+    await purchase(2 * DAY, 'paid', shared);
+
+    await cleanupAbandoned(24, db, new Date(Date.now() + 2 * DAY));
+
+    expect(await exists('orders', left.order)).toBe(false);
+    expect(await exists('orders', leftOld.order)).toBe(false);
+    expect(await kept(listed)).toBe(false);
+    expect(await kept(older)).toBe(false);
+    expect(await kept(shared)).toBe(true);
+  });
+
+  it('takes a left card\'s photos one by one: those no other card shows go, one a paid card also shows stays', async () => {
+    const [a, b, shared] = [await photo(), await photo(), await photo()];
+    const left = await purchase(2 * DAY, 'pending', [a, shared, b]);
+    const paid = await purchase(2 * DAY, 'paid', [shared]);
+
+    const r = await cleanupAbandoned(24, db, new Date(Date.now() + 2 * DAY));
+
+    expect(await exists('gift_cards', left.card)).toBe(false);
+    expect(await exists('gift_cards', paid.card)).toBe(true);
+    expect([await kept(a), await kept(b), await kept(shared)]).toEqual([false, false, true]);
+    expect(r.photos).toBeGreaterThanOrEqual(2);
   });
 
   it('refuses a cut-off under an hour', async () => {

@@ -13,12 +13,13 @@ export function presetContent(form: FormSpec): GiftContent {
     intro: form.preset.intro,
     letter: { to: form.preset.to, body: [...form.preset.body], from: form.preset.from },
     slots,
-    photoPath: null
+    photoPaths: []
   };
 }
 
-/** `photoUrl`: where the browser can fetch the photo now (a signed link, or a local object URL in the preview). */
-export function toCard(content: GiftContent, product: Pick<Product, 'template' | 'design'>, photoUrl: string | null): Card {
+/** `photoUrls`: where the browser can fetch the photos now (signed links, or local object URLs in the preview), in the
+    buyer's order; the player shuffles them. */
+export function toCard(content: GiftContent, product: Pick<Product, 'template' | 'design'>, photoUrls: readonly string[]): Card {
   return mergeCard({
     template: product.template,
     design: product.design ?? undefined,
@@ -27,7 +28,8 @@ export function toCard(content: GiftContent, product: Pick<Product, 'template' |
     seal: initials(content.letter.from || content.title),
     greeting: content.letter.to,
     letter: content.letter,
-    photo: photoUrl ?? '',
+    photo: photoUrls[0] ?? '',
+    photos: [...photoUrls],
     slots: content.slots
   });
 }

@@ -9,8 +9,11 @@ import { getServices } from '@/lib/server/services';
 /** the photo plus the multipart framing around it */
 const MAX_BODY = LIMITS.photoBytes + 64 * 1024;
 
+/** a card takes up to ten photos, swapped a few times; buyers behind one mobile network share an address */
+const UPLOADS_PER_MINUTE = 40;
+
 export async function POST(req: NextRequest) {
-  return route(req, { rate: { name: 'uploads', limit: 10, windowMs: 60_000 }, sameOrigin: true }, async () => {
+  return route(req, { rate: { name: 'uploads', limit: UPLOADS_PER_MINUTE, windowMs: 60_000 }, sameOrigin: true }, async () => {
     const type = req.headers.get('content-type') ?? '';
     if (!type.startsWith('multipart/form-data')) throw new InvalidInput(['Hãy gửi ảnh dưới dạng tệp.']);
     const body = await readBody(req, MAX_BODY);

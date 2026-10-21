@@ -1,5 +1,5 @@
 'use client';
-/* Writing the card: the start screen, the act's words (from the template's form.json), the letter and a photo; the live
+/* Writing the card: the start screen, the act's words (from the template's form.json), the letter and photos; the live
    preview plays it beside the form as it is written. react-hook-form holds the values and checks them against the
    template's own rules (customize.ts); "Mua" places the order and goes to the checkout. */
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,7 +17,7 @@ import { DraftNote } from './DraftNote';
 import { track } from './events';
 import { Field, Section } from './fields';
 import { formatVnd } from './format';
-import { PhotoField, type PhotoState } from './PhotoField';
+import { PhotosField, type PhotoItem } from './PhotosField';
 import { PreviewPanel } from './PreviewPanel';
 import { S } from './strings';
 import { useDraft } from './useDraft';
@@ -25,6 +25,8 @@ import { useDraft } from './useDraft';
 export interface CustomizeFormProps {
   product: Product;
   form: FormSpec;
+  /** how many places the card's act has for photos (template.json "photos") */
+  photoPlaces?: number;
 }
 
 const DESKTOP = '(min-width: 1024px)';
@@ -43,7 +45,7 @@ function FormText(p: { control: Control<CustomizeValues>; name: FieldPath<Custom
   );
 }
 
-export function CustomizeForm({ product, form }: CustomizeFormProps) {
+export function CustomizeForm({ product, form, photoPlaces = 0 }: CustomizeFormProps) {
   const router = useRouter();
   const fields = useMemo(() => allFields(form.groups), [form.groups]);
   const schema = useMemo(() => customizeSchema(fields), [fields]);
@@ -55,7 +57,7 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
   });
   const paragraphs = useFieldArray({ control, name: 'body' });
   const values = useWatch({ control }) as CustomizeValues;
-  const [photo, setPhoto] = useState<PhotoState>({ path: null, previewUrl: null });
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [leaving, setLeaving] = useState(false);                     // the order is placed: the checkout is loading
   const desktop = useDesktop();
@@ -63,14 +65,16 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
   const showPreview = desktop || previewOpen;
   const started = useRef(false), previewed = useRef(false), first = useRef(true);
   const draft = useDraft({                                              // a reload brings the card back (this browser only)
-    productId: product.id, fields, defaults, values, photo, read: getValues,
-    restore: useCallback((v: CustomizeValues, p: PhotoState) => { started.current = true; reset(v); setPhoto(p); }, [reset])
+    productId: product.id, fields, defaults, values, photos, read: getValues,
+    restore: useCallback((v: CustomizeValues, p: PhotoItem[]) => { started.current = true; reset(v); setPhotos(p); }, [reset])
   });
-  const startOver = () => { reset(defaults); setPhoto({ path: null, previewUrl: null }); draft.discard(); };
+  const startOver = () => { reset(defaults); setPhotos([]); draft.discard(); };
   useLayoutEffect(() => () => setLeaving(false), []);                  // Back from the checkout: this page again, ready to buy
 
-  const content = useMemo(() => toContent(values, fields, photo.path), [values, fields, photo.path]);
-  const card = useMemo(() => toCard(content, product, photo.previewUrl), [content, product, photo.previewUrl]);
+  const paths = useMemo(() => photos.flatMap(p => (p.path ? [p.path] : [])), [photos]);
+  const previews = useMemo(() => photos.flatMap(p => (p.previewUrl ? [p.previewUrl] : [])), [photos]);
+  const content = useMemo(() => toContent(values, fields, paths), [values, fields, paths]);
+  const card = useMemo(() => toCard(content, product, previews), [content, product, previews]);
 
   useEffect(() => { track({ name: 'product_view', productId: product.id }); }, [product.id]);
   useEffect(() => {
@@ -92,7 +96,7 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(orderRequest(product.id, toContent(v, fields, photo.path), fields))
+        body: JSON.stringify(orderRequest(product.id, toContent(v, fields, paths), fields))
       });
       const json = (await res.json().catch(() => ({}))) as Partial<CreateOrderResponse> & { error?: string };
       if (!res.ok || !json.checkoutUrl) throw new Error(json.error || S.product.orderFailed);
@@ -174,7 +178,7 @@ export function CustomizeForm({ product, form }: CustomizeFormProps) {
           </Section>
 
           <Section n="04" id="photo" title={S.product.sections.photo} note={S.product.sections.photoNote}>
-            <PhotoField value={photo} onChange={setPhoto} onBusy={setUploading} lost={draft.photoLost} />
+            <PhotosField value={photos} onChange={setPhotos} onBusy={setUploading} places={photoPlaces} lost={draft.photosLost} />
           </Section>
         </div>
 

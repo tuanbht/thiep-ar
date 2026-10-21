@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: PageProps<'/cards/[product
         </div>
       </header>
       {info?.form
-        ? <CustomizeForm product={product} form={info.form} />
+        ? <CustomizeForm product={product} form={info.form} photoPlaces={info.photoPlaces} />
         : <p className="mx-auto mb-20 max-w-xl px-4 text-center italic text-paper/70">{S.product.noForm}</p>}
     </>
   );

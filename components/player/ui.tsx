@@ -1,6 +1,6 @@
 /* The gift player's screens and overlays. Presentational only: what they show comes in as props. Anything a tap must
    not pass through to the act carries data-ui. */
-import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import type { Card } from '@/lib/player/core/card';
 import s from './playerClasses';
 import { T } from './strings';
@@ -10,14 +10,29 @@ const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).jo
 export function Letter({ card, id, focusable }: { card: Card; id?: string; focusable?: boolean }) {
   return (
     <article className={s.letter} id={id} data-ui tabIndex={focusable ? -1 : undefined}>
-      {/* the photo is the buyer's own, from a short-lived signed link: no next/image optimisation for it */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {card.photo && <img src={card.photo} alt="" />}
+      <LetterPhotos photos={card.photos} />
       <h2>{card.letter.to}</h2>
       {card.letter.body.map((t, i) => <p key={i}>{t}</p>)}
       <p className={s.from}>{card.letter.from}</p>
     </article>
   );
+}
+
+/** The letter's photos: one wide, or several in a strip. They are the buyer's own, from signed links that last an hour,
+    so no next/image optimisation for them; one that will not load (its link ran out in a tab left open) is left out. */
+function LetterPhotos({ photos }: { photos: readonly string[] }) {
+  const [broken, setBroken] = useState<ReadonlySet<string>>(() => new Set());
+  const shown = photos.filter(p => !broken.has(p));
+  const drop = (p: string) => setBroken(b => new Set(b).add(p));
+  /* eslint-disable @next/next/no-img-element */
+  if (shown.length === 1) return <img src={shown[0]} alt="" onError={() => drop(shown[0])} />;
+  if (!shown.length) return null;
+  return (
+    <div className={s.photos}>
+      {shown.map((p, i) => <img key={`${i}-${p}`} src={p} alt="" onError={() => drop(p)} />)}
+    </div>
+  );
+  /* eslint-enable @next/next/no-img-element */
 }
 
 /** The letter over the act: it takes the focus when it opens (a screen reader reads it, the keys scroll it) and Escape

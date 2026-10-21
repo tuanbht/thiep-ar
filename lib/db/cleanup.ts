@@ -1,5 +1,6 @@
 /* The nightly sweep of abandoned purchases: pending orders and draft gift cards nobody paid for (older than a day), the
-   photos those cards held, and photos uploaded while writing a card that was never ordered. Paid cards and their
+   photos those cards held, and photos uploaded while writing a card that was never ordered. A photo goes only when no
+   card left shows it. Paid cards and their
    photos are never touched. Called by GET /api/cron/cleanup. */
 import 'server-only';
 import { getAdminClient, type Db } from './client';
@@ -19,11 +20,9 @@ export async function cleanupAbandoned(olderThanHours = 24, db: Db = getAdminCli
   if (error) throw new RepositoryError(`clean up abandoned orders: ${error.message}`, error);
   const r = data as { orders: number; gift_cards: number; photos: string[] };
   const cutoff = now.getTime() - olderThanHours * 3600_000;
-  const stale = new Set<string>();                                     // a photo goes only when no card is left that shows it:
-  for (const path of [...r.photos, ...(await oldDrafts(db, cutoff))]) {   // a kept draft can share one with a paid card
-    if (!stale.has(path) && !(await isReferenced(db, path))) stale.add(path);
-  }
-  const paths = [...stale];
+  const candidates = [...new Set([...r.photos, ...(await oldDrafts(db, cutoff))])];
+  const shown = await inUse(db, candidates);                           // a photo goes only when no card is left that shows it:
+  const paths = candidates.filter(p => !shown.has(p));                 // a kept draft can share one with a paid card
   for (let i = 0; i < paths.length; i += PAGE) {
     const { error: e } = await db.storage.from(PHOTO_BUCKET).remove(paths.slice(i, i + PAGE));
     if (e) throw new RepositoryError(`remove abandoned photos: ${e.message}`, e);
@@ -42,9 +41,13 @@ async function oldDrafts(db: Db, cutoff: number): Promise<string[]> {
   }
 }
 
-/** whether any gift card (draft or paid) still shows this photo */
-async function isReferenced(db: Db, path: string): Promise<boolean> {
-  const { count, error } = await db.from('gift_cards').select('id', { count: 'exact', head: true }).eq('content->>photoPath', path);
-  if (error) throw new RepositoryError(`look for a photo's card: ${error.message}`, error);
-  return (count ?? 0) > 0;
+/** which of these photos a gift card (draft or paid) still shows, in its list or (kept before lists) as its one photo */
+async function inUse(db: Db, paths: string[]): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (let i = 0; i < paths.length; i += PAGE) {
+    const { data, error } = await db.rpc('photos_in_use', { p_paths: paths.slice(i, i + PAGE) });
+    if (error) throw new RepositoryError(`look for the cards that show photos: ${error.message}`, error);
+    for (const path of data ?? []) out.add(path);
+  }
+  return out;
 }

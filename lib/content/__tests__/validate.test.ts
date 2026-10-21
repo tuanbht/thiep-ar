@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { giftContentInputSchema } from '../../api/dto';
+import { giftContentInputSchema, LIMITS } from '../../api/dto';
 import type { FormSpec } from '../../catalog/form';
 import { InvalidInput } from '../../orders/errors';
 import { catalog } from '../../orders/__tests__/test-kit';
@@ -47,9 +47,19 @@ describe('validateContent', () => {
     expect(c.letter.body).toEqual(['Một\nhai', 'Ba']);
   });
 
-  it('passes the photo through', () => {
-    const photoPath = 'drafts/12345678-1234-4123-8123-123456789abc.jpg';
-    expect(validateContent(input({ photoPath }), null).photoPath).toBe(photoPath);
+  it('keeps the photos in the buyer\'s order, each once, and takes an older client\'s single photo', () => {
+    const a = 'drafts/12345678-1234-4123-8123-123456789abc.jpg', b = 'drafts/22345678-1234-4123-8123-123456789abc.png';
+    expect(validateContent(input({ photoPaths: [a, b, a] }), null).photoPaths).toEqual([a, b]);
+    expect(validateContent(input({ photoPath: a }), null).photoPaths).toEqual([a]);
+    expect(validateContent(input({ photoPaths: [b], photoPath: a }), null).photoPaths).toEqual([b, a]);
+    expect(validateContent(input(), null).photoPaths).toEqual([]);
+  });
+
+  it('refuses more photos than a card takes, and anything that is not one of our uploads', () => {
+    const many = Array.from({ length: LIMITS.photos + 1 }, (_, i) => `drafts/${String(i).padStart(8, '0')}-1234-4123-8123-123456789abc.jpg`);
+    expect(() => input({ photoPaths: many })).toThrow();
+    expect(() => input({ photoPaths: ['../../secret.jpg'] })).toThrow();
+    expect(input({ photoPaths: many.slice(0, LIMITS.photos) }).photoPaths).toHaveLength(LIMITS.photos);
   });
 });
 

@@ -56,7 +56,9 @@ fake sale. Referrers are kept as their origin only (a path may be a private gift
 
 Abandoned purchases are swept nightly: `GET /api/cron/cleanup` (with `Authorization: Bearer $CRON_SECRET`; `vercel.json`
 schedules it at 03:00 Vietnam time) deletes pending orders and draft cards older than a day, their photos, and photos
-uploaded for cards that were never ordered. Paid cards are never touched.
+uploaded for cards that were never ordered. Paid cards are never touched. Before rolling the app back to a build from
+before photo lists (a card's `photoPaths`), switch the cron off: that build reads only `photoPath`, so it would take
+the photos of cards kept as lists, paid ones too, for unused.
 
 ## Payments
 

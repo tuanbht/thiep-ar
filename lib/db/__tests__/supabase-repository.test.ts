@@ -71,7 +71,7 @@ describe.skipIf(!configured)('Supabase', () => {
   it('takes any provider the app names, with no migration, and refuses a malformed one', async () => {
     const repo = new SupabaseRepository(db);                           // the contract above has put the products in
     const gift = await repo.createGiftCard({ slug: randomBytes(9).toString('hex'), productId: products.first.id, template: 'flower-letter', design: null,
-      content: { title: 't', intro: '', letter: { to: 'a', body: ['b'], from: 'c' }, slots: {}, photoPath: null } });
+      content: { title: 't', intro: '', letter: { to: 'a', body: ['b'], from: 'c' }, slots: {}, photoPaths: [] } });
     const order = await repo.createOrder({ code: `T-${randomBytes(6).toString('hex').toUpperCase()}`, giftCardId: gift.id, productId: products.first.id,
       amountVnd: 49000, buyer: { name: null, email: null, phone: null }, accessTokenHash: 'a'.repeat(64) });
     const someday = 'momo_qr' as PaymentProviderId;
@@ -80,6 +80,16 @@ describe.skipIf(!configured)('Supabase', () => {
     expect(await repo.setOrderPayment(order.id, someday, 'ref-1')).toMatchObject({ paymentProvider: 'momo_qr' });
     const paid = await repo.confirmPayment({ orderId: order.id, provider: someday, providerRef: 'ref-1', amountVnd: 49000, raw: {}, paidAt: new Date().toISOString() });
     expect(paid.order).toMatchObject({ status: 'paid', paymentProvider: 'momo_qr' });
+  });
+
+  it('reads a card saved before photo lists: its one photo becomes the list', async () => {
+    const path = 'drafts/00000000-0000-4000-8000-00000000abcd.jpg';
+    const { data, error } = await db.from('gift_cards').insert({ slug: randomBytes(9).toString('hex'), product_id: products.first.id,
+      template: 'flower-letter', content: { title: 't', intro: '', letter: { to: 'a', body: ['b'], from: 'c' }, slots: {}, photoPath: path } })
+      .select('id').single();
+    if (error) throw new Error(error.message);
+    expect((await new SupabaseRepository(db).getGiftCard(data.id))!.content.photoPaths).toEqual([path]);
+    await db.from('gift_cards').delete().eq('id', data.id);
   });
 
   afterAll(async () => {

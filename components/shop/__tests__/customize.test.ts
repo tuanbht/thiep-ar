@@ -26,17 +26,17 @@ describe('the form\'s values', () => {
   });
 
   it('become gift content, a field\'s words in every slot it fills', () => {
-    expect(toContent({ ...ok, words: { board: 'Chào', sign0: 'B' } }, fields, 'drafts/x.jpg')).toEqual({
+    expect(toContent({ ...ok, words: { board: 'Chào', sign0: 'B' } }, fields, ['drafts/x.jpg', 'drafts/y.png'])).toEqual({
       title: 'Gửi Hanna', intro: '', letter: { to: 'Hanna à,', body: ['Một', 'Hai'], from: 'Yêu em' },
-      slots: { board: 'Chào', sign0: 'B', 'cap0-k': 'B' }, photoPath: 'drafts/x.jpg'
+      slots: { board: 'Chào', sign0: 'B', 'cap0-k': 'B' }, photoPaths: ['drafts/x.jpg', 'drafts/y.png']
     });
   });
 
   it('become an order request: trimmed, empty paragraphs dropped, no stray slots, no buyer', () => {
-    const content = toContent({ ...ok, title: '  Gửi Hanna ', body: [{ text: ' Một ' }, { text: '  ' }, { text: 'Hai' }], words: { board: ' Hi ', sign0: 'A' } }, fields, null);
+    const content = toContent({ ...ok, title: '  Gửi Hanna ', body: [{ text: ' Một ' }, { text: '  ' }, { text: 'Hai' }], words: { board: ' Hi ', sign0: 'A' } }, fields, []);
     expect(orderRequest('mochi', { ...content, slots: { ...content.slots, stray: 'x' } }, fields)).toEqual({
       productId: 'mochi',
-      content: { title: 'Gửi Hanna', intro: '', letter: { to: 'Hanna à,', body: ['Một', 'Hai'], from: 'Yêu em' }, slots: { board: 'Hi', sign0: 'A', 'cap0-k': 'A' }, photoPath: null }
+      content: { title: 'Gửi Hanna', intro: '', letter: { to: 'Hanna à,', body: ['Một', 'Hai'], from: 'Yêu em' }, slots: { board: 'Hi', sign0: 'A', 'cap0-k': 'A' }, photoPaths: [] }
     });
   });
 });

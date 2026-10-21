@@ -167,16 +167,24 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     return { b, L, R, r, y, ph };
   });
 
-  /* ── the polaroid: the card's photo, in a white frame with a small heart ── */
+  /* ── the polaroid: the card's photos, in a white frame with a small heart. They are shuffled each play; while the act
+     waits at the photo's stop they show in turn, fading from one to the next. ── */
   const polCanvas = document.createElement('canvas'); polCanvas.width = 512; polCanvas.height = 620;
   const polTex = keep(new THREE.CanvasTexture(polCanvas)); polTex.colorSpace = THREE.SRGBColorSpace; polTex.anisotropy = 4;
-  function paintPolaroid(img) {
+  const shuffle = list => { const out = [...list]; for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; };
+  const TURN = 2.8, FADE = .6;                                          // seconds a photo shows at the stop, and its fade to the next
+  let photos = [], shown = 0, mix = 0, heldSince = null, from = 0;
+  const drawPhoto = (c, img, x, y, s, alpha) => {
+    const k = Math.max(s / img.width, s / img.height), w = img.width * k, h = img.height * k;
+    c.save(); c.globalAlpha = alpha; c.beginPath(); c.rect(x, y, s, s); c.clip(); c.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h); c.restore();
+  };
+  function paintPolaroid() {
     const c = polCanvas.getContext('2d');
     c.fillStyle = '#ffffff'; c.fillRect(0, 0, 512, 620);
-    const x = 30, y = 30, s = 452;
-    if (img) {
-      const k = Math.max(s / img.width, s / img.height), w = img.width * k, h = img.height * k;
-      c.save(); c.beginPath(); c.rect(x, y, s, s); c.clip(); c.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h); c.restore();
+    const x = 30, y = 30, s = 452, n = photos.length;
+    if (n) {
+      drawPhoto(c, photos[shown % n], x, y, s, 1);
+      if (mix > 0) drawPhoto(c, photos[(shown + 1) % n], x, y, s, mix);
     } else {
       c.fillStyle = '#fde4e0'; c.fillRect(x, y, s, s); c.fillStyle = '#f2aaaa'; c.font = '700 200px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('♥', 256, 256);
     }
@@ -184,14 +192,39 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     c.moveTo(440, 586); c.bezierCurveTo(400, 556, 410, 520, 438, 532); c.bezierCurveTo(462, 515, 478, 552, 440, 586); c.stroke();
     polTex.needsUpdate = true;
   }
-  paintPolaroid(null);
-  let photoReady = Promise.resolve();
-  if (card.photo) {
-    photoReady = new Promise(res => {
-      const img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = () => { paintPolaroid(img); res(); }; img.onerror = () => res();
-      img.src = card.photo;
-    });
+  paintPolaroid();
+  const photoUrls = Array.isArray(card.photos) && card.photos.length ? card.photos : card.photo ? [card.photo] : [];
+  const small = img => {                                                // a photo is kept 640 px at most: ten full-size ones fill a phone
+    const k = Math.min(1, 640 / Math.max(img.width, img.height));
+    if (k === 1) return img;
+    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    return cv;
+  };
+  const loads = shuffle(photoUrls).map(url => new Promise(res => {      // each one after the others as it comes in, so none moves
+    const img = new Image(), late = setTimeout(() => res(false), 20000);
+    img.crossOrigin = 'anonymous';
+    img.onload = () => { clearTimeout(late); photos = [...photos, small(img)]; paintPolaroid(); res(true); };
+    img.onerror = () => { clearTimeout(late); res(false); };
+    img.src = url;
+  }));
+  /** the act may start once the first photo is in (or none can come, or 8 s went by): the others come in while it plays */
+  const photoReady = Promise.race([new Promise(res => {
+    let left = loads.length;
+    if (!left) res();
+    loads.forEach(p => p.then(ok => { if (ok || --left === 0) res(); }));
+  }), new Promise(r => setTimeout(r, 8000))]);
+  /** at the photo's stop: the photos in turn, from the one shown when the act stopped there */
+  function turnPhotos(held, T) {
+    if (photos.length < 2 || !held) {
+      heldSince = null;
+      if (mix > 0) { if (mix >= .5) shown += 1; mix = 0; paintPolaroid(); }   // left in the middle of a fade: settle on one photo
+      return;
+    }
+    if (heldSince === null) { heldSince = T; from = shown; }
+    const k = (T - heldSince) / TURN, step = Math.floor(k), into = (k - step) * TURN;
+    const m = into > TURN - FADE ? (into - TURN + FADE) / FADE : 0;
+    if (from + step !== shown || Math.abs(m - mix) > .02 || (m === 0 && mix !== 0)) { shown = from + step; mix = m; paintPolaroid(); }
   }
   const polaroid = at(new THREE.Group(), .3, 0, .13); polaroid.scale.setScalar(.001); spin.add(polaroid);
   const polCard = at(mesh(new THREE.BoxGeometry(.2, .242, .004), [toon(C.white), toon(C.white), toon(C.white), toon(C.white), keep(new THREE.MeshBasicMaterial({ map: polTex })), toon(C.white)]), 0, .133, 0);
@@ -280,12 +313,13 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       petals.update(dt, state.T); hearts.update(dt, state.T);
     }
     if (state.loop == null && !state.stopped && !state.paused && state.t >= DUR[state.chapter]) { state.stopped = true; onStop(state.chapter); }
+    turnPhotos(state.loop == null && ch === 1 && state.stopped, state.T);
     if (!disposed) raf = requestAnimationFrame(tick);
   }
   raf = requestAnimationFrame(tick);
 
   return {
-    play(i) { if (i === 0) resetFx(); state.loop = null; state.chapter = i; state.t = 0; state.stopped = false; state.paused = false; last = performance.now(); },
+    play(i) { if (i === 0) { resetFx(); photos = shuffle(photos); shown = from = 0; mix = 0; heldSince = null; paintPolaroid(); } state.loop = null; state.chapter = i; state.t = 0; state.stopped = false; state.paused = false; last = performance.now(); },
     pause() { state.paused = true; },
     resume() { state.paused = false; last = performance.now(); },
     turn(rad) { spin.rotation.y += rad; },

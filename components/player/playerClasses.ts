@@ -22,6 +22,7 @@ const s = {
   done: 'gp-done',
   fallback: 'gp-fallback',
   letter: 'gp-letter',
+  photos: 'gp-photos',
   from: 'gp-from',
   read: 'gp-read',
   top: 'gp-top',

@@ -4,6 +4,7 @@
    - the card is read live, at each paint (the page shows it as window.__card and the tool swaps its slots);
    - draw(-1) forgets the last frame, so the next draw(f) paints again. */
 import type { Card } from '../core/card';
+import { paintPhotos, type PhotoImage } from './photos';
 import type { Slot, SlotStyle, Slots } from './types';
 
 type Style = Partial<SlotStyle>;
@@ -36,6 +37,9 @@ export interface WordsPainter {
   frameAt(seconds: number): number;
   /** every face the card's words need is in, or the wait ran out */
   facesReady: Promise<void>;
+  /** the card's photos, in the order the film's photo places take them (slots.photos), null where one is not in: the
+      frame on screen is painted again with them */
+  setPhotos(list: (PhotoImage | null)[]): void;
   dispose(): void;
 }
 
@@ -123,6 +127,7 @@ export function createWordsPainter(o: WordsPainterOptions): WordsPainter {
   const styleOf = (slot: Slot): Style => ({ ...(KINDS[slot.kind ?? ''] || KINDS.text), ...(slot.style || {}) });
   const fonts = o.fonts === undefined ? (typeof document !== 'undefined' ? document.fonts : null) : o.fonts;
   let lastWords = -1, disposed = false;
+  let images: (PhotoImage | null)[] = [];
 
   const frameAt = (t: number): number => Math.max(0, Math.min((slots ? slots.frames : 1) - 1, Math.round(t * FPS)));
 
@@ -166,6 +171,7 @@ export function createWordsPainter(o: WordsPainterOptions): WordsPainter {
   function draw(frame: number): void {
     if (disposed || !slots || !wctx || frame === lastWords) return;
     lastWords = frame; wctx.clearRect(0, 0, SW, SH);
+    if (slots.photos?.length && images.length) paintPhotos(wctx, slots.photos, frame, images, layer);   // under the words written on them
     for (const [name, slot] of Object.entries(slots.slots)) paintSlot(name, slot, frame);
     o.onPainted?.();
   }
@@ -192,11 +198,11 @@ export function createWordsPainter(o: WordsPainterOptions): WordsPainter {
     lastWords = -1; draw(f);
   };
   fonts?.addEventListener?.('loadingdone', onLoadingDone);
-
   return {
     draw,
     frameAt,
     facesReady,
+    setPhotos(list) { images = [...list]; onLoadingDone(); },
     dispose() {
       disposed = true;
       fonts?.removeEventListener?.('loadingdone', onLoadingDone);

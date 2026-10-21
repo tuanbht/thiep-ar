@@ -2,11 +2,39 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mergeCard } from '@/lib/player/core/card';
-import { Hint, ReadView } from '../ui';
+import { Hint, Letter, ReadView } from '../ui';
 
 const card = mergeCard({ template: 'mochi', title: 'Gửi Hanna', letter: { to: 'Hanna à,', body: ['Một dòng.'], from: 'Yêu em.' } });
 
 afterEach(cleanup);
+
+describe('Letter', () => {
+  it('shows every photo: one wide, several as a strip of prints, none when there are none', () => {
+    const with_ = (photos: string[]) => mergeCard({ ...card, photos });
+    const imgs = () => [...document.querySelectorAll('article img')].map(i => i.getAttribute('src'));
+    render(<Letter card={with_(['https://p/1.jpg'])} />);
+    expect(imgs()).toEqual(['https://p/1.jpg']);
+    cleanup();
+    render(<Letter card={with_(['https://p/1.jpg', 'https://p/2.jpg', 'https://p/3.jpg'])} />);
+    expect(imgs()).toEqual(['https://p/1.jpg', 'https://p/2.jpg', 'https://p/3.jpg']);
+    expect(document.querySelector('.gp-photos')).not.toBeNull();
+    cleanup();
+    render(<Letter card={card} />);
+    expect(imgs()).toEqual([]);
+  });
+
+  it('leaves out a photo that will not load (its link ran out), keeping the others', () => {
+    const imgs = () => [...document.querySelectorAll('article img')];
+    render(<Letter card={mergeCard({ ...card, photos: ['https://p/1.jpg', 'https://p/2.jpg', 'https://p/3.jpg'] })} />);
+    fireEvent.error(imgs()[1]);
+    expect(imgs().map(i => i.getAttribute('src'))).toEqual(['https://p/1.jpg', 'https://p/3.jpg']);
+    fireEvent.error(imgs()[0]);
+    expect(imgs().map(i => i.getAttribute('src'))).toEqual(['https://p/3.jpg']);   // one left: shown wide, not in a strip
+    expect(document.querySelector('.gp-photos')).toBeNull();
+    fireEvent.error(imgs()[0]);
+    expect(imgs()).toHaveLength(0);
+  });
+});
 
 describe('Hint', () => {
   it('keeps its live region mounted while there is nothing to say, so the next hint is announced', () => {

@@ -11,5 +11,6 @@
   "boardDefault": "For you, with love",
   "notes": "A pink envelope stands up on the card, its heart seal beats and opens, three carnations bloom out of it with baby's breath and butterflies, and a note slides up with the card's words (slot \"board\"). Stop 1: a polaroid of the card's photo pops up beside the bouquet. Everything is built in scene.js; the only files are the handwriting face (fonts/, Dancing Script, OFL) and the card's own photo.",
   "categories": ["family", "love"],
-  "tags": ["mẹ", "20/10", "8/3", "phụ nữ", "hoa cẩm chướng", "phong thư", "biết ơn"]
+  "tags": ["mẹ", "20/10", "8/3", "phụ nữ", "hoa cẩm chướng", "phong thư", "biết ơn"],
+  "photos": 1
 }

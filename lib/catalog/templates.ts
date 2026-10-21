@@ -18,6 +18,8 @@ export interface TemplateInfo {
   /** the template's own hint at each stop */
   /** null when the template has no form.json (or a broken one): it cannot be customised */
   form: FormSpec | null;
+  /** how many places the act has for the buyer's photos (template.json "photos"; 0: they show only in the letter) */
+  photoPlaces: number;
 }
 
 const ID = /^[a-z0-9][a-z0-9_-]*$/i;
@@ -52,7 +54,8 @@ export function createTemplateCatalog(dir: string, { cache = true }: { cache?: b
       kind: kindOf(tpl),
       aspect: tpl.aspect,
       chapters: tpl.chapters.length,
-      form
+      form,
+      photoPlaces: Number.isInteger(tpl.photos) && Number(tpl.photos) > 0 ? Math.min(Number(tpl.photos), 20) : 0
     };
   }
 

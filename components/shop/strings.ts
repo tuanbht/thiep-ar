@@ -54,8 +54,8 @@ export const S = {
       words: 'Lời trên thiệp',
       letter: 'Lá thư cuối',
       letterNote: 'Mở ra sau điểm dừng cuối cùng.',
-      photo: 'Ảnh kèm thư',
-      photoNote: 'Không bắt buộc. JPG, PNG hoặc WebP, tối đa 5 MB.'
+      photo: 'Ảnh của bạn',
+      photoNote: 'Không bắt buộc. Tối đa 10 ảnh JPG, PNG hoặc WebP, mỗi ảnh tối đa 5 MB.'
     },
     fields: {
       title: 'Tiêu đề',
@@ -65,10 +65,16 @@ export const S = {
       addParagraph: 'Thêm đoạn',
       removeParagraph: 'Bỏ đoạn này',
       from: 'Lời ký tên',
-      choosePhoto: 'Chọn ảnh',
-      changePhoto: 'Đổi ảnh',
       removePhoto: 'Bỏ ảnh',
-      uploading: 'Đang tải ảnh lên…'
+      uploading: 'Đang tải ảnh lên…',
+      addPhotos: 'Thêm ảnh',
+      photoN: (n: number) => `Ảnh ${n}`,
+      removePhotoN: (n: number) => `Bỏ ảnh ${n}`,
+      uploadingShort: 'đang tải…',
+      photosCount: (n: number, max: number) => `${n}/${max} ảnh`,
+      photoPlaces: (n: number) => n === 0 ? 'Ảnh của bạn sẽ nằm trong lá thư cuối thiệp.'
+        : n === 1 ? 'Ảnh của bạn thay nhau hiện trong khung ảnh của thiệp, và nằm trong lá thư cuối.'
+        : `Thiệp có ${n} chỗ cho ảnh: mỗi lần mở, ảnh được xếp ngẫu nhiên; chỗ nào chưa có ảnh của bạn sẽ giữ hình có sẵn.`
     },
     required: 'Cần điền',
     tooLong: (max: number) => `Tối đa ${max} ký tự`,
@@ -80,14 +86,16 @@ export const S = {
     photoTooBig: 'Ảnh lớn hơn 5 MB.',
     photoType: 'Chỉ nhận ảnh JPG, PNG hoặc WebP.',
     photoFailed: 'Chưa tải được ảnh lên. Thử lại nhé.',
+    photosTooMany: (max: number) => `Mỗi thiệp nhận tối đa ${max} ảnh: những ảnh sau đã được bỏ qua.`,
     orderFailed: 'Chưa tạo được đơn. Thử lại sau một chút.',
     noForm: 'Tấm thiệp này chưa mở bán.',
     draft: {
       idle: 'Bản nháp tự lưu trên máy này',
       saved: (when: string) => `Đã lưu nháp ${when}`,
+      savedWithoutPhotos: (when: string) => `Đã lưu nháp ${when}, nhưng máy hết chỗ giữ ảnh`,
       restored: (when: string) => `Đã mở lại bản nháp ${when}`,
       failed: 'Máy này không lưu được bản nháp',
-      photoLost: 'Ảnh của bản nháp không mở lại được, chọn lại ảnh nhé.',
+      photosLost: (n: number) => `${n} ảnh của bản nháp không mở lại được, bạn thêm lại nhé.`,
       startOver: 'Viết lại từ đầu',
       confirm: 'Bấm lần nữa để xoá'
     }

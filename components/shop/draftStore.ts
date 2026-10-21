@@ -4,7 +4,8 @@
    an old paid order never wipes a newer draft of the same card. Storage that is full or switched off (a private
    window) only means no draft: nothing here throws. */
 
-export const draftKey = (productId: string): string => `gc:draft:${productId}`;
+export const DRAFT_PREFIX = 'gc:draft:';
+export const draftKey = (productId: string): string => `${DRAFT_PREFIX}${productId}`;
 
 export function draftStorage(): Storage | null {
   try { return typeof window === 'undefined' ? null : window.localStorage; } catch { return null; }

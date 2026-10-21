@@ -56,7 +56,7 @@ export function customizeSchema(fields: FormField[]) {
 }
 
 /** The form's values as gift content: each field's words written into every slot it fills. */
-export function toContent(v: CustomizeValues, fields: FormField[], photoPath: string | null): GiftContent {
+export function toContent(v: CustomizeValues, fields: FormField[], photoPaths: readonly string[]): GiftContent {
   const slots: Record<string, string> = {};
   for (const f of fields) for (const s of slotsOf(f)) slots[s] = v.words?.[fieldKey(f)] ?? '';
   return {
@@ -64,7 +64,7 @@ export function toContent(v: CustomizeValues, fields: FormField[], photoPath: st
     intro: v.intro ?? '',
     letter: { to: v.to ?? '', body: (v.body ?? []).map(p => p?.text ?? ''), from: v.from ?? '' },
     slots,
-    photoPath
+    photoPaths: [...photoPaths]
   };
 }
 
@@ -79,7 +79,7 @@ export function orderRequest(productId: string, content: GiftContent, fields: Fo
       intro: content.intro.trim(),
       letter: { to: content.letter.to.trim(), body: content.letter.body.map(p => p.trim()).filter(Boolean), from: content.letter.from.trim() },
       slots,
-      photoPath: content.photoPath
+      photoPaths: content.photoPaths
     }
   };
 }

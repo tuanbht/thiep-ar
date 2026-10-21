@@ -51,8 +51,8 @@ export interface GiftContent {
   letter: { to: string; body: string[]; from: string };
   /** the act's words by slot name (a 3D act's board is "board"; a film has many) */
   slots: Record<string, string>;
-  /** where the photo is kept (Supabase Storage, bucket gift-photos), or null */
-  photoPath: string | null;
+  /** where the buyer's photos are kept (Supabase Storage, bucket gift-photos), in their order, each once */
+  photoPaths: string[];
 }
 
 export type GiftStatus = 'draft' | 'active' | 'disabled';

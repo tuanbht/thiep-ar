@@ -57,7 +57,7 @@ export const flowerOrder = (over: Record<string, unknown> = {}) => ({
     intro: 'Mở camera nhé',
     letter: { to: 'Hanna à,', body: ['Nhân ngày 20/10, anh muốn nói...', '', 'Yêu em.'], from: 'Anh' },
     slots: { board: "Happy Women's Day Hanna" },
-    photoPath: null
+    photoPaths: []
   },
   buyer: {},
   ...over

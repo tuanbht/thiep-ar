@@ -42,6 +42,25 @@ export interface Slot {
   text?: string;
   boxes: SlotBox[];
 }
+/** A photo place's four corners in a frame (top left, top right, bottom right, bottom left), in film pixels. */
+export type PhotoQuad = [x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number];
+/** A photo place's box for a frame, one of two ways:
+    - [x, y, w, h, alpha, turn, develop]: the unturned box (top left), turned about its centre (degrees, clockwise);
+    - { quad, alpha, develop, clip }: its four corners (a page seen in perspective), and, when something in the film lies
+      over it, the part of the film it may paint in: polygons [x0, y0, x1, y1, …] filled even-odd.
+    alpha: how opaque; develop: 0 the print's blank, 1 the photo. null: not in this frame. */
+export type PhotoBox =
+  | [x: number, y: number, w: number, h: number, alpha?: number, turn?: number, develop?: number]
+  | { quad: PhotoQuad; alpha?: number; develop?: number; clip?: number[][] }
+  | null;
+/** Where one of the buyer's photos shows in the film, frame by frame (photos.ts paints it). */
+export interface PhotoPlace {
+  /** what the film shows there when the card has no photo for it (for people reading the file) */
+  name?: string;
+  /** the print's colour before it develops */
+  blank?: string;
+  boxes: PhotoBox[];
+}
 export interface Slots {
   width: number;
   height: number;
@@ -49,6 +68,8 @@ export interface Slots {
   frames: number;
   font?: string;
   slots: Record<string, Slot>;
+  /** places for the buyer's photos, filled in a shuffled order */
+  photos?: PhotoPlace[];
 }
 
 export interface FilmActOptions {

@@ -37,12 +37,15 @@ export const toProduct = (r: ProductFields, categories: string[]): Product => ({
   priceVnd: r.price_vnd, active: r.active, sort: r.sort, tags: r.tags ?? [], categories
 });
 
-/** What a gift card's content column must hold; a row that does not is an error here, not a crash in the player. */
+/** What a gift card's content column must hold; a row that does not is an error here, not a crash in the player. A
+    card kept before photo lists has one photoPath: it is read as a list of one. Older rows' "hints" are dropped. */
 const storedContent = z.object({
   title: z.string(), intro: z.string(),
   letter: z.object({ to: z.string(), body: z.array(z.string()), from: z.string() }),
-  slots: z.record(z.string(), z.string()), photoPath: z.string().nullable()   // older rows' "hints" are dropped
-});
+  slots: z.record(z.string(), z.string()),
+  photoPaths: z.array(z.string()).optional(),
+  photoPath: z.string().nullable().optional()
+}).transform(({ photoPath, photoPaths, ...c }) => ({ ...c, photoPaths: photoPaths ?? (photoPath ? [photoPath] : []) }));
 
 export function toGiftCard(r: GiftRow): GiftCard {
   const content = storedContent.safeParse(r.content);

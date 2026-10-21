@@ -45,7 +45,7 @@ export function testProducts(run: string): RepoFixture['products'] {
 
 const content = (title = 'Gửi Hanna'): GiftContent => ({
   title, intro: 'Mở ra nhé', letter: { to: 'Hanna à,', body: ['Đoạn một.', 'Đoạn hai.'], from: 'Yêu em' },
-  slots: { board: "Happy Women's Day" }, photoPath: null
+  slots: { board: "Happy Women's Day" }, photoPaths: []
 });
 const slug = () => randomBytes(9).toString('hex');
 const code = () => `T-${randomBytes(6).toString('hex').toUpperCase()}`;

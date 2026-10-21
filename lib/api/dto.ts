@@ -19,7 +19,9 @@ export const LIMITS = {
   name: 80,
   email: 254,
   phone: 20,
-  photoBytes: 5 * 1024 * 1024
+  photoBytes: 5 * 1024 * 1024,
+  /** photos one card can carry */
+  photos: 10
 } as const;
 
 const trimmed = (max: number) => z.string().trim().max(max);
@@ -37,8 +39,10 @@ export const giftContentInputSchema = z.object({
   }),
   /** slot name -> words; checked against the product's form on the server (unknown slots refused, lengths capped) */
   slots: z.record(z.string(), z.string()).default({}),
-  /** a path returned by POST /api/uploads, or null */
-  photoPath: z.string().regex(PHOTO_PATH).nullable().default(null)
+  /** paths returned by POST /api/uploads, in the buyer's order */
+  photoPaths: z.array(z.string().regex(PHOTO_PATH)).max(LIMITS.photos).default([]),
+  /** an older client's one photo (before photo lists): counted as the last of photoPaths */
+  photoPath: z.string().regex(PHOTO_PATH).nullable().optional()
 });
 export type GiftContentInput = z.input<typeof giftContentInputSchema>;
 

@@ -181,18 +181,30 @@ describe('OrdersService: the gift', () => {
     expect(await orders.giftIdBySlug('nope!')).toBeNull();
   });
 
-  it('gives the photo as a link that lasts an hour, and still opens if signing fails', async () => {
+  it('gives each photo as a link that lasts an hour, leaves out one it cannot sign, and still opens', async () => {
     const kit = makeService();
-    const up = await kit.orders.uploadPhoto(JPEG);
-    const content = { ...flowerOrder().content, photoPath: up.photoPath };
+    const [a, b] = [(await kit.orders.uploadPhoto(JPEG)).photoPath, (await kit.orders.uploadPhoto(JPEG)).photoPath];
+    const link = (p: string) => `https://storage.test/${p}?expires=3600`;
+    const content = { ...flowerOrder().content, photoPaths: [a, b] };
     const { response, accessToken } = await kit.orders.createOrder(parse({ content }), ORIGIN);
     await kit.orders.startPayment(response.orderId, accessToken, ORIGIN);
     const slug = (await kit.repo.getGiftCard((await kit.repo.getOrder(response.orderId))!.giftCardId))!.slug;
-    expect((await kit.orders.getGift(slug))!.card.photo).toBe(`https://storage.test/${up.photoPath}?expires=3600`);
-    kit.photos.signedUrl = async () => { throw new Error('storage down'); };
+    expect((await kit.orders.getGift(slug))!.card).toMatchObject({ photos: [link(a), link(b)], photo: link(a) });
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-    expect((await kit.orders.getGift(slug))!.card.photo).toBe('');
+    const sign = kit.photos.signedUrl.bind(kit.photos);
+    kit.photos.signedUrl = async (p, s) => { if (p === a) throw new Error('gone'); return sign(p, s); };
+    expect((await kit.orders.getGift(slug))!.card).toMatchObject({ photos: [link(b)], photo: link(b) });
+    kit.photos.signedUrl = async () => { throw new Error('storage down'); };
+    expect((await kit.orders.getGift(slug))!.card).toMatchObject({ photos: [], photo: '' });
     log.mockRestore();
+  });
+
+  it('will not take an order whose photo is gone, naming none', async () => {
+    const kit = makeService();
+    const [a, b] = [(await kit.orders.uploadPhoto(JPEG)).photoPath, (await kit.orders.uploadPhoto(JPEG)).photoPath];
+    kit.photos.kept.delete(b);
+    await expect(kit.orders.createOrder(parse({ content: { ...flowerOrder().content, photoPaths: [a, b] } }), ORIGIN))
+      .rejects.toThrow(InvalidInput);
   });
 });
 
