@@ -1,14 +1,17 @@
 /* The buyer's photos in a film. A film can have photo places (slots.json "photos"): where a picture shows, with a box
    for every frame it is in: a turned box, or four corners (a page in perspective), with how opaque and how developed it
    is, and the part of it nothing in the film lies over. The player lays the buyer's photos there, in a new order each
-   play, over the film's own stand-in pictures, which show wherever no photo is given. A photo is cropped to its place,
-   never stretched; a print that develops is its blank colour with the photo coming through. */
-import type { PhotoBox, PhotoPlace, PhotoQuad } from "./types";
+   play, over the film's own stand-in pictures, which show wherever no photo is given. A photo is cropped to the
+   picture's own shape, never stretched; a print that develops is its blank colour with the photo coming through; the
+   film's light on the picture (a page's shade as it turns, a poster's glare, a veil) is laid over the photo. */
+import type { PhotoBox, PhotoOverlay, PhotoPlace, PhotoQuad } from "./types";
 
 /** A loaded photo: an image, or anything drawable with a size (a canvas in the tests). */
 export type PhotoImage = CanvasImageSource & { width: number; height: number };
 
 const DEFAULT_BLANK = "#ddd6c8";
+/** a photo with the film's light laid over it is drawn this big at most first */
+const PICTURE_PX = 1024;
 
 /** The list in a new order (Fisher-Yates); the list itself is left as it was. */
 export function shuffled<T>(
@@ -78,35 +81,69 @@ function smaller(img: HTMLImageElement, maxPx: number): PhotoImage {
   return cv;
 }
 
-/** Lays photo k into place k for this frame, wherever both exist. `layer`: a canvas to draw a place in perspective on
-    first (the film's size; the words painter lends its own), so it is laid on at its opacity in one piece. */
+/** Canvases the painter may draw on first. `layer` (the film's size): a place in perspective is drawn there in pieces,
+    then laid on in one piece at its opacity, so no seams show. `scratch` (any size): a photo with the film's light laid
+    over it. Without them, a place in perspective is drawn straight on, and the light is left out. */
+export interface PhotoCanvases {
+  layer?: HTMLCanvasElement;
+  scratch?: HTMLCanvasElement;
+}
+
+/** Lays photo k into place k for this frame, wherever both exist. */
 export function paintPhotos(
   ctx: CanvasRenderingContext2D,
   places: readonly PhotoPlace[],
   frame: number,
   images: readonly (PhotoImage | null)[],
-  layer?: HTMLCanvasElement,
+  canvases: PhotoCanvases = {},
 ): void {
   places.forEach((place, k) => {
     const img = images[k],
       box = place.boxes[frame];
     if (!img || !box) return;
-    if (Array.isArray(box)) paintTurned(ctx, place, box, img);
-    else paintQuad(ctx, place, box, img, layer);
+    const light = [
+      ...(place.overlay ?? []),
+      ...(!Array.isArray(box) && box.overlay ? box.overlay : []),
+    ];
+    if (Array.isArray(box)) paintTurned(ctx, place, box, img, light, canvases);
+    else paintQuad(ctx, place, box, img, light, canvases);
   });
 }
 
 type Turned = Extract<PhotoBox, unknown[]>;
 type Cornered = Extract<PhotoBox, { quad: PhotoQuad }>;
+interface Crop {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+/** what goes into a place: the part of the photo it shows; `whole` when the print's blank and the film's light are
+    already in it (drawn on the scratch canvas) */
+interface Picture {
+  img: PhotoImage;
+  src: Crop;
+  whole: boolean;
+}
 
 function paintTurned(
   ctx: CanvasRenderingContext2D,
   place: PhotoPlace,
   box: Turned,
   img: PhotoImage,
+  light: PhotoOverlay[],
+  c: PhotoCanvases,
 ): void {
   const [x, y, w, h, alpha = 1, turn = 0, develop = 1] = box;
   if (alpha <= 0 || w <= 0 || h <= 0) return;
+  const pic = picture(
+    img,
+    place.aspect ?? w / h,
+    place,
+    develop,
+    light,
+    c.scratch,
+  );
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(x + w / 2, y + h / 2);
@@ -114,16 +151,23 @@ function paintTurned(
   ctx.beginPath();
   ctx.rect(-w / 2, -h / 2, w, h);
   ctx.clip();
-  if (develop < 1) {
+  if (develop < 1 && !pic.whole) {
     // a print still developing: its blank first
     ctx.fillStyle = place.blank ?? DEFAULT_BLANK;
     ctx.fillRect(-w / 2, -h / 2, w, h);
     ctx.globalAlpha = alpha * Math.max(0, develop);
   }
-  const k2 = Math.max(w / img.width, h / img.height),
-    dw = img.width * k2,
-    dh = img.height * k2; // cover: crop, never stretch
-  ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+  ctx.drawImage(
+    pic.img,
+    pic.src.x,
+    pic.src.y,
+    pic.src.w,
+    pic.src.h,
+    -w / 2,
+    -h / 2,
+    w,
+    h,
+  );
   ctx.restore();
 }
 
@@ -134,12 +178,24 @@ function paintQuad(
   place: PhotoPlace,
   box: Cornered,
   img: PhotoImage,
-  layer?: HTMLCanvasElement,
+  light: PhotoOverlay[],
+  c: PhotoCanvases,
 ): void {
   const alpha = box.alpha ?? 1,
     develop = box.develop ?? 1,
     q = box.quad;
   if (alpha <= 0) return;
+  const seen =
+    Math.hypot(q[2] - q[0], q[3] - q[1]) /
+    Math.max(1e-6, Math.hypot(q[6] - q[0], q[7] - q[1]));
+  const pic = picture(
+    img,
+    place.aspect ?? seen,
+    place,
+    develop,
+    light,
+    c.scratch,
+  ); // its own shape: a turning page never zooms it
   ctx.save();
   ctx.globalAlpha = alpha;
   if (box.clip?.length) {
@@ -147,18 +203,13 @@ function paintQuad(
     for (const poly of box.clip) trace(ctx, poly);
     ctx.clip("evenodd");
   }
-  if (develop < 1) {
+  if (develop < 1 && !pic.whole) {
     ctx.beginPath();
     trace(ctx, q);
     ctx.fillStyle = place.blank ?? DEFAULT_BLANK;
     ctx.fill();
     ctx.globalAlpha = alpha * Math.max(0, develop);
   }
-  const src = coverCrop(
-    img,
-    Math.hypot(q[2] - q[0], q[3] - q[1]) /
-      Math.max(1e-6, Math.hypot(q[6] - q[0], q[7] - q[1])),
-  );
   if (isFlat(q)) {
     ctx.transform(
       q[2] - q[0],
@@ -168,25 +219,97 @@ function paintQuad(
       q[0],
       q[1],
     ); // the unit square onto the place
-    ctx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, 1, 1);
+    ctx.drawImage(
+      pic.img,
+      pic.src.x,
+      pic.src.y,
+      pic.src.w,
+      pic.src.h,
+      0,
+      0,
+      1,
+      1,
+    );
   } else {
-    inPerspective(ctx, img, src, q, layer);
+    inPerspective(ctx, pic, q, c.layer);
   }
   ctx.restore();
+}
+
+/** The part of the photo a place of this shape (width / height) shows. With the film's light on it (and a scratch
+    canvas), the whole picture is made there: the print's blank, the photo developing over it, then the light over both,
+    as the film lights the print whether it has developed or not. */
+function picture(
+  img: PhotoImage,
+  shape: number,
+  place: PhotoPlace,
+  develop: number,
+  light: readonly PhotoOverlay[],
+  scratch?: HTMLCanvasElement,
+): Picture {
+  const src = coverCrop(img, shape);
+  const c = light.length ? scratch?.getContext("2d") : null;
+  if (!scratch || !c) return { img, src, whole: false };
+  const k = Math.min(1, PICTURE_PX / Math.max(src.w, src.h));
+  const W = Math.max(1, Math.round(src.w * k)),
+    H = Math.max(1, Math.round(src.h * k));
+  if (scratch.width !== W || scratch.height !== H) {
+    scratch.width = W;
+    scratch.height = H;
+  }
+  c.save();
+  c.globalAlpha = 1;
+  c.clearRect(0, 0, W, H);
+  if (develop < 1) {
+    c.fillStyle = place.blank ?? DEFAULT_BLANK;
+    c.fillRect(0, 0, W, H);
+    c.globalAlpha = Math.max(0, develop);
+  }
+  c.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, W, H);
+  for (const o of light) lay(c, o, W, H);
+  c.restore();
+  return { img: scratch, src: { x: 0, y: 0, w: W, h: H }, whole: true };
+}
+
+/** One of the film's lights over the picture (W x H): a colour, or a gradient across it as it is oriented. A colour the
+    canvas cannot read is left out rather than stopping the film. */
+function lay(
+  c: CanvasRenderingContext2D,
+  o: PhotoOverlay,
+  W: number,
+  H: number,
+): void {
+  try {
+    if ("color" in o) c.fillStyle = o.color;
+    else {
+      const g = c.createLinearGradient(
+        o.from[0] * W,
+        o.from[1] * H,
+        o.to[0] * W,
+        o.to[1] * H,
+      );
+      for (const [at, color] of o.stops)
+        g.addColorStop(Math.min(1, Math.max(0, at)), color);
+      c.fillStyle = g;
+    }
+  } catch {
+    return;
+  }
+  c.globalAlpha = Math.min(1, Math.max(0, o.alpha ?? 1));
+  c.fillRect(0, 0, W, H);
 }
 
 /** A place in perspective: its pieces drawn opaque on the layer, then laid on in one piece at the context's opacity, so
     their overlapping edges never show (straight onto the film when there is no layer). */
 function inPerspective(
   ctx: CanvasRenderingContext2D,
-  img: PhotoImage,
-  src: Crop,
+  pic: Picture,
   q: PhotoQuad,
   layer?: HTMLCanvasElement,
 ): void {
   const lc = layer?.getContext("2d");
   if (!layer || !lc) {
-    drawInPieces(ctx, img, src, q);
+    drawInPieces(ctx, pic, q);
     return;
   }
   const xs = [q[0], q[2], q[4], q[6]],
@@ -199,16 +322,9 @@ function inPerspective(
   lc.save();
   lc.clearRect(x, y, w, h);
   lc.globalAlpha = 1;
-  drawInPieces(lc, img, src, q);
+  drawInPieces(lc, pic, q);
   lc.restore();
   ctx.drawImage(layer, x, y, w, h, x, y, w, h);
-}
-
-interface Crop {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
 }
 
 /** The part of the photo that fills a place of this shape (width / height): its middle, at most the whole photo. */
@@ -229,23 +345,71 @@ function trace(ctx: CanvasRenderingContext2D, poly: readonly number[]): void {
   ctx.closePath();
 }
 
-/** A place in perspective: the photo drawn as a grid of triangles, each mapped flat onto its piece of the place. */
+/** The projective map of the unit square onto a place's four corners (Heckbert): a b c d e f g h, where a point (u, v)
+    of the picture lands at ((a u + b v + c) / w, (d u + e v + f) / w), w = g u + h v + 1. */
+type Projective = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
+
+function projectiveOf(q: PhotoQuad): Projective {
+  const [x0, y0, x1, y1, x2, y2, x3, y3] = q;
+  const sx = x0 - x1 + x2 - x3,
+    sy = y0 - y1 + y2 - y3;
+  if (Math.abs(sx) < 1e-9 && Math.abs(sy) < 1e-9)
+    return [x1 - x0, x2 - x1, x0, y1 - y0, y2 - y1, y0, 0, 0];
+  const dx1 = x1 - x2,
+    dx2 = x3 - x2,
+    dy1 = y1 - y2,
+    dy2 = y3 - y2;
+  const den = dx1 * dy2 - dx2 * dy1 || 1e-9;
+  const g = (sx * dy2 - dx2 * sy) / den,
+    h = (dx1 * sy - sx * dy1) / den;
+  return [
+    x1 - x0 + g * x1,
+    x3 - x0 + h * x3,
+    x0,
+    y1 - y0 + g * y1,
+    y3 - y0 + h * y3,
+    y0,
+    g,
+    h,
+  ];
+}
+
+function project(
+  [a, b, c, d, e, f, g, h]: Projective,
+  u: number,
+  v: number,
+): [number, number] {
+  const w = g * u + h * v + 1 || 1e-9;
+  return [(a * u + b * v + c) / w, (d * u + e * v + f) / w];
+}
+
+/** Where the point (u, v) of the picture (0 to 1 across and down, as it is oriented) lands in a place given by its four
+    corners: true perspective, so the middle of a page seen at an angle is where its diagonals cross. */
+export const quadPoint = (
+  q: PhotoQuad,
+  u: number,
+  v: number,
+): [number, number] => project(projectiveOf(q), u, v);
+
+/** A place in perspective: the picture drawn as a grid of triangles, each mapped flat onto its piece of the place, the
+    grid's points where perspective puts them. */
 function drawInPieces(
   ctx: CanvasRenderingContext2D,
-  img: PhotoImage,
-  src: Crop,
+  pic: Picture,
   q: PhotoQuad,
 ): void {
-  const at = (u: number, v: number): [number, number] => [
-    (1 - u) * (1 - v) * q[0] +
-      u * (1 - v) * q[2] +
-      u * v * q[4] +
-      (1 - u) * v * q[6],
-    (1 - u) * (1 - v) * q[1] +
-      u * (1 - v) * q[3] +
-      u * v * q[5] +
-      (1 - u) * v * q[7],
-  ];
+  const m = projectiveOf(q),
+    src = pic.src;
+  const at = (u: number, v: number) => project(m, u, v);
   const from = (u: number, v: number): [number, number] => [
     src.x + u * src.w,
     src.y + v * src.h,
@@ -260,13 +424,13 @@ function drawInPieces(
       ];
       piece(
         ctx,
-        img,
+        pic.img,
         [from(u0, v0), from(u1, v0), from(u1, v1)],
         [at(u0, v0), at(u1, v0), at(u1, v1)],
       );
       piece(
         ctx,
-        img,
+        pic.img,
         [from(u0, v0), from(u1, v1), from(u0, v1)],
         [at(u0, v0), at(u1, v1), at(u0, v1)],
       );
@@ -276,7 +440,8 @@ function drawInPieces(
 
 type P = [number, number];
 
-/** One triangle of the photo (s, in its pixels) onto one triangle of the place (d), clipped a hair wide so no seam shows. */
+/** One triangle of the picture (s, in its pixels) onto one triangle of the place (d), clipped a pixel wide so no seam
+    shows. */
 function piece(
   ctx: CanvasRenderingContext2D,
   img: PhotoImage,

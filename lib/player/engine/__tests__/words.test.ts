@@ -351,6 +351,8 @@ describe("createWordsPainter", () => {
     expect(painter.frameAt(1)).toBe(24);
     expect(painter.frameAt(99)).toBe(47);
     expect(painter.frameAt(-3)).toBe(0);
+    expect(painter.frameAt(10.6 / 24)).toBe(10); // frame 10 stays on screen until frame 11's time: never one ahead
+    expect(painter.frameAt(11 / 24)).toBe(11); // a frame's own time, however the division rounds
   });
 
   it("does nothing without slots", async () => {

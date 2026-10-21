@@ -183,6 +183,10 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
   overlay.position.z = 0.002;
   card3d.add(screen, overlay);
 
+  /* the frame on screen: the browser says which frame it presented (requestVideoFrameCallback), and the words and photos
+     are painted for that one, never for the frame a moment ahead that currentTime may already name */
+  let shownAt: number | null = null,
+    frameCallback = 0;
   const painter = createWordsPainter({
     canvas,
     slots,
@@ -190,7 +194,7 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     onPainted: () => {
       wordsTex.needsUpdate = true;
     },
-    frameNow: () => painter.frameAt(video.currentTime),
+    frameNow: () => painter.frameAt(shownAt ?? video.currentTime),
     after: Promise.race([
       loadFontsSheet(tpl.fonts, tdir),
       new Promise((r) => setTimeout(r, FACES_WAIT)),
@@ -354,15 +358,31 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
   };
+  /** follows the frames the browser presents while the film plays (where it can tell) */
+  const followFrames = (): void => {
+    if (typeof video.requestVideoFrameCallback !== "function") return;
+    if (frameCallback) video.cancelVideoFrameCallback(frameCallback);
+    const onFrame: VideoFrameRequestCallback = (_now, meta) => {
+      shownAt = meta.mediaTime;
+      frameCallback =
+        playing && !disposed ? video.requestVideoFrameCallback(onFrame) : 0;
+    };
+    frameCallback = video.requestVideoFrameCallback(onFrame);
+  };
+  /** the film was moved to a time: until the browser presents a frame there, the time is all there is to go by */
+  const seek = (t: number): void => {
+    video.currentTime = t;
+    shownAt = null;
+  };
   function watch(): void {
     raf = 0;
     if (!playing || disposed || chapter < 0) return;
-    painter.draw(painter.frameAt(video.currentTime));
+    painter.draw(painter.frameAt(shownAt ?? video.currentTime));
     const c = chapters[chapter],
       end = c.end;
     if (video.currentTime >= end - 0.02) {
       video.pause();
-      video.currentTime = end;
+      seek(end);
       painter.draw(painter.frameAt(end));
       playing = false;
       if (c.reveal) {
@@ -423,9 +443,10 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
         hide();
         o.onReveal?.(false);
       }
-      video.currentTime = i ? chapters[i - 1].end : 0;
+      seek(i ? chapters[i - 1].end : 0);
       painter.draw(painter.frameAt(video.currentTime));
       playVideo();
+      followFrames();
       startWatch();
     },
     pause() {
@@ -435,6 +456,7 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
     resume() {
       if (!playing || disposed) return;
       playVideo();
+      followFrames();
       startWatch();
     },
     kick() {
@@ -455,6 +477,7 @@ export function createFilmAct(o: FilmActOptions): FilmAct {
       disposed = true;
       playing = false;
       stopWatch();
+      if (frameCallback) video.cancelVideoFrameCallback?.(frameCallback);
       tweens = [];
       painter.dispose();
       try {

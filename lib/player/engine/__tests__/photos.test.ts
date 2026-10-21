@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { mergeCard } from "../../core/card";
-import { paintPhotos, shuffled, type PhotoImage } from "../photos";
+import { paintPhotos, quadPoint, shuffled, type PhotoImage } from "../photos";
 import { createWordsPainter } from "../words";
-import type { PhotoPlace, Slots } from "../types";
+import type { PhotoOverlay, PhotoPlace, PhotoQuad, Slots } from "../types";
 
 /* jsdom has no 2D canvas: a fake context records what is drawn, in order. */
 function fakeCtx() {
@@ -49,6 +49,18 @@ function fakeCtx() {
         alpha: ctx.globalAlpha as number,
         fill: op === "fillRect" ? String(ctx.fillStyle) : undefined,
       });
+  ctx.createLinearGradient = (...args: unknown[]) => {
+    const stops: unknown[] = [];
+    calls.push({
+      op: "createLinearGradient",
+      args: [...args, stops],
+      alpha: ctx.globalAlpha as number,
+    });
+    return {
+      addColorStop: (...s: unknown[]) => stops.push(s),
+      toString: () => "gradient",
+    };
+  };
   return { ctx: ctx as unknown as CanvasRenderingContext2D, calls };
 }
 const img = (width: number, height: number, name: string) =>
@@ -76,7 +88,7 @@ describe("paintPhotos", () => {
     expect(calls[1].args).toEqual([200, 100]); // the place's centre
     expect(calls[2].args[0]).toBeCloseTo(Math.PI / 2);
     const draw = calls.find((c) => c.op === "drawImage")!;
-    expect(draw.args).toEqual([a, -100, -50, 200, 100]); // a 2:1 photo fills a 2:1 place exactly
+    expect(draw.args).toEqual([a, 0, 0, 400, 200, -100, -50, 200, 100]); // a 2:1 photo fills a 2:1 place exactly
     expect(draw.alpha).toBe(0.5);
   });
 
@@ -97,9 +109,13 @@ describe("paintPhotos", () => {
     paintPhotos(ctx, [place([[0, 0, 100, 100]])], 0, [img(300, 100, "wide")]);
     expect(calls.find((c) => c.op === "drawImage")!.args).toEqual([
       expect.anything(),
-      -150,
+      100,
+      0,
+      100,
+      100, // its middle square
       -50,
-      300,
+      -50,
+      100,
       100,
     ]);
   });
@@ -184,7 +200,7 @@ describe("paintPhotos, for a place given by its four corners", () => {
       [place([{ quad: [100, 100, 260, 120, 260, 180, 100, 200], alpha: 0.5 }])],
       0,
       [img(100, 100, "p")],
-      layer,
+      { layer },
     );
     expect(
       scratch.calls.filter((c) => c.op === "drawImage").length,
@@ -195,6 +211,148 @@ describe("paintPhotos, for a place given by its four corners", () => {
       alpha: 0.5,
       args: [layer, 99, 99, 162, 102, 99, 99, 162, 102],
     }); // its bounds and the pixel each piece grows by
+  });
+
+  it("crops by the picture's own shape when given, so the photo never seems to zoom as a page turns", () => {
+    const { ctx, calls } = fakeCtx();
+    const halfTurned: PhotoQuad = [100, 100, 150, 100, 150, 200, 100, 200]; // a 2:1 picture, half as wide on screen
+    paintPhotos(ctx, [{ aspect: 2, boxes: [{ quad: halfTurned }] }], 0, [
+      img(400, 400, "sq"),
+    ]);
+    expect(calls.find((c) => c.op === "drawImage")!.args).toEqual([
+      expect.anything(),
+      0,
+      100,
+      400,
+      200,
+      0,
+      0,
+      1,
+      1,
+    ]);
+  });
+
+  it("maps a place in perspective truly: corners on corners, the middle where the diagonals cross", () => {
+    const q: PhotoQuad = [100, 100, 300, 140, 300, 260, 100, 300]; // a page seen at an angle: its far edge shorter
+    for (const [u, v, x, y] of [
+      [0, 0, 100, 100],
+      [1, 0, 300, 140],
+      [1, 1, 300, 260],
+      [0, 1, 100, 300],
+      [0.5, 0.5, 225, 200],
+    ]) {
+      const [px, py] = quadPoint(q, u, v);
+      expect(px, `${u},${v}`).toBeCloseTo(x);
+      expect(py, `${u},${v}`).toBeCloseTo(y);
+    }
+  });
+
+  it("lays the film's shade or glare over the photo: a gradient across the picture as it is oriented, at its opacity", () => {
+    const { ctx, calls } = fakeCtx(),
+      pic = fakeCtx();
+    const scratch = {
+      width: 0,
+      height: 0,
+      getContext: () => pic.ctx,
+    } as unknown as HTMLCanvasElement;
+    const shade: PhotoOverlay = {
+      from: [0, 0.5],
+      to: [1, 0.5],
+      stops: [
+        [0, "rgba(28,16,6,.36)"],
+        [1, "rgba(28,16,6,0)"],
+      ],
+      alpha: 0.8,
+    };
+    const glare: PhotoOverlay = {
+      from: [0, 0],
+      to: [0.4, 0.3],
+      stops: [
+        [0, "rgba(255,255,255,.18)"],
+        [1, "rgba(255,255,255,0)"],
+      ],
+    };
+    paintPhotos(
+      ctx,
+      [{ aspect: 2, overlay: [glare], boxes: [{ ...Q, overlay: [shade] }] }],
+      0,
+      [img(400, 200, "a")],
+      { scratch },
+    );
+    const W = scratch.width,
+      H = scratch.height;
+    expect(W / H).toBeCloseTo(2);
+    expect(pic.calls.find((c) => c.op === "drawImage")).toMatchObject({
+      args: [expect.anything(), 0, 0, 400, 200, 0, 0, W, H],
+    }); // the photo's crop first
+    const grads = pic.calls.filter((c) => c.op === "createLinearGradient");
+    expect(grads.map((g) => g.args.slice(0, 4))).toEqual([
+      [0, 0, 0.4 * W, 0.3 * H],
+      [0, H / 2, W, H / 2],
+    ]); // the place's, then the frame's
+    expect(grads[1].args[4]).toEqual([
+      [0, "rgba(28,16,6,.36)"],
+      [1, "rgba(28,16,6,0)"],
+    ]);
+    expect(
+      pic.calls.filter((c) => c.op === "fillRect").map((c) => c.alpha),
+    ).toEqual([1, 0.8]);
+    expect(calls.find((c) => c.op === "drawImage")!.args).toEqual([
+      scratch,
+      0,
+      0,
+      W,
+      H,
+      0,
+      0,
+      1,
+      1,
+    ]); // the picture is what goes in the place
+  });
+
+  it("lights a print still developing all over, its blank as well as the photo coming through", () => {
+    const { ctx, calls } = fakeCtx(),
+      pic = fakeCtx();
+    const scratch = {
+      width: 0,
+      height: 0,
+      getContext: () => pic.ctx,
+    } as unknown as HTMLCanvasElement;
+    const veil: PhotoOverlay = { color: "rgb(40,30,24)", alpha: 0.5 };
+    paintPhotos(
+      ctx,
+      [place([[0, 0, 100, 100, 1, 0, 0.25]], "#ddd5c4")],
+      0,
+      [img(100, 100, "a")],
+      { scratch },
+    );
+    expect(pic.calls).toHaveLength(0); // nothing lights it: drawn straight on, as before
+    paintPhotos(
+      ctx,
+      [
+        {
+          blank: "#ddd5c4",
+          overlay: [veil],
+          boxes: [[0, 0, 100, 100, 1, 0, 0.25]],
+        },
+      ],
+      0,
+      [img(100, 100, "a")],
+      { scratch },
+    );
+    const made = pic.calls.filter(
+      (c) => c.op === "fillRect" || c.op === "drawImage",
+    );
+    expect(made.map((c) => [c.op, c.fill, c.alpha])).toEqual([
+      ["fillRect", "#ddd5c4", 1], // the blank
+      ["drawImage", undefined, 0.25], // the photo coming through
+      ["fillRect", "rgb(40,30,24)", 0.5], // the veil over both
+    ]);
+    const onFilm = calls.slice(calls.findLastIndex((c) => c.op === "save"));
+    expect(onFilm.filter((c) => c.op === "fillRect")).toHaveLength(0); // no second blank on the film
+    expect(onFilm.find((c) => c.op === "drawImage")).toMatchObject({
+      alpha: 1,
+    });
   });
 
   it("keeps to the visible part when something in the film lies over the picture", () => {

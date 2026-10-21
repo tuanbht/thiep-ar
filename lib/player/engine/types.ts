@@ -58,7 +58,8 @@ export type PhotoQuad = [
     - [x, y, w, h, alpha, turn, develop]: the unturned box (top left), turned about its centre (degrees, clockwise);
     - { quad, alpha, develop, clip }: its four corners (a page seen in perspective), and, when something in the film lies
       over it, the part of the film it may paint in: polygons [x0, y0, x1, y1, …] filled even-odd.
-    alpha: how opaque; develop: 0 the print's blank, 1 the photo. null: not in this frame. */
+    alpha: how opaque; develop: 0 the print's blank, 1 the photo; overlay: the film's light on the picture in this frame
+    (a page's shade as it turns, a veil). null: not in this frame. */
 export type PhotoBox =
   | [
       x: number,
@@ -69,14 +70,36 @@ export type PhotoBox =
       turn?: number,
       develop?: number,
     ]
-  | { quad: PhotoQuad; alpha?: number; develop?: number; clip?: number[][] }
+  | {
+      quad: PhotoQuad;
+      alpha?: number;
+      develop?: number;
+      clip?: number[][];
+      overlay?: PhotoOverlay[];
+    }
   | null;
+/** Light the film lays over a picture, which a photo laid there must get too: one colour over all of it, or a gradient
+    across it as the picture is oriented (u from its left edge, 0, to its right, 1; v from its top, 0, to its bottom,
+    1), from `from` to `to` with colour stops (0 to 1 along that line). alpha: how strongly (1 by default). */
+export type PhotoOverlay =
+  | { color: string; alpha?: number }
+  | {
+      from: [u: number, v: number];
+      to: [u: number, v: number];
+      stops: [at: number, color: string][];
+      alpha?: number;
+    };
 /** Where one of the buyer's photos shows in the film, frame by frame (photos.ts paints it). */
 export interface PhotoPlace {
   /** what the film shows there when the card has no photo for it (for people reading the file) */
   name?: string;
   /** the print's colour before it develops */
   blank?: string;
+  /** the picture's own shape (width / height): the photo is cropped to it, so a page seen at an angle squeezes the
+      photo rather than cropping it narrower (by default the box's shape on screen) */
+  aspect?: number;
+  /** light the film lays over the picture in every frame (a poster's glass glare) */
+  overlay?: PhotoOverlay[];
   boxes: PhotoBox[];
 }
 export interface Slots {

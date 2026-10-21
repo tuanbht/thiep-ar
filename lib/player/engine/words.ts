@@ -33,7 +33,7 @@ export interface WordsPainterOptions {
 export interface WordsPainter {
   /** paint the card's words for a film frame; -1 clears and forgets, so the next frame paints again */
   draw(frame: number): void;
-  /** the film frame at a time, in seconds */
+  /** the film frame on screen at a time, in seconds: a frame shows from its own time until the next one's */
   frameAt(seconds: number): number;
   /** every face the card's words need is in, or the wait ran out */
   facesReady: Promise<void>;
@@ -42,6 +42,9 @@ export interface WordsPainter {
   setPhotos(list: (PhotoImage | null)[]): void;
   dispose(): void;
 }
+
+/** a frame's own time, divided by the frame rate, can come out a hair under its number: never fall back a frame for it */
+const FRAME_SLACK = 0.01;
 
 const signFamily = (slots: Slots | null): string =>
   `"${(slots && slots.font) || "Barlow Condensed"}", "Arial Narrow", "Roboto Condensed", sans-serif`;
@@ -218,9 +221,29 @@ export function createWordsPainter(o: WordsPainterOptions): WordsPainter {
   let lastWords = -1,
     disposed = false;
   let images: (PhotoImage | null)[] = [];
+  /* a photo the film lights (a page's shade, a glare) is made on a canvas of its own first: only films that do need one */
+  const lit = !!slots?.photos?.some(
+    (p) =>
+      !!p.overlay?.length ||
+      p.boxes.some((b) => !!b && !Array.isArray(b) && !!b.overlay?.length),
+  );
+  const scratch = !lit
+    ? undefined
+    : o.makeCanvas
+      ? o.makeCanvas(1, 1)
+      : Object.assign(document.createElement("canvas"), {
+          width: 1,
+          height: 1,
+        });
 
   const frameAt = (t: number): number =>
-    Math.max(0, Math.min((slots ? slots.frames : 1) - 1, Math.round(t * FPS)));
+    Math.max(
+      0,
+      Math.min(
+        (slots ? slots.frames : 1) - 1,
+        Math.floor(t * FPS + FRAME_SLACK),
+      ),
+    );
 
   function paintSlot(name: string, slot: Slot, frame: number): void {
     if (!wctx || !tctx) return;
@@ -296,7 +319,7 @@ export function createWordsPainter(o: WordsPainterOptions): WordsPainter {
     lastWords = frame;
     wctx.clearRect(0, 0, SW, SH);
     if (slots.photos?.length && images.length)
-      paintPhotos(wctx, slots.photos, frame, images, layer); // under the words written on them
+      paintPhotos(wctx, slots.photos, frame, images, { layer, scratch }); // under the words written on them
     for (const [name, slot] of Object.entries(slots.slots))
       paintSlot(name, slot, frame);
     o.onPainted?.();
