@@ -18,6 +18,7 @@ const eslintConfig = defineConfig([
     // generated or not ours to lint: coverage reports, the templates' own scene scripts
     "coverage/**",
     "public/templates/**",
+    "**/__tests__/**",
   ]),
 ]);
 
