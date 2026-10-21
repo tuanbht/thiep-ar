@@ -16,6 +16,10 @@ export const T = {
   stopCamera: "Tắt camera",
   useCamera: "Dùng camera",
   backToCard: "Quay lại tấm thiệp",
+  photoBig: "Ảnh phóng to",
+  soundOff: "Tắt tiếng",
+  soundOn: "Bật tiếng",
+  closePhoto: "Đóng ảnh",
   letterTitle: "Lá thư",
   retry: "Thử lại camera",
   noCameraApi:

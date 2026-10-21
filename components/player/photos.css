@@ -112,7 +112,50 @@
   box-shadow: 0 0.6rem 1.4rem rgba(194, 55, 95, 0.26);
 }
 
+/* a photo tapped in the act, big over everything */
+.gp-zoom {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1.4rem;
+  padding: max(16px, env(safe-area-inset-top, 0px))
+    max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px))
+    max(16px, env(safe-area-inset-left, 0px));
+  background: rgba(20, 12, 30, 0.74);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: gp-photo-in 0.25s ease both;
+}
+.gp-zoom img {
+  max-width: min(100%, 40rem);
+  max-height: 70vh;
+  padding: 0.6rem 0.6rem 2.2rem;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
+  object-fit: contain;
+  animation: gp-zoom-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes gp-zoom-in {
+  from {
+    transform: scale(0.86) rotate(-2deg);
+    opacity: 0;
+  }
+}
+.gp-blush .gp-zoom {
+  background: rgba(255, 227, 236, 0.8);
+}
+.gp-blush .gp-zoom img {
+  box-shadow: 0 1.5rem 3rem rgba(194, 55, 95, 0.3);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .gp-zoom,
+  .gp-zoom img,
   .gp-strip-photo,
   .gp-strip-photo img,
   .gp-photo-fan img {

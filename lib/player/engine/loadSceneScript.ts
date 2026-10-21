@@ -1,6 +1,9 @@
 /* A 3D template's scene.js is a plain script that sets window.NM_SCENE; the Studio and the player load it the same way.
    Load each script once, one at a time, and keep the function it defined. */
-import type { Object3D } from "three";
+import type { Object3D, Raycaster } from "three";
+
+/** what a tap on a 3D act found: a photo to show big, or the act took the tap itself (null: the tap plays on) */
+export type TapHit = { photo: string } | { handled: true };
 
 export interface SceneApi {
   play(chapter: number): void;
@@ -13,6 +16,10 @@ export interface SceneApi {
   clip?(name: string): boolean;
   /** Why the template's model.glb did not load, or null. */
   modelError?(): string | null;
+  /** what a tap along this ray finds */
+  pick?(raycaster: Raycaster): TapHit | null;
+  /** the act's sound: enable() from inside a tap (iOS lets audio start only there), mute(on); `has`: it has any */
+  sound?: { has: boolean; enable(): void; mute(on: boolean): void };
   dispose?(): void;
 }
 

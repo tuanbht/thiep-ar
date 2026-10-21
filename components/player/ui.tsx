@@ -91,6 +91,40 @@ export function ReadView({ card, onClose }: { card: Card; onClose(): void }) {
   );
 }
 
+/** A photo tapped in the act, big over everything: a tap anywhere (its button's click too, which bubbles up) or Escape
+    closes it. It is the buyer's own, from a signed link, so no next/image for it. */
+export function PhotoZoom({ src, onClose }: { src: string; onClose(): void }) {
+  const close = useRef(onClose);
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    close.current = onClose;
+  });
+  useEffect(() => {
+    button.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <div
+      className={s.zoom}
+      role="dialog"
+      aria-modal="true"
+      aria-label={T.photoBig}
+      data-ui
+      onClick={onClose}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- the buyer's photo, from a short-lived signed link */}
+      <img src={src} alt="" />
+      <button ref={button} type="button" className={cx(s.btn, s.ghost)}>
+        {T.closePhoto}
+      </button>
+    </div>
+  );
+}
+
 const IN_APP =
   /Zalo|FBAN|FBAV|Instagram|Line\/|MicroMessenger|TikTok|musical_ly|Snapchat/i;
 

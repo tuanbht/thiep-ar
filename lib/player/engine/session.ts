@@ -18,6 +18,7 @@ import { ArSource } from "./arSource";
 import { askForGyroscope, Gyro } from "./pin";
 import { PreviewView } from "./preview";
 import { Stage } from "./stage";
+import type { TapHit } from "./loadSceneScript";
 import type { Act } from "./types";
 
 export type Mode = "ar" | "preview";
@@ -48,6 +49,7 @@ export class CardSession {
     camera: THREE.Quaternion | null;
   } | null = null;
   private readonly gyro = new Gyro();
+  private readonly raycaster = new THREE.Raycaster();
   private paper: THREE.Mesh | null = null;
   private paperAspect = 0;
   private readonly untick: () => void;
@@ -74,6 +76,28 @@ export class CardSession {
   }
   get currentAct(): Act | null {
     return this.act;
+  }
+
+  /** What a tap at (clientX, clientY) finds in a 3D act: a photo to show big, or the act took it; null for nothing, and
+      for a film (its taps play on). */
+  pick(clientX: number, clientY: number): TapHit | null {
+    const api = this.act3d?.api;
+    if (!api?.pick) return null;
+    const r = this.stage.renderer.domElement.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    this.raycaster.setFromCamera(
+      new THREE.Vector2(
+        ((clientX - r.left) / r.width) * 2 - 1,
+        -((clientY - r.top) / r.height) * 2 + 1,
+      ),
+      this.stage.camera,
+    );
+    try {
+      return api.pick(this.raycaster);
+    } catch (e) {
+      console.error("[session] the act could not answer a tap", e);
+      return null;
+    }
   }
 
   /** set the lighting for the act about to be built (a 3D act is tone-mapped, a film is not) */

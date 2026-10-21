@@ -23,7 +23,8 @@ export interface GestureTarget {
   kind: "film" | "3d" | null;
   /** pinch and wheel zoom the preview (off in the shop's box: the wheel scrolls the page there) */
   zoom: boolean;
-  onTap(): void;
+  /** a tap that was not a drag, where it landed on the screen */
+  onTap(clientX: number, clientY: number): void;
 }
 
 const ignored = (t: EventTarget | null) =>
@@ -170,7 +171,7 @@ export function useGestures(g: GestureTarget) {
     const onClick = (e: MouseEvent) => {
       const { running, live } = ref.current;
       if (running && live && !dragged && !ignored(e.target))
-        ref.current.onTap();
+        ref.current.onTap(e.clientX, e.clientY);
     };
 
     element.addEventListener("touchstart", onTouchStart, { passive: true });

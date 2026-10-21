@@ -9,7 +9,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mergeCard } from "@/lib/player/core/card";
 import { T_BLUSH, wordsFor } from "../strings";
-import { Hint, Intro, Letter, ReadView } from "../ui";
+import { Hint, Intro, Letter, PhotoZoom, ReadView } from "../ui";
 
 const card = mergeCard({
   template: "mochi",
@@ -154,5 +154,26 @@ describe("Intro", () => {
   it("speaks the theme's words", () => {
     intro({ words: wordsFor("blush") });
     expect(screen.getByText(T_BLUSH.eyebrow)).toBeTruthy();
+  });
+});
+
+describe("PhotoZoom", () => {
+  it("shows the tapped photo big, with its close button ready for the keys", () => {
+    render(<PhotoZoom src="https://p/1.jpg" onClose={() => {}} />);
+    expect(
+      screen.getByRole("dialog").querySelector("img")!.getAttribute("src"),
+    ).toBe("https://p/1.jpg");
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Đóng ảnh" }),
+    );
+  });
+
+  it("closes on a tap anywhere, on its button, or on Escape", () => {
+    const onClose = vi.fn();
+    render(<PhotoZoom src="https://p/1.jpg" onClose={onClose} />);
+    fireEvent.click(screen.getByRole("dialog"));
+    fireEvent.click(screen.getByRole("button", { name: "Đóng ảnh" }));
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(3);
   });
 });

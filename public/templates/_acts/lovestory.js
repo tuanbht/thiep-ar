@@ -2,12 +2,14 @@
    About eighteen seconds told in chapters. Each chapter ends at a stop where the act holds (its idle motion goes on) until
    a tap plays the next, so there is time to read the card's words or look at its photo; after the last stop a tap opens
    the letter. The player calls NM_SCENE({anchor, card, tpl, THREE, onStop, dir}) and gets {play, pause, resume, turn,
-   ready, modelError, dispose}. The card lies flat: the act stands up out of it (local +y is the card's +z) and faces the
+   ready, modelError, dispose, pick, sound}. The card lies flat: the act stands up out of it (local +y is the card's +z) and faces the
    card's bottom edge (local +z), where a phone usually looks from. One unit is the card's width.
 
    template.json: "chapters": [0, 1, …] (one per stop), "story": the template's own script, or a list of scripts loaded in
    order whose last one registers the story (helpers first: ["scenery.js", "story.js"]), "models": { name: "models/x.glb" }
-   (the same file under two names gives two independent copies), "credits": [{ model, author, license, url }].
+   (the same file under two names gives two independent copies: loaded once, the second a clone sharing its geometry and
+   textures), "credits": [{ model, author, license, url }], "sound": { music, soft (a second loop), volume (the music's, .5),
+   effects: { name: "sound/x.mp3" } } (MP3, CC0 only).
 
    The story registers itself, loaded once by URL:
      (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => ({
@@ -25,9 +27,14 @@
    moving (vx, vy) on screen points along rot = Math.atan2(vx, -vy). A headless browser renders slowly and dt is clamped
    to .05 s, so there the story runs slower than the wall clock.
    kit: THREE, stage, card ({ width, depth }), clamp, lerp, seg, ease, rng, tween(t, keys), hop(t, every, height),
-     words(slot, fallback), model(name), sign(opts), polaroid(opts: the card's photos, see below), particles(opts: shapes heart, petal, glow, sparkle,
+     words(slot, fallback), model(name), sign(opts), polaroid(opts: the card's photos, see below), photo(opts: the photos on a
+     frame, a screen, a print or a film frame), photoCount(), particles(opts: shapes heart, petal, glow, sparkle,
      drop, star, leaf, note), glow(opts), picture(draw, opts), canvasTexture(w, h, draw), backdrop(draw, opts),
-     lights ({ hemi, sun }: dim them for a night), heartPath(ctx, x, y, size), once(key), keep(x).
+     lights ({ hemi, sun }: dim them for a night), heartPath(ctx, x, y, size), once(key), keep(x), onTap(object, fn): a tap on
+     the object (or anything in it) calls fn instead of playing on; an invisible stand-in that should still take taps has
+     userData.proxy = true. A tap on a photo (polaroid or photo surface) shows it big. sfx(name, { volume, rate }) plays an
+     effect, music(name) changes the loop ('music' or 'soft'); both are silent until the player enables sound inside a tap
+     (iOS lets audio start only there), and the shop's preview never does.
      model(name).play(clip, { once, fade, speed, key }): called every frame; a new key plays the same clip again.
      Every draw callback (sign, polaroid, picture, canvasTexture, backdrop) runs again when the handwriting face arrives:
      make its random choices outside it, or the picture changes when it repaints. fitText(ctx, text, { x, y, w, h },
@@ -215,12 +222,17 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
     return cv;
   };
-  let photoImgs = [];
+  let photoImgs = [], heroImg = null;                                 // heroImg: the buyer's first photo, kept apart from the shuffle
+  const urlOf = new WeakMap();                                         // a photo's picture -> its link, to show it big when tapped
+  const taps = new Map();                                              // what a tap can find: object -> { photo() } or { fn() }
   const polaroids = new Set();
   const loads = shuffle(photoUrls).map(url => new Promise(res => {      // each one after the others as it comes in, so none moves
     const img = new Image(), late = setTimeout(() => res(false), 20000);
     img.crossOrigin = 'anonymous';
-    img.onload = () => { clearTimeout(late); photoImgs = [...photoImgs, small(img)]; polaroids.forEach(p => p.repaint()); res(true); };
+    img.onload = () => {
+      clearTimeout(late); const pic = small(img); urlOf.set(pic, url); if (url === photoUrls[0]) heroImg = pic;
+      photoImgs = [...photoImgs, pic]; polaroids.forEach(p => p.repaint()); res(true);
+    };
     img.onerror = () => { clearTimeout(late); res(false); };
     img.src = url;
   }));
@@ -263,6 +275,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     const box = new THREE.Mesh(keep(new THREE.BoxGeometry(width, width * 620 / 512, .004)),
       [white, white, white, white, keep(new THREE.MeshStandardMaterial({ map: tex, roughness: .7, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: o.glow ?? .25 })), white]);
     box.castShadow = true; box.position.y = width * 620 / 512 / 2;
+    taps.set(box, { photo: () => { const n = photoImgs.length; return n ? urlOf.get(photoImgs[(shown + (mix >= .5 ? 1 : 0)) % n]) : null; } });
     const root = new THREE.Group(); root.add(box);
     let halo = null;                                                   // { halo: true }: a flat glow just behind the photo (set its opacity)
     if (o.halo) {
@@ -287,6 +300,83 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       repaint: paint
     });
     return { root, width, height: width * 620 / 512, halo };
+  }
+
+  /** a photo cut to fill a box (cover), centred across and a little high, where faces usually are */
+  const coverPhoto = (c, img, x, y, w, h, alpha = 1) => {
+    const k = Math.max(w / img.width, h / img.height), dw = img.width * k, dh = img.height * k;
+    c.save(); c.globalAlpha = alpha; c.beginPath(); c.rect(x, y, w, h); c.clip();
+    c.drawImage(img, x + (w - dw) / 2, y + (h - dh) * .35, dw, dh); c.restore();
+  };
+  /** The card's photos on any surface, turning like a polaroid's: a frame on a wall, a screen, a magnet print, a film frame.
+      opts: width (.12, the whole thing), aspect (the picture's height / width, 1), frame ('wood' | 'white' | 'screen' | 'film'
+      | 'none'), border (the frame's width as a share of the picture's, .09), color (the frame's), slot and of (surface slot
+      of `of`: it starts that far into the photos, so a set of surfaces spreads over all of them; without them it starts on
+      photo `slot`), hero (true: always the buyer's first photo), turn (seconds a photo shows, 2.8), glow (.3; screens .9),
+      depth (.006). Returns { root, width, height, face }: root's middle is the picture's middle, its face looks along +z. */
+  function photo(o = {}) {
+    const style = o.frame ?? 'wood', aspect = o.aspect ?? 1, border = style === 'none' ? 0 : o.border ?? (style === 'film' ? .16 : .09);
+    const PW = 480, PH = Math.round(PW * aspect), B = Math.round(PW * border), CW = PW + 2 * B, CH = PH + 2 * B;
+    const width = o.width ?? .12, height = width * CH / CW, turnS = o.turn ?? PHOTO_TURN, fadeS = Math.min(PHOTO_FADE, turnS * .3);
+    const frameColor = o.color ?? { wood: '#d9a877', white: '#ffffff', screen: '#1d1a22', film: '#17141c', none: '#ffffff' }[style] ?? '#d9a877';
+    const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH;
+    const tex = keep(new THREE.CanvasTexture(cv)); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    let step = 0, mix = 0, seenSince = null, from = 0;
+    const startOf = n => (o.of ? Math.floor((o.slot ?? 0) * n / Math.max(1, o.of)) : (o.slot ?? 0));
+    const at = k => { const n = photoImgs.length; return n ? photoImgs[(((startOf(n) + k) % n) + n) % n] : null; };
+    function frame(c) {
+      c.fillStyle = frameColor; c.fillRect(0, 0, CW, CH);
+      if (style === 'wood') {                                          // a bevel: light on the top and left, shade on the others
+        c.fillStyle = 'rgba(255,255,255,.28)'; c.fillRect(0, 0, CW, B * .35); c.fillRect(0, 0, B * .35, CH);
+        c.fillStyle = 'rgba(80,40,20,.22)'; c.fillRect(0, CH - B * .35, CW, B * .35); c.fillRect(CW - B * .35, 0, B * .35, CH);
+        c.strokeStyle = 'rgba(80,40,20,.35)'; c.lineWidth = 3; c.strokeRect(B - 2, B - 2, PW + 4, PH + 4);
+      } else if (style === 'screen') {
+        c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(0, 0, CW, B * .5);
+      } else if (style === 'film') {                                   // sprocket holes along the top and the bottom
+        c.fillStyle = '#fdf6ee'; const hw = B * .42, hh = B * .5, gap = PW / 6;
+        for (let x = B * .5; x < CW - hw; x += gap) for (const y of [B * .25, CH - B * .75]) { rounded(c, x, y, hw, hh, 4); c.fill(); }
+      }
+    }
+    function paint() {
+      const c = cv.getContext('2d'); frame(c);
+      const img = o.hero ? (heroImg || at(0)) : at(step);
+      if (img) {
+        coverPhoto(c, img, B, B, PW, PH);
+        if (!o.hero && mix > 0) { const next = at(step + 1); if (next) coverPhoto(c, next, B, B, PW, PH, mix); }
+      } else {                                                         // no photo yet: a soft heart
+        c.fillStyle = o.empty ?? '#fde4ea'; c.fillRect(B, B, PW, PH); c.fillStyle = '#f39ab4';
+        heartPath(c, B + PW / 2, B + PH * .54, Math.min(PW, PH) * .5); c.fill();
+      }
+      if (style === 'screen') {                                        // the glass catches a little light
+        const gl = c.createLinearGradient(B, B, B + PW, B + PH); gl.addColorStop(0, 'rgba(255,255,255,.16)'); gl.addColorStop(.4, 'rgba(255,255,255,0)');
+        c.fillStyle = gl; c.fillRect(B, B, PW, PH);
+      }
+      tex.needsUpdate = true;
+    }
+    painters.add(paint); paint(); photoReady.then(paint);
+    const glow = o.glow ?? (style === 'screen' ? .9 : .3);
+    const side = keep(new THREE.MeshStandardMaterial({ color: new THREE.Color(frameColor), roughness: .7 }));
+    const faceMat = keep(new THREE.MeshStandardMaterial({ map: tex, roughness: style === 'screen' ? .25 : .7, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: glow }));
+    const face = new THREE.Mesh(keep(new THREE.BoxGeometry(width, height, o.depth ?? .006)), [side, side, side, side, faceMat, side]);
+    face.castShadow = true;
+    taps.set(face, { photo: () => { const img = o.hero ? (heroImg || at(0)) : at(step + (mix >= .5 ? 1 : 0)); return img ? urlOf.get(img) : null; } });
+    const root = new THREE.Group(); root.add(face);
+    polaroids.add({
+      turn(T) {
+        if (o.hero || photoImgs.length < 2 || !inView(root)) {
+          seenSince = null;
+          if (mix > 0) { if (mix >= .5) step += 1; mix = 0; paint(); }
+          return;
+        }
+        if (seenSince === null) { seenSince = T; from = step; }
+        const k = (T - seenSince) / turnS, n = Math.floor(k), into = (k - n) * turnS;
+        const m = into > turnS - fadeS ? (into - turnS + fadeS) / fadeS : 0;
+        if (from + n !== step || Math.abs(m - mix) > .02 || (m === 0 && mix !== 0)) { step = from + n; mix = m; paint(); }
+      },
+      rewind() { step = from = 0; mix = 0; seenSince = null; paint(); },
+      repaint: paint
+    });
+    return { root, width, height, face, material: faceMat };
   }
 
   /* ── particles: hearts, petals, glows and sparkles, as points that face the phone ── */
@@ -430,8 +520,17 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   const loader = new THREE.GLTFLoader();
   const gltfs = {};
   const mixers = new Set();
-  const modelsReady = Promise.all(Object.entries(tpl.models || {}).map(([name, file]) =>
-    loader.loadAsync(new URL(file, base).href).then(g => { gltfs[name] = g; }, e => { errors.push(`${file}: ${e && e.message ? e.message : 'did not load'}`); })));
+  const files = new Map();                                            // one load per file, however many names share it
+  const modelsReady = Promise.all(Object.entries(tpl.models || {}).map(([name, file]) => {
+    const url = new URL(file, base).href;
+    const first = !files.has(url);
+    if (first) files.set(url, loader.loadAsync(url));
+    return files.get(url).then(g => {
+      const copy = !first && THREE.SkeletonUtils ? { scene: THREE.SkeletonUtils.clone(g.scene), animations: g.animations } : null;
+      gltfs[name] = copy || (first ? g : null);
+      if (!gltfs[name]) return loader.loadAsync(url).then(again => { gltfs[name] = again; });   // no SkeletonUtils: a second load
+    }).catch(e => { errors.push(`${file}: ${e && e.message ? e.message : 'did not load'}`); });
+  }));
   function dress(o) {
     o.traverse(x => {
       if (!x.isMesh) return;
@@ -536,13 +635,58 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     return api;
   }
 
+  /* ── sound: nothing is fetched or played until the player enables it from a tap ── */
+  const SOUND = tpl.sound && typeof tpl.sound === 'object' ? tpl.sound : null;
+  const soundFiles = SOUND ? Object.entries({ music: SOUND.music, soft: SOUND.soft, ...(SOUND.effects || {}) }).filter(([, f]) => typeof f === 'string') : [];
+  let actx = null, master = null, musicBus = null, muted = false, wantMusic = null, musicName = null, musicNow = null;
+  const buffers = {};
+  function startMusic(name) {
+    if (!actx || !buffers[name] || musicName === name) return;
+    const src = actx.createBufferSource(), g = actx.createGain();
+    src.buffer = buffers[name]; src.loop = true; g.gain.value = 0; src.connect(g); g.connect(musicBus); src.start();
+    g.gain.setTargetAtTime(1, actx.currentTime, .35);
+    if (musicNow) { musicNow.gain.gain.setTargetAtTime(0, actx.currentTime, .3); musicNow.src.stop(actx.currentTime + 1.5); }
+    musicNow = { src, gain: g }; musicName = name;
+  }
+  const sound = {
+    has: soundFiles.length > 0,
+    /** from inside a tap: makes the audio context (or wakes it) and fetches the sounds the first time */
+    enable() {
+      if (!soundFiles.length || disposed) return;
+      try {
+        if (!actx) {
+          const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+          actx = new AC(); master = actx.createGain(); master.gain.value = muted ? 0 : 1; master.connect(actx.destination);
+          musicBus = actx.createGain(); musicBus.gain.value = SOUND.volume ?? .5; musicBus.connect(master);
+          for (const [name, file] of soundFiles)
+            fetch(new URL(file, base).href).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${file}: ${r.status}`))))
+              .then(b => actx.decodeAudioData(b)).then(buf => { buffers[name] = buf; if (name === wantMusic) startMusic(name); })
+              .catch(e => console.warn('[lovestory] a sound did not load', e));
+        }
+        if (actx.state === 'suspended') actx.resume();
+        const blip = actx.createBufferSource(); blip.buffer = actx.createBuffer(1, 1, 22050); blip.connect(actx.destination); blip.start();   // older iOS
+      } catch (e) { console.warn('[lovestory] no sound', e); }
+    },
+    mute(on) { muted = !!on; if (master) master.gain.setTargetAtTime(muted ? 0 : 1, actx.currentTime, .04); }
+  };
+  function sfx(name, o = {}) {
+    if (!actx || !buffers[name] || state.paused || actx.state !== 'running') return;
+    const src = actx.createBufferSource(), g = actx.createGain();
+    src.buffer = buffers[name]; src.playbackRate.value = o.rate ?? 1; g.gain.value = o.volume ?? 1;
+    src.connect(g); g.connect(master); src.start();
+  }
+  function music(name) { wantMusic = name; startMusic(name); }
+
   /* ── the story ── */
   const fired = new Set();
   const kit = {
     THREE, stage, card: { width: 1, depth: tpl.aspect || .625 }, clamp, lerp, seg, ease, rng, tween, hop, keep, words,
-    model, sign, polaroid, particles, glow, picture, canvasTexture, backdrop, env, lights: { hemi, sun }, heartPath, fitText, HAND,
+    model, sign, polaroid, photo, photoCount: () => photoImgs.length, particles, glow, picture, canvasTexture, backdrop, env,
+    lights: { hemi, sun }, heartPath, fitText, HAND,
     /** true the first time it is asked after the story (re)starts */
-    once: key => (fired.has(key) ? false : (fired.add(key), true))
+    once: key => (fired.has(key) ? false : (fired.add(key), true)),
+    onTap: (object, fn) => { taps.set(object, { fn }); return object; },
+    sfx, music
   };
   let story = null, seconds = [], starts = [];
   const reg = window.NM_STORIES = window.NM_STORIES || {};
@@ -593,6 +737,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   return {
     play(i) {
       if (i === 0) {
+        music('music');                                                // the theme from the top (silent until sound is on)
         fired.clear(); mixers.forEach(m => m.stopAllAction());
         photoImgs = shuffle(photoImgs); polaroids.forEach(p => p.rewind());   // a new order of photos each play
         try { story?.reset?.(); } catch (e) { errors.push(String(e)); }
@@ -600,14 +745,35 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       state.chapter = i; state.t = 0; state.stopped = false; state.paused = false; last = performance.now();
       if (!story && i >= 0) ready.then(() => { if (!story && !disposed && state.chapter === i && !state.stopped) { state.stopped = true; onStop(i); } });
     },
-    pause() { state.paused = true; },
-    resume() { state.paused = false; last = performance.now(); },
+    pause() { state.paused = true; if (actx && actx.state === 'running') actx.suspend(); },
+    resume() { state.paused = false; last = performance.now(); if (actx && actx.state === 'suspended') actx.resume(); },
+    sound,
     turn(rad) { spin.rotation.y += rad; },
+    /** what a tap along this ray finds: { photo: link } for a photo (the player shows it big), { handled: true } when the
+        story took it, null for nothing (the tap plays on). The nearest thing hit decides: a wall in front hides a frame. */
+    pick(raycaster) {
+      if (!story) return null;
+      for (const h of raycaster.intersectObject(root, true)) {
+        const o = h.object, m = o.material;
+        if (!o.isMesh || !(o.userData.proxy ? inView(o.parent) : inView(o))) continue;
+        if (m && !Array.isArray(m) && (m.isShadowMaterial || m.blending === THREE.AdditiveBlending || (m.transparent && m.opacity < .5))) continue;
+        for (let x = o; x && x !== root; x = x.parent) {
+          const t = taps.get(x);
+          if (!t) continue;
+          if (t.photo) { const src = t.photo(); if (src) sfx('shutter', { volume: .5 }); return src ? { photo: src } : null; }
+          try { t.fn(); } catch (e) { errors.push(e && e.message ? e.message : String(e)); }
+          return { handled: true };
+        }
+        return null;
+      }
+      return null;
+    },
     repaint: () => painters.forEach(p => p()),
     ready,
     modelError: () => (errors.length ? errors.join('; ') : null),
     dispose() {
       disposed = true; cancelAnimationFrame(raf); anchor.object3D.remove(root);
+      try { musicNow?.src.stop(); actx?.close(); } catch (e) { /* already closed */ }
       mixers.forEach(m => m.stopAllAction()); painters.clear();
       root.traverse(o => {                                           // the models' own geometry, materials and textures too
         if (o.geometry) o.geometry.dispose();

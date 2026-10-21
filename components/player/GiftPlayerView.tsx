@@ -20,6 +20,7 @@ import {
   Fallback,
   Hint,
   Intro,
+  PhotoZoom,
   ReadView,
   ScanFrame,
   TopBar,
@@ -62,6 +63,8 @@ export default function GiftPlayerView({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [running, setRunning] = useState(false);
   const [pinned, setPinned] = useState(false);
+  const [zoomed, setZoomed] = useState<string | null>(null);
+  const [muted, setMuted] = useState(false);
   const [why, setWhy] = useState("");
   /** the stops are being passed with the keys: each new stop's button takes the focus */
   const [keys, setKeys] = useState(false);
@@ -116,6 +119,9 @@ export default function GiftPlayerView({
     onStop: (i) => emit.current?.("chapter_reached", { chapter: i }),
   });
   const kind = loaded?.kind ?? null;
+  /** the act's sound, when it has any: switched on from the taps that start it (iOS lets audio start only there) */
+  const sound =
+    act && isAct3d(act) && act.api.sound?.has ? act.api.sound : null;
 
   const startPreview = useCallback(async () => {
     if (!session || !flow || !act || !loaded || previewFor.current === act)
@@ -228,7 +234,12 @@ export default function GiftPlayerView({
     live: !!view && (view.found || view.pinned),
     kind,
     zoom: true,
-    onTap: () => flow?.tap(),
+    onTap: (x, y) => {
+      sound?.enable(); // a preview that started on its own gets its sound from the first tap
+      const hit = session?.pick(x, y) ?? null; // a photo opens big; what the act took itself is not a tap on
+      if (hit && "photo" in hit) setZoomed(hit.photo);
+      else if (!hit) flow?.tap();
+    },
   });
 
   // hooks for the tests
@@ -294,12 +305,15 @@ export default function GiftPlayerView({
           ready={!!flow && phase === "idle"}
           words={words}
           photos={card.photos}
-          onStart={() => void start()}
-          onNoCamera={() =>
-            kind === "3d"
-              ? void startPreview()
-              : showFallback(T.filmWithoutCamera)
-          }
+          onStart={() => {
+            sound?.enable();
+            void start();
+          }}
+          onNoCamera={() => {
+            sound?.enable();
+            if (kind === "3d") void startPreview();
+            else showFallback(T.filmWithoutCamera);
+          }}
         />
       )}
       {!message && phase === "fallback" && loaded && (
@@ -320,6 +334,22 @@ export default function GiftPlayerView({
             {mode === "ar" && (view.found || pinned) && (
               <button type="button" id="pin" onClick={() => void togglePin()}>
                 {pinned ? T.unpin : T.pin}
+              </button>
+            )}
+            {sound && (
+              <button
+                type="button"
+                id="mute"
+                aria-pressed={muted}
+                aria-label={muted ? T.soundOn : T.soundOff}
+                title={muted ? T.soundOn : T.soundOff}
+                onClick={() => {
+                  sound.enable();
+                  sound.mute(!muted);
+                  setMuted(!muted);
+                }}
+              >
+                <SpeakerIcon muted={muted} />
               </button>
             )}
             <button type="button" id="replay" onClick={replay}>
@@ -355,8 +385,29 @@ export default function GiftPlayerView({
           {phase === "reading" && (
             <ReadView card={loaded.card} onClose={() => flow?.closeLetter()} />
           )}
+          {zoomed && <PhotoZoom src={zoomed} onClose={() => setZoomed(null)} />}
         </>
       )}
     </div>
+  );
+}
+
+/** the mute button's face: a speaker, its sound waves or a cross */
+function SpeakerIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+      <path d="M3.5 9.5v5h4l5.5 4.5v-14L7.5 9.5z" fill="currentColor" />
+      <path
+        d={
+          muted
+            ? "M16 9.5l5 5m0-5l-5 5"
+            : "M16.2 9a4.2 4.2 0 0 1 0 6M18.8 6.5a7.8 7.8 0 0 1 0 11"
+        }
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

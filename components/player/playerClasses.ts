@@ -10,6 +10,7 @@ const s = {
   photoStrip: "gp-photo-strip",
   stripPhoto: "gp-strip-photo",
   photoFan: "gp-photo-fan",
+  zoom: "gp-zoom",
   introArt: "gp-intro-art",
   stage: "gp-stage",
   filmDom: "gp-film-dom",
