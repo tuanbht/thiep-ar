@@ -410,13 +410,13 @@
     const fg = new THREE.ShapeGeometry(floor); fg.rotateX(Math.PI / 2);
     const fl = mesh(fg, mat('#ffffff', { map: boards, roughness: .9, side: THREE.DoubleSide }), 0, BOAT.floor, 0); fl.castShadow = false; ride.add(fl);
     { const p = fg.attributes.position, uvs = fg.attributes.uv; for (let i = 0; i < p.count; i++) uvs.setXY(i, p.getX(i) * 6 + .5, p.getZ(i) * 2.4); uvs.needsUpdate = true; }
-    const bench = mat('#a0683c', { roughness: .7 });                    // the benches: his across the middle, a cushion for her at the stern
-    for (const [z, d] of [[BOAT.seat, .035], [BOAT.stern + .01, .03]]) {
-      const t = z / (BOAT.len / 2), y = BOAT.seatTop;
+    const bench = mat('#a0683c', { roughness: .7 });                    // the benches: his across the middle, one at the stern; her cushion before it
+    for (const [z, d, y] of [[BOAT.seat, .035, BOAT.thwart], [BOAT.stern + .01, .03, BOAT.seatTop]]) {
+      const t = z / (BOAT.len / 2);
       ride.add(mesh(new THREE.BoxGeometry(widthAt(t, y) * 2 - .004, .006, d), bench, 0, y - .003, z));
     }
-    const cushion = mesh(new THREE.BoxGeometry(.07, .008, .06), mat('#c8362f', { roughness: .9 }), 0, BOAT.floor + .004, BOAT.stern + .002); ride.add(cushion);
-    for (const s of [-1, 1]) ride.add(mesh(new THREE.SphereGeometry(.006, 8, 6), mat('#f2c14e'), s * .03, BOAT.floor + .008, BOAT.stern + .03));   // its tassels
+    const cushion = mesh(new THREE.BoxGeometry(.07, .008, .06), mat('#c8362f', { roughness: .9 }), 0, BOAT.floor + .004, BOAT.cushion); ride.add(cushion);
+    for (const s of [-1, 1]) ride.add(mesh(new THREE.SphereGeometry(.006, 8, 6), mat('#f2c14e'), s * .03, BOAT.floor + .008, BOAT.cushion + .028));   // its tassels
     const posts = [-1, 1].map(s => {                                   // the oar posts on the gunwales
       const t = BOAT.lock / (BOAT.len / 2), x = s * halfBeam(t), y = sheer(t);
       ride.add(mesh(new THREE.CylinderGeometry(.003, .0035, .014, 6), rail, x, y + .007, BOAT.lock));

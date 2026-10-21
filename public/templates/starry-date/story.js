@@ -1,5 +1,5 @@
 /* Hẹn hò dưới sao (a starry date), told by the shared act _acts/lovestory.js. Three chapters, each ending at a stop:
-     1 · 0–6.5 s     night falls; he walks in from the left, she from the right; he waves, she cheers; a heart pops and
+     1 · 0–6.5 s     night falls; he walks in from the left, she from the right; he waves, she claps; a heart pops and
                      a note with the card's first words (note1) comes up
      2 · 6.5–12.6 s  a picnic blanket unrolls, they sit down side by side, a shooting star crosses, fireflies come out and
                      the card's photo rises in a glow with its caption
@@ -8,22 +8,32 @@
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
   const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
-  const H = 0.3;                                                     // the sweethearts' height, in card widths
+  const H = 0.3, HER = H * .945;                                     // their heights, in card widths (her 1.70 m to his 1.80)
+  const STRIDE = .1 * H / .3, STRIDE_HER = .1 * HER / .3;            // Walking_A at speed 1, in card widths a second (the kit paces it)
+  const SIT = .07, HUG = .028, HUG_Z = .005;                         // where they sit (x), and stand to hug: close enough to kiss
   const NIGHT = { hemi: new THREE.Color('#b9c4ff'), ground: new THREE.Color('#3b2f5c'), sun: new THREE.Color('#c9d2ff') };
   const DAY = { hemi: new THREE.Color('#fff6f0'), ground: new THREE.Color('#c9a9c4'), sun: new THREE.Color('#ffffff') };
   let boy, girl, note, banner, photo, moon, lamp, lampLight, lampGlow, blanket, heartPic, stars, hearts, sparks, flies;
 
   /* the pose a character holds at story time g: which clip, where, which way it looks */
-  const BOY = [                                                      // [from g, clip, options]
-    [0, 'Idle'], [.35, 'Walking_A', { speed: 1.6 }], [3, 'Idle'], [7, 'Walking_A'], [7.55, 'Sit_Floor_Down', { once: true, fade: .2 }],
-    [8.6, 'Sit_Floor_Idle', { fade: .3 }], [12.85, 'Sit_Floor_StandUp', { once: true, fade: .2 }], [13.9, 'Idle'], [14.05, 'Walking_A'], [14.6, 'Idle']
+  const BOY = [                                                      // [from g, clip, options]; the walk in sets its own pace
+    [0, 'Idle'], [.35, 'Walking_A'], [3, 'Idle'], [7, 'Walking_A', { speed: .77 }], [7.55, 'Sit_Floor_Down', { once: true, fade: .2 }],
+    [8.6, 'Sit_Floor_Idle', { fade: .3 }], [12.85, 'Sit_Floor_StandUp', { once: true, fade: .2 }], [13.9, 'Idle'], [14.05, 'Walking_A', { speed: 1.05 }], [14.6, 'Idle']
   ];
   const GIRL = [
-    [0, 'Idle'], [.65, 'Walking_A', { speed: 1.6 }], [3.2, 'Idle'], [3.5, 'Cheer', { once: true }], [5.1, 'Idle'], [7.05, 'Walking_A'],
+    [0, 'Idle'], [.65, 'Walking_A'], [3.2, 'Idle'], [3.5, 'Clap'], [5.1, 'Idle'], [7.05, 'Walking_A', { speed: .81 }],
     [7.6, 'Sit_Floor_Down', { once: true, fade: .2 }], [8.65, 'Sit_Floor_Idle', { fade: .3 }], [12.95, 'Sit_Floor_StandUp', { once: true, fade: .2 }],
-    [14, 'Idle'], [14.1, 'Walking_A'], [14.65, 'Idle']
+    [14, 'Idle'], [14.1, 'Walking_A', { speed: 1.1 }], [14.65, 'Idle']
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
+  /** a walk from a to b between g0 and g1 at an even pace, easing in and out over its first and last .35 s: [where it is,
+      Walking_A's speed for that pace (stride: what speed 1 covers in a second), so the feet do not slide] */
+  function walk(g, g0, g1, a, b, stride) {
+    const r = .35, v = (b - a) / (g1 - g0 - 2 * r + 2 * r / 3), e = v * r / 3;   // an eased end covers a third of what the pace would
+    const x = tween(g, [[g0, a], [g0 + r, a + e, 'in'], [g1 - r, b - e, 'linear'], [g1, b, 'out']]);
+    const ramp = Math.min(1, seg(g, g0, g0 + r), 1 - seg(g, g1 - r, g1)) ** 2;
+    return [x, Math.max(.3, Math.abs(v) * ramp / stride)];
+  }
 
   function gingham(c, px) {                                          // the picnic blanket: red and white checks with a hem
     c.fillStyle = '#fff6f2'; c.fillRect(0, 0, px, px);
@@ -38,7 +48,7 @@
 
     build() {
       /* the two of them */
-      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: H });
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
 
       /* the night: a crescent moon, stars, a street lamp that lights up */
@@ -103,30 +113,32 @@
       if (g > .15 && kit.once('stars')) stars.burst(70, i => ({ x: (rng() - .5) * 1.25, y: .42 + rng() * .5, z: -.32 + rng() * .18,
         color: ['#ffffff', '#fff2c4', '#cfe0ff'][i % 3], size: .008 + rng() * .016, life: 1e6, shape: i % 5 ? 'glow' : 'sparkle', twinkle: 1.5 + rng() * 3.5 }));
 
-      /* the sweethearts: where they are and which way they look */
-      const walkIn = ease.inOut(seg(g, .35, 3)), walkIn2 = ease.inOut(seg(g, .65, 3.2));
-      const sitTurn = ease.inOut(seg(g, 7, 7.6)), standTurn = ease.inOut(seg(g, 14.05, 14.6));
-      const close = ease.inOut(seg(g, 14.05, 14.6));
-      boy.root.position.set(lerp(lerp(-.52, -.1, walkIn), -.064, close), 0, lerp(0, .035, sitTurn) * (1 - standTurn));   // .42 in 2.65 s: walk speed 1.6
-      girl.root.position.set(lerp(lerp(.52, .1, walkIn2), .064, close), 0, lerp(0, .035, sitTurn) * (1 - standTurn));
+      /* the sweethearts: where they are and which way they look. They walk in, step onto the blanket to sit side by
+         side (a step forward: sitting back lands them on it), and stand close to hug, a little aside so their faces meet */
+      const [bIn, bPace] = walk(g, .35, 3, -.52, -.1, STRIDE), [gIn, gPace] = walk(g, .65, 3.2, .52, .1, STRIDE_HER);
+      const sitTurn = ease.inOut(seg(g, 7, 7.6)), standTurn = ease.inOut(seg(g, 14.05, 14.6)), step = .035 * sitTurn;
+      boy.root.position.set(lerp(lerp(bIn, -SIT, sitTurn), -HUG, standTurn), 0, lerp(step, -HUG_Z, standTurn));
+      girl.root.position.set(lerp(lerp(gIn, SIT, sitTurn), HUG, standTurn), 0, lerp(step, HUG_Z, standTurn));
       const faceIn = Math.PI / 2, faceFront = .28;
       boy.root.rotation.y = lerp(lerp(faceIn, faceFront, sitTurn), faceIn, standTurn);
       girl.root.rotation.y = -lerp(lerp(faceIn, faceFront, sitTurn), faceIn, standTurn);
-      const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
-      boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
+      const bc = clipAt(BOY, g), gc = clipAt(GIRL, g), pace = (c, p) => (g < 3.5 && c[1] === 'Walking_A' ? { speed: p } : c[2]);
+      boy.play(bc[1], pace(bc, bPace)); girl.play(gc[1], pace(gc, gPace));
 
-      /* gestures the clips do not have */
-      const wave = seg(g, 3, 3.35) * (1 - seg(g, 4.4, 4.8));
-      if (wave) { boy.aim('upperarm.r', [-.4, .85, .3], wave); boy.aim('lowerarm.r', [-.05 + .45 * Math.sin(T * 9), 1, .3], wave); }   // the arm nearer the phone
+      /* gestures the clips do not have (a +z bend tips a head to its own right: he sits on her right, she on his left) */
+      const wave = seg(g, 3, 3.35) * (1 - seg(g, 4.4, 4.8));             // the arm nearer the phone, raised towards her, clear of his face
+      if (wave) { boy.aim('upperarm.r', [-.3, .45, .85], wave); boy.aim('lowerarm.r', [-.05 + .35 * Math.sin(T * 9), 1, .25 + .15 * Math.sin(T * 9)], wave); }
       const lean = seg(g, 9, 9.8) * (1 - seg(g, 12.6, 12.9));            // sitting: she rests her head towards him
-      if (lean) { girl.bend('head', 0, 0, -.32, lean); boy.bend('head', 0, 0, .18, lean); }
-      const hug = ease.smooth(seg(g, 14.6, 15.3));
-      if (hug) for (const m of [boy, girl]) {
-        m.aim('upperarm.r', [-.42, .05, .9], hug); m.aim('lowerarm.r', [.8, .1, .6], hug);
-        m.aim('upperarm.l', [.42, .05, .9], hug); m.aim('lowerarm.l', [-.8, .1, .6], hug);
+      if (lean) { girl.bend('chest', 0, 0, .15, lean); girl.bend('head', 0, 0, .32, lean); boy.bend('head', 0, 0, -.18, lean); }
+      const hug = ease.smooth(seg(g, 14.6, 15.3)), kiss = ease.smooth(seg(g, 15.3, 16)) * (1 - .6 * seg(g, 17.6, 18.4));
+      if (kiss) { boy.bend('spine', .1, 0, 0, kiss); boy.bend('chest', .2, 0, 0, kiss); girl.bend('chest', .1, 0, 0, kiss); }   // he leans down to her
+      if (hug) {                                                     // his arms round her shoulders, hers round his back
+        boy.aim('upperarm.r', [-.42, -.1, .9], hug); boy.aim('lowerarm.r', [.85, 0, .5], hug);
+        boy.aim('upperarm.l', [.42, -.1, .9], hug); boy.aim('lowerarm.l', [-.85, 0, .5], hug);
+        girl.aim('upperarm.r', [-.38, -.3, .85], hug); girl.aim('lowerarm.r', [.85, -.05, .55], hug);
+        girl.aim('upperarm.l', [.38, -.3, .85], hug); girl.aim('lowerarm.l', [-.85, -.05, .55], hug);
       }
-      const kiss = ease.smooth(seg(g, 15.3, 16)) * (1 - .6 * seg(g, 17.6, 18.4));
-      if (kiss) for (const m of [boy, girl]) { m.bend('chest', .2, 0, 0, kiss); m.bend('head', .14, 0, 0, kiss); }
+      if (kiss) { boy.bend('head', .1, 0, 0, kiss); girl.bend('head', -.45, 0, 0, kiss); }   // and she looks up to him
 
       /* chapter 1: a heart, then the first note */
       if (g > 4.3 && kit.once('meet')) hearts.burst(16, () => ({ x: (rng() - .5) * .06, y: .3, z: 0, vx: (rng() - .5) * .22, vy: .18 + rng() * .14,

@@ -16,7 +16,7 @@
   const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
   const TAU = Math.PI * 2, R = Math.PI / 2;
   const rand = (s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)(1406);   // the scenery's own seed: the same every time
-  const K = .13;                                                     // model units to card widths, the same for both: eye to eye
+  const H = .3, HER = H * .945, CROWN = .032;                        // their heights (her 1.70 m to his 1.80); the top of a head over its bone
   const POST = [-.37, -.12], LAMP = [.42, -.1];                     // the bus stop's post; the street lamp
   const PUDDLES = [{ x: 0, z: .17, rx: .165, rz: .072 }, { x: .3, z: .14, rx: .085, rz: .045 }, { x: -.3, z: .2, rx: .066, rz: .032 }];
   const READ = [.31, .12, .15], POSTER = [-.372, .178, -.104], PIN = .65;         // where the photo is read; pinned on the post at the end
@@ -24,17 +24,17 @@
   const SKY = { width: 1.1, height: .75, curve: .12, z: -.3 };        // the painted sky at the back edge (it writes depth: keep things in front)
   const RAINY = { hemi: new THREE.Color('#c3d0e0'), ground: new THREE.Color('#56606e'), sun: new THREE.Color('#d6e0ec') };
   const CLEAR = { hemi: new THREE.Color('#fff1e0'), ground: new THREE.Color('#c8ae98'), sun: new THREE.Color('#ffe2b8') };
-  let boy, girl, umb, stop, lamp, bus, note, banner, photo, pin, rainbow, clouds, rainSky, clearSky, waterGlow;
+  let boy, girl, umb, umbLeft = false, stop, lamp, bus, note, banner, photo, pin, rainbow, clouds, rainSky, clearSky, waterGlow;
   let rain, splash, hearts, sparks, petals, ripples, puddles;
 
   /* the pose a character holds at story time g: which clip, where, which way it looks */
   const BOY = [                                                      // [from g, clip, options]
-    [0, 'Walking_A', { speed: 1.64 }], [3.3, 'Idle', { fade: .25 }], [6.95, 'Walking_A', { speed: 1.3, fade: .15 }],
+    [0, 'Walking_A', { speed: 1.82 }], [3.3, 'Idle', { fade: .25 }], [6.95, 'Walking_A', { speed: 1.2, fade: .15 }],
     [7.4, 'Idle', { fade: .25 }], [15.3, 'Jump_Full_Short', { once: true, speed: .85, fade: .15 }],
     [16.5, 'Cheer', { once: true, fade: .2 }], [18.15, 'Idle', { fade: .35 }]
   ];
   const GIRL = [
-    [0, 'Idle'],
+    [0, 'Idle'], [6.9, 'Walking_A', { speed: 1.55, fade: .15 }], [7.65, 'Idle', { fade: .25 }],
     [15.32, 'Jump_Full_Short', { once: true, speed: .85, fade: .15 }], [16.55, 'Cheer', { once: true, fade: .2 }], [18.2, 'Idle', { fade: .35 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
@@ -42,13 +42,13 @@
 
   /* where each of them is: [from g, x, z, facing, ease into it (smooth by default)] */
   const BOY_WAY = [
-    [0, .62, .015, -R], [.3, .62, .015, -R, 'linear'], [3.05, .17, .002, -R, 'linear'], [3.3, .15, 0, -R, 'out'], [3.6, .15, 0, -1.42],
-    [6.95, .15, 0, -1.42], [7.4, .085, -.02, -1.3], [7.9, .085, -.02, -.24], [15.68, .085, -.02, -.2],
-    [16.1, .075, .135, -.2, 'inOut'], [18.2, .075, .135, -.24]
+    [0, .62, .015, -R], [.3, .62, .015, -R, 'linear'], [3.05, .12, .002, -R, 'linear'], [3.3, .1, 0, -R, 'out'], [3.6, .1, 0, -1.42],
+    [6.95, .1, 0, -1.42], [7.4, .06, -.02, -1.3], [7.9, .06, -.02, -.24], [15.68, .06, -.02, -.2],
+    [16.1, .042, .135, -.2, 'inOut'], [18.2, .042, .135, -.24]
   ];
   const GIRL_WAY = [
-    [0, -.125, -.02, .35], [3.3, -.125, -.02, .35], [3.65, -.125, -.02, 1.02], [6.9, -.125, -.02, 1.02], [7.35, -.11, -.02, .9],
-    [7.9, -.095, -.02, .24], [15.7, -.095, -.02, .2], [16.12, -.075, .135, .2, 'inOut'], [18.2, -.075, .135, .26]
+    [0, -.125, -.02, .35], [3.3, -.125, -.02, .35], [3.65, -.125, -.02, 1.02], [6.9, -.125, -.02, 1.02], [7.65, -.015, -.02, .9, 'linear'],
+    [7.9, -.015, -.02, .24], [15.7, -.015, -.02, .2], [16.12, -.034, .135, .2, 'inOut'], [18.2, -.034, .135, .26]
   ];
   const wayAt = (way, g) => [1, 2, 3].map(i => tween(g, way.map(k => [k[0], k[i], k[4] || 'smooth'])));
   const skyZ = x => SKY.z + SKY.curve * (x / (SKY.width / 2)) ** 2;   // where the painted page stands at x (its ends come forward)
@@ -61,17 +61,18 @@
     chest: [[-.15, -.55, .8], [.6, .65, .3]],                          // hands together at her chest, shy
     carry: [[-.35, -.6, .7], [-.15, .65, .75]],                        // the umbrella up in front of him, walking
     offer: [[-.3, -.1, .95], [-.15, .5, .85]],                         // held out over her
-    share: [[-.6, -.5, .62], [-.35, .55, .75]],                        // between the two of them, at his shoulder
+    share: [[-.2, -.75, .4], [.05, .85, .5]],                          // between the two of them, at his shoulder
     tipBack: [[-.45, -.35, .8], [-.25, .8, .5]],                       // tipped back to look at the sky
     shoulder: [[-.3, -.75, .45], [-.15, .9, -.1]],                     // the shut umbrella on his shoulder
-    joy: [[-.85, .45, .2], [-.55, .82, .15]],                          // a free arm flung up and out in the jump (up alone hides behind the hood)
-    beckon: g => { const k = Math.max(0, Math.sin((g - 6.5) * 13)); return [[-.15, -.5, .85], [.05, .05 + .55 * k, 1 - .45 * k]]; }   // come under here: palm up, low (a raised hand hides in the hood)
+    pass: [[-.1, -.7, .7], [.55, .3, .75]],                            // a hand in front of his chest, to pass it to the other
+    joy: [[-.85, .45, .2], [-.55, .82, .15]],                          // a free arm flung up and out in the jump
+    beckon: g => { const k = Math.max(0, Math.sin((g - 6.5) * 13)); return [[-.15, -.5, .85], [.05, .05 + .55 * k, 1 - .45 * k]]; }   // come under here: palm up, low
   };
   /* each arm's poses through the story: [from g, pose (null: the clip's own), seconds to blend in] */
   const ARMS = {
     boy: {
-      r: [[0, 'carry', 0], [3.45, 'offer', .55], [6.95, 'share', .6], [13.2, 'tipBack', .4], [13.75, 'share', .3], [14.5, 'shoulder', .4]],
-      l: [[0, null, 0], [15.55, 'joy', .2], [16.25, null, .3]]
+      r: [[0, 'carry', 0], [3.45, 'offer', .55], [6.95, 'share', .6], [13.2, 'tipBack', .4], [13.75, 'share', .3], [14.52, 'pass', .15], [14.68, null, .35]],
+      l: [[0, null, 0], [14.47, 'pass', .2], [14.68, 'shoulder', .35]]          // shut, it goes to his left shoulder: his right arm is hers
     },
     girl: {
       r: [[0, 'hug', 0], [1.15, 'palm', .3], [1.95, 'hug', .3], [4.4, 'chest', .4], [6.5, 'beckon', .25], [7.2, null, .4], [13.15, 'palm', .35], [13.8, null, .35], [15.57, 'joy', .2], [16.27, null, .3]],
@@ -131,8 +132,8 @@
   /* the umbrella through the story: [from g, the way its shaft points (stage space), seconds to blend in, how open];
      shut, it goes up on his shoulder */
   const UMB = [
-    [0, [-.08, 1, -.1], 0, 1], [3.45, [-.4, .9, -.12], .7, 1], [6.95, [-.26, .96, -.1], .7, 1], [13.2, [-.08, .9, -.42], .45, 1],
-    [13.75, [-.2, .9, -.38], .3, 1], [13.85, [-.2, .9, -.38], .4, 0], [14.5, [-.12, .55, -.83], .4, 0]
+    [0, [-.08, 1, -.1], 0, 1], [3.45, [-.4, .9, -.12], .7, 1], [6.95, [-.1, .97, -.1], .7, 1], [13.2, [-.08, .9, -.42], .45, 1],
+    [13.75, [-.2, .9, -.38], .3, 1], [13.85, [-.2, .9, -.38], .4, 0], [14.6, [.15, .55, -.82], .45, 0]
   ];
   const FLIGHT = new THREE.CatmullRomCurve3([[READ[0], READ[1], READ[2]], [.3, .5, .1], [-.2, .62, .02], [POSTER[0], POSTER[1], POSTER[2]]].map(p => new THREE.Vector3(...p)));
   const vUp = new THREE.Vector3(), vUp0 = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), qW = new THREE.Quaternion();
@@ -145,24 +146,11 @@
   const mesh = (g, m, parent, [x, y, z] = [0, 0, 0]) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); o.castShadow = true; parent && parent.add(o); return o; };
   const ramp = (c, x, y, w, h, cols) => { const gr = c.createLinearGradient(0, y, 0, y + h); cols.forEach((k, i) => gr.addColorStop(i / (cols.length - 1), k)); c.fillStyle = gr; c.fillRect(x, y, w, h); };
 
-  /* outfits for a rainy day: his bear hat turns into a yellow rain hood (the cape and his collar's fur share its swatch),
-     his beard dark brown; her hood and cape lavender over a cream tunic. Each palette is one texture of 8 x 4 swatches */
-  function repaint(m, part, cells) {
-    const node = m.node(part), material = node && node.material, img = material && material.map && material.map.image;
-    if (!img || !img.width) return;
-    const cv = canvas(img.width, img.height, c => {
-      c.drawImage(img, 0, 0);
-      for (const [col, row, cols] of cells) ramp(c, col * img.width / 8, row * img.height / 4, img.width / 8, img.height / 4, cols);   // light at the top, like the palette's own
-    });
-    const old = material.map, t = texture(cv);
-    t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter;
-    material.map = t; material.needsUpdate = true; old.dispose();
-  }
-
   /* the umbrella: eight panels on ribs round a shaft, a tip on top, a wooden J handle. Its origin is the grip, +y runs
      up the shaft. setOpen(k) folds the ribs down round the shaft: 1 open, 0 shut */
   function makeUmbrella() {
-    const N = 8, RS = 6, AS = 4, Rc = .2, DOME = .068, SHAFT = .31, L = Math.hypot(Rc, DOME) * 1.04;
+    const N = 8, RS = 6, AS = 4, Rc = .16, DOME = .055, SHAFT = .17, L = Math.hypot(Rc, DOME) * 1.04;   // a big golf umbrella, for two
+    const RUN = SHAFT * .19, SLIDE = SHAFT * .39;                      // the runner under the hub when open, and how far it slides to shut
     const root = new THREE.Group(), top = new THREE.Group(); top.position.y = SHAFT; root.add(top);
     const panel = canvas(256, 256, c => {                            // one panel, hub at the top, rim at the bottom
       ramp(c, 0, 0, 256, 256, ['#f25a63', '#e5444f', '#d83a46']);
@@ -218,11 +206,11 @@
           const o = ((p * RS) + i) * 6, [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
           ribPos.set([ca * x0, y0 - .002, sa * x0, ca * x1, y1 - .002, sa * x1], o);
         }
-        const o = (N * RS + p) * 6, [xm, ym] = pts[3], ry = -.06 - .12 * (1 - k);   // a stretcher from the runner to mid-rib
+        const o = (N * RS + p) * 6, [xm, ym] = pts[3], ry = -RUN - SLIDE * (1 - k);   // a stretcher from the runner to mid-rib
         ribPos.set([0, ry, 0, ca * xm, ym - .002, sa * xm], o);
         tips[p].position.set(ca * pts[RS][0], pts[RS][1], sa * pts[RS][0]);
       }
-      runner.position.y = SHAFT - .06 - .12 * (1 - k);
+      runner.position.y = SHAFT - RUN - SLIDE * (1 - k);
       cg.attributes.position.needsUpdate = true; cg.computeVertexNormals(); cg.computeBoundingSphere();
       ribGeo.attributes.position.needsUpdate = true; ribGeo.setDrawRange(0, (N * RS + N) * 2);
     }
@@ -492,13 +480,13 @@
       const dx = x - hub.x, dz = z - hub.z, r = Math.hypot(dx, dz);
       if (r < umb.R * .9) return { y: hub.y - (axis.x * dx + axis.z * dz) / axis.y - umb.DOME * (r / umb.R) ** 2, on: 'umb', dx, dz, r };
     }
-    for (const h of heads) if (Math.hypot(x - h.x, z - h.z) < .05) return { y: h.y, on: 'head' };
+    for (const h of heads) if (Math.hypot(x - h.x, z - h.z) < .035) return { y: h.y, on: 'head' };
     for (const p of PUDDLES) if (((x - p.x) / p.rx) ** 2 + ((z - p.z) / p.rz) ** 2 < .75) return { y: .004, on: 'puddle' };
     return { y: .003, on: 'card' };
   }
   function weather(T, dt, pour, held, g) {
     findCanopy();
-    [boy, girl].forEach((m, i) => { stagePos(m.node('head'), heads[i]); heads[i].y += .135; });
+    [boy, girl].forEach((m, i) => { stagePos(m.node('head'), heads[i]); heads[i].y += CROWN; });
     const open = umb.open;
     if (dt) {
       const first = pour > .5 && kit.once('rain');                       // the first frame: it is raining already, not starting to
@@ -536,10 +524,8 @@
     seconds: [6.4, 6.2, 6.4],
 
     build() {
-      /* the two of them, dressed for the rain */
-      boy = kit.model('boy').fit({ height: 2.398 * K }); girl = kit.model('girl').fit({ height: 2.2513 * K });
-      repaint(boy, 'Barbarian_Body', [[7, 0, ['#ffd75e', '#f2b51f', '#d08c12']], [1, 0, ['#6e4a36', '#57392a', '#3e281e']]]);
-      repaint(girl, 'Rogue_Body', [[1, 1, ['#a88cf2', '#7d5fd6', '#5a3fae']], [0, 1, ['#fff6ea', '#f1e2cf', '#d9c4ab']]]);
+      /* the two of them */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
 
       /* the umbrella, in his right hand all along */
@@ -658,7 +644,8 @@
       stagePos(boy.node('lowerarm.r'), TARGET.link).lerp(stagePos(boy.node('handslot.r'), vA), .4);
       arms(girl, ARMS.girl, g);
 
-      /* the umbrella: in his hand, its shaft pointing the way the table says */
+      /* the umbrella: in his hand (shut, in the left one), its shaft pointing the way the table says */
+      if ((g >= 14.62) !== umbLeft) { umbLeft = g >= 14.62; boy.hold(umb.root, umbLeft ? 'handslot.l' : 'handslot.r'); umb.root.position.set(0, 0, 0); }
       let u = 0; while (u + 1 < UMB.length && g >= UMB[u + 1][0]) u++;
       const uk = UMB[u][2] ? ease.inOut(clamp((g - UMB[u][0]) / UMB[u][2])) : 1;
       vUp.fromArray(UMB[u][1]).normalize();
@@ -678,7 +665,7 @@
           color: '#e6f3ff', size: .009 + rng() * .006, life: .6, shape: 'glow' });
       }
 
-      /* the rain: falling, landing, splashing (by T); the canopy, the hoods and the puddles each catch it */
+      /* the rain: falling, landing, splashing (by T); the canopy, their heads and the puddles each catch it */
       const pour = 1 - ease.smooth(seg(g, 12.75, 13.9));
       weather(T, dt, pour, held, g);
 

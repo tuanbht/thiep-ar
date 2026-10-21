@@ -19,8 +19,9 @@
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
   const { THREE, stage, tween, ease, seg, lerp, rng, words } = kit;
   const H = .29, HER = H * .945;                                     // their heights, in card widths (her 1.70 m to his 1.80)
-  /* how far a walk carries them each second at speed 1 (the clips' strides, measured at .4 tall, scale with height) */
-  const STRIDE = { boy: .195 * H / .4, girl: .212 * HER / .378 };
+  /* how far a walk carries them each second at speed 1, in KayKit's stride (.1 card widths a second for a .3-tall
+     character): the shared models carry a pace for each walk and run that turns it into their own */
+  const STRIDE = { boy: .1 * H / .3, girl: .1 * HER / .3 };
   const SIT_BACK = .066 * H / .4;                                    // a chair clip settles the hips this far behind where they stood
   const START = [0, 7, 14, 21, 27.5, 34.5], SECONDS = [7, 7, 7, 6.5, 7, 7.5];
   const TITLES = ['Lần đầu gặp nhau', 'Vào bếp', 'Đêm xem phim', 'Tranh cái remote', 'Lời tỏ tình', 'Hậu trường'];

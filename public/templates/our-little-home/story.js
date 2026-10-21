@@ -9,12 +9,13 @@
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
   const { THREE, stage, tween, ease, seg, lerp, rng, words } = kit;
-  const K = .13;                                                     // model units to card widths, the same for both: eye to eye
+  const H = .27, HER = H * .945;                                     // their heights, in card widths (1.80 m and 1.70 m): the couch's seat is a chair's
+  const STRIDE = { boy: .1 * H / .3, girl: .1 * HER / .3 };         // a walk's stride a second at speed 1 (the models' pace makes KayKit's theirs)
   const R = Math.PI / 2;                                             // facing +x, the way they walk in
   const WALL_Z = -.297;                                              // the wall's face, at the card's back edge
-  const SEAT = { boy: [-.078, -.11], girl: [.078, -.11] };           // where they stand to sit: knees at the seat's front edge
-  const LIFT = { boy: .012, girl: .008 };                            // Sit_Chair's hips come down this far below the seat
-  const BOX_AT = [-.262, .098];                                      // where the moving box ends up, in front of him
+  const SEAT = { boy: [-.078, -.11], girl: [.078, -.11] };           // where they stand to sit: the hips settle onto the cushion, the knees past its edge
+  const BOX_AT = [-.262, .11];                                       // where the moving box ends up, in front of him (where his hands set it)
+  const CARRY = [.6, .08];                                           // how far out his upper arms and forearms go to hold the box by its sides
   const LAMP_AT = [.236, -.205], PHOTO_UP = [0, .36, -.2], PHOTO_WALL = [0, .2, WALL_Z + .006];
   const DAY = { hemi: new THREE.Color('#fff6f0'), ground: new THREE.Color('#c9a9c4'), sun: new THREE.Color('#ffffff') };
   const EVE = { hemi: new THREE.Color('#c4c0ff'), ground: new THREE.Color('#4f3f63'), sun: new THREE.Color('#9fb0ff') };
@@ -24,32 +25,41 @@
 
   /* the pose a character holds at story time g: which clip, where, which way it looks */
   const BOY = [                                                      // [from g, clip, options]
-    [0, 'Idle'], [1.1, 'Walking_A', { speed: 1.1 }], [2.95, 'Idle', { fade: .2 }], [3.05, 'PickUp', { once: true, fade: .2 }],
+    [0, 'Idle'], [1.1, 'Walking_A'], [2.95, 'Idle', { fade: .2 }], [3.05, 'PickUp', { once: true, fade: .2 }],
     [4.35, 'Idle', { fade: .2 }], [4.45, 'Walking_A'], [5.15, 'Idle', { fade: .2 }], [5.25, 'Cheer', { once: true, fade: .2 }],
     [6.65, 'Idle', { fade: .3 }], [6.95, 'Walking_Backwards'], [7.6, 'Sit_Chair_Down', { once: true, fade: .2 }],
     [8.4, 'Sit_Chair_Idle', { fade: .3 }], [12.85, 'Sit_Chair_StandUp', { once: true, fade: .2 }], [13.65, 'Idle', { fade: .2 }],
     [13.7, 'Walking_A'], [14.2, 'Idle', { fade: .25 }], [16.2, 'Cheer', { once: true, fade: .2 }], [17.85, 'Idle', { fade: .3 }]
   ];
   const GIRL = [
-    [0, 'Idle'], [.1, 'Walking_A', { speed: 1.3 }], [2.9, 'Idle', { fade: .25 }], [5.2, 'Cheer', { once: true, fade: .2 }],
+    [0, 'Idle'], [.1, 'Walking_A'], [2.9, 'Idle', { fade: .25 }], [5.2, 'Cheer', { once: true, fade: .2 }],
     [6.7, 'Idle', { fade: .3 }], [7, 'Walking_Backwards'], [7.65, 'Sit_Chair_Down', { once: true, fade: .2 }],
     [8.45, 'Sit_Chair_Idle', { fade: .3 }], [12.95, 'Sit_Chair_StandUp', { once: true, fade: .2 }], [13.75, 'Idle', { fade: .2 }],
     [13.8, 'Walking_A'], [14.25, 'Idle', { fade: .25 }], [16.25, 'Cheer', { once: true, fade: .2 }], [17.9, 'Idle', { fade: .3 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
+  const shoulder = (m, side) => stage.worldToLocal(m.node(`upperarm.${side}`).getWorldPosition(new THREE.Vector3()));
+  /** one arm straight from its shoulder towards a point on the stage, k of the way */
+  function reach(m, side, at, k) {
+    const sh = shoulder(m, side), th = m.root.rotation.y;
+    const dx = at.x - sh.x, dz = at.z - sh.z, d = [dx * Math.cos(th) - dz * Math.sin(th), at.y - sh.y, dx * Math.sin(th) + dz * Math.cos(th)];
+    m.aim(`upperarm.${side}`, d, k); m.aim(`lowerarm.${side}`, d, k);
+  }
 
   /* where each of them is: [from g, x, z, facing, ease into it (smooth by default)] */
   const BOY_WAY = [
     [0, -.62, .03, R], [1.1, -.62, .03, R], [2.95, -.262, .03, R], [3.15, -.262, .03, 0], [4.3, -.262, .03, 0], [4.5, -.262, .03, R],
     [5.15, -.085, .02, R], [5.35, -.085, .02, .15], [6.95, -.085, .02, .15], [7.6, ...SEAT.boy, 0], [13.65, ...SEAT.boy, 0],
-    [14.2, -.08, 0, .95], [15.2, -.08, 0, .95], [16, -.07, 0, .95], [16.25, -.075, .01, .12]
+    [14.2, -.066, 0, .95], [15.2, -.066, 0, .95], [15.45, -.058, 0, .95], [16, -.058, 0, .95], [16.25, -.075, .01, .12]
   ];
   const GIRL_WAY = [
     [0, -.6, .13, R], [.1, -.6, .13, R], [2.9, .075, .035, R], [3.25, .075, .035, -.55], [4.95, .075, .035, -.55],
     [5.2, .075, .035, -.15], [7, .075, .035, -.15], [7.65, ...SEAT.girl, 0], [13.75, ...SEAT.girl, 0],
-    [14.25, .08, 0, -.95], [15.2, .08, 0, -.95], [16, .07, 0, -.95], [16.25, .075, .01, -.12]
+    [14.25, .066, 0, -.95], [15.2, .066, 0, -.95], [15.45, .032, 0, -.95], [16, .032, 0, -.95], [16.25, .075, .01, -.12]
   ];
   const wayAt = (way, g) => [1, 2, 3].map(i => tween(g, way.map(k => [k[0], k[i], k[4] || 'smooth'])));
+  /** a walk's speed that keeps its feet: how fast its way moves just now, over the stride (the eased ways speed up and slow down) */
+  const pace = (way, g, stride) => { const [x1, z1] = wayAt(way, g + .03), [x0, z0] = wayAt(way, g - .03); return Math.max(.4, Math.hypot(x1 - x0, z1 - z0) / .06 / stride); };
 
   /* ── the room's paintings: wallpaper, the sky in the window, the box's side ── */
   const canvas = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); return cv; };
@@ -116,19 +126,6 @@
     for (const x of [W * .12, W * .2]) { c.beginPath(); c.moveTo(x, H * .9); c.lineTo(x, H * .74); c.moveTo(x - 6, H * .8); c.lineTo(x, H * .74); c.lineTo(x + 6, H * .8); c.stroke(); }
   }
 
-  /* the beard is grey on the model: a warm brown makes him the young one he is (its own swatch in the texture) */
-  function youngBeard() {
-    const head = boy.node('Barbarian_Head'), m = head && head.material, img = m && m.map && m.map.image;
-    if (!img || !img.width) return;
-    const cv = canvas(img.width, img.height, c => {
-      c.drawImage(img, 0, 0); c.globalCompositeOperation = 'multiply'; c.fillStyle = '#b8794e';
-      c.fillRect(img.width / 8, 0, img.width / 8, img.height / 4);                        // swatch 2 of the top row: beard, brows
-    });
-    const old = m.map, t = texture(cv);
-    t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter;
-    m.map = t; m.needsUpdate = true; old.dispose();
-  }
-
   /** a furniture model at its size on the stage, catching shadows */
   function furnish(name, o) {
     const m = kit.model(name).fit(o);
@@ -178,9 +175,8 @@
     seconds: [6.7, 6, 6.3],
 
     build() {
-      /* the two of them: the Barbarian (his bear hat on) and the Rogue */
-      boy = kit.model('boy').fit({ height: 2.398 * K }); girl = kit.model('girl').fit({ height: 2.187 * K });
-      youngBeard();
+      /* the two of them */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
 
       /* the wall: one painted panel that folds up out of the card like a pop-up page, a window with curtains */
@@ -207,7 +203,7 @@
       rug = furnish('rug', { width: .62 }); rug.scene.scale.y *= .3; rug.root.position.z = .207; rugRoot.add(rug.root);
       rugRoll = new THREE.Mesh(kit.keep(new THREE.CylinderGeometry(1, 1, .56, 18)), kit.keep(new THREE.MeshStandardMaterial({ color: 0xe1ae4a, roughness: .9 })));
       rugRoll.rotation.z = Math.PI / 2; rugRoll.castShadow = true; stage.add(rugRoll);
-      couch = furnish('couch', { height: .159 }); couch.scene.scale.z *= .77; couch.scene.position.z *= .77;   // shallower: chibi legs are short
+      couch = furnish('couch', { height: .159 }); couch.scene.scale.z *= .77; couch.scene.position.z *= .77;   // shallower: its back clear of the wall, they sit at its front
       couch.root.position.set(0, 0, -.212); stage.add(couch.root);
       lamp = furnish('lamp', { height: .3 }); lamp.root.position.set(LAMP_AT[0], 0, LAMP_AT[1]); stage.add(lamp.root);
       plant = furnish('plant', { height: .1 }); plant.root.position.set(-.37, 0, -.215); stage.add(plant.root);
@@ -291,31 +287,32 @@
 
       /* the sweethearts: where they are and which way they look */
       const [bx, bz, br] = wayAt(BOY_WAY, g), [gx, gz, gr] = wayAt(GIRL_WAY, g);
-      const sitB = ease.inOut(seg(g, 7.9, 8.35)) * (1 - ease.inOut(seg(g, 12.9, 13.4)));
-      const sitG = ease.inOut(seg(g, 7.95, 8.4)) * (1 - ease.inOut(seg(g, 13, 13.5)));
       const twirl = ease.inOut(seg(g, 15.25, 15.95));
       const sway = seg(g, 14.25, 14.5) * (1 - seg(g, 15.05, 15.25));          // the hand-held sway before the twirl
       const beat = Math.sin((g - 14.25) * Math.PI * 4);
-      boy.root.position.set(bx + .006 * beat * sway, LIFT.boy * sitB + kit.hop(g - 14.25, .5, .01) * sway, bz);
-      girl.root.position.set(gx + .006 * beat * sway, LIFT.girl * sitG + kit.hop(g - 14.25, .5, .01) * sway, gz);
+      boy.root.position.set(bx + .006 * beat * sway, kit.hop(g - 14.25, .5, .01) * sway, bz);
+      girl.root.position.set(gx + .006 * beat * sway, kit.hop(g - 14.25, .5, .01) * sway, gz);
       const rock = .06 * Math.sin(T * 2.2) * ease.smooth(seg(g, 18.2, 18.8));   // at the last stop they sway together
       boy.root.rotation.y = br + .12 * beat * sway + rock; girl.root.rotation.y = gr - .12 * beat * sway + twirl * Math.PI * 2 + rock;
       boy.root.visible = g > 1.09; girl.root.visible = g > .09;
-      const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
-      boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
+      const bc = clipAt(BOY, g), gc = clipAt(GIRL, g), walk = /^Walking/;
+      boy.play(bc[1], walk.test(bc[1]) ? { ...bc[2], speed: pace(BOY_WAY, g, STRIDE.boy) } : bc[2]);
+      girl.play(gc[1], walk.test(gc[1]) ? { ...gc[2], speed: pace(GIRL_WAY, g, STRIDE.girl) } : gc[2]);
 
-      /* he carries the box in both arms, then lowers it to the floor with PickUp's bend */
-      const carry = g < 3.65 ? 1 : 1 - ease.smooth(seg(g, 3.65, 4.05));
+      /* he carries the box by its sides, then lowers it to the floor with PickUp's bend */
+      const carry = g < 4.35 ? 1 : 1 - ease.smooth(seg(g, 4.35, 4.6));      // the hands stay on it until he straightens up
       if (carry > 0) {
-        const down = ease.smooth(seg(g, 3.15, 3.6));                           // the arms go from hugging the box to lowering it
-        boy.aim('upperarm.r', [-.2, lerp(-.3, -.75, down), lerp(.93, .6, down)], carry); boy.aim('lowerarm.r', [.22, lerp(.15, -.5, down), 1], carry);
-        boy.aim('upperarm.l', [.2, lerp(-.3, -.75, down), lerp(.93, .6, down)], carry); boy.aim('lowerarm.l', [-.22, lerp(.15, -.5, down), 1], carry);
+        const down = ease.smooth(seg(g, 3.2, 3.9));                            // the arms go from carrying the box to lowering it
+        for (const [s, side] of [[-1, 'r'], [1, 'l']]) {
+          boy.aim(`upperarm.${side}`, [s * CARRY[0], lerp(-.62, -.45, down), lerp(.66, .9, down)], carry);
+          boy.aim(`lowerarm.${side}`, [s * CARRY[1], lerp(-.05, -.85, down), lerp(1, .45, down)], carry);
+        }
       }
       const hr = boy.node('handslot.r'), hl = boy.node('handslot.l');
-      if (g < 3.7 && hr && hl) {
+      if (g < 4.05 && hr && hl) {
         const a = hr.getWorldPosition(new THREE.Vector3()), b = hl.getWorldPosition(new THREE.Vector3());
         const mid = stage.worldToLocal(a.add(b).multiplyScalar(.5));
-        const set = ease.inOut(seg(g, 3.3, 3.65));                            // the last bit: onto its spot on the floor
+        const set = ease.inOut(seg(g, 3.4, 4));                               // the last bit: onto its spot on the floor
         box.root.position.set(lerp(mid.x, BOX_AT[0], set), Math.max(0, lerp(mid.y - .033, 0, set)), lerp(mid.z, BOX_AT[1], set));
         box.root.rotation.y = lerp(br, 0, set);
       } else { box.root.position.set(BOX_AT[0], 0, BOX_AT[1]); box.root.rotation.y = 0; }
@@ -382,13 +379,16 @@
       }
 
       /* chapter 3: they dance; hands held, a twirl, a cheer */
-      const hold2 = seg(g, 14.15, 14.45) * (1 - seg(g, 15.15, 15.3));        // both hands, facing each other
-      if (hold2) for (const m of [boy, girl]) {
-        m.aim('upperarm.r', [-.18, -.55, .82], hold2); m.aim('lowerarm.r', [.15, -.15, 1], hold2);
-        m.aim('upperarm.l', [.18, -.55, .82], hold2); m.aim('lowerarm.l', [-.15, -.15, 1], hold2);
+      const hold2 = seg(g, 14.15, 14.45) * (1 - seg(g, 15.15, 15.3));        // both hands, facing each other: each pair meets halfway, a little low
+      if (hold2) for (const [a, b] of [['r', 'l'], ['l', 'r']]) {
+        const meet = shoulder(boy, a).add(shoulder(girl, b)).multiplyScalar(.5); meet.y -= .05;
+        reach(boy, a, meet, hold2); reach(girl, b, meet, hold2);
       }
-      const lift = seg(g, 15.15, 15.35) * (1 - seg(g, 15.9, 16.1));           // his hand up, she turns under it
-      if (lift) { boy.aim('upperarm.r', [-.45, .85, .25], lift); boy.aim('lowerarm.r', [-.1, 1, .25], lift); girl.aim('upperarm.l', [.05, 1, .05], lift); girl.aim('lowerarm.l', [0, 1, 0], lift); }
+      const lift = seg(g, 15.15, 15.35) * (1 - seg(g, 15.9, 16.1));           // his left hand up in her right, over her head: she turns under it
+      if (lift) {
+        const top = new THREE.Vector3(lerp(bx, gx, .58), HER + .02, lerp(bz, gz, .58));
+        reach(girl, 'r', top, lift); reach(boy, 'l', top, lift);
+      }
       if (g > 15.25 && g < 16 && dt) for (let i = 0; i < 2; i++) {
         const a = T * 9 + i * Math.PI;
         sparks.emit({ x: gx + Math.cos(a) * .06, y: .05 + rng() * .2, z: gz + Math.sin(a) * .06, color: ['#fff1b8', '#ffd1dc'][i], size: .016, life: .7, shape: 'sparkle', spin: 4 });

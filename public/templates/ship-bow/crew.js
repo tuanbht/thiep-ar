@@ -1,144 +1,30 @@
-/* Mũi thuyền lộng gió: the crew, built in code for story.js (loaded after scenery.js). How the two of them look (the
-   Barbarian shaved, with dark hair, a striped sailor's shirt and a red kerchief; the Mage in a coral dress with a bow in
-   her hair), the kerchief that becomes her blindfold and then a streamer in the wind, the gulls and the dolphins, and the
-   things that carry the card's words: a tag on the mast, a page of the ship's log with the photo, a banner two gulls fly in.
+/* Mũi thuyền lộng gió: the crew, built in code for story.js (loaded after scenery.js). What the two of them wear besides
+   their own clothes (a red kerchief at his collar, a sky-blue bow in her hair), the kerchief that becomes her blindfold
+   and then a streamer in the wind, the gulls and the dolphins, and the things that carry the card's words: a tag on the
+   mast, a page of the ship's log with the photo, a banner two gulls fly in.
      NM_SHIP.crew(kit, S) → the builders (S: what scenery.js built) */
 (window.NM_SHIP = window.NM_SHIP || {}).crew = (kit, S) => {
   const { THREE, clamp, lerp, fitText, HAND } = kit;
   const { V3, mat, geo, mesh, seeded } = S;
   const TAU = Math.PI * 2;
-  const HEAD_BONE = 1.241;                                           // where the head bone sits in a KayKit model, in its own units
 
-  /* ── the palette: one texture of flat swatches, 8 across and 4 down ── */
-  const cellOf = (uv, i) => [Math.floor(uv.getX(i) * 8), Math.floor(uv.getY(i) * 4)];
-  /** the triangles of `mesh` whose middle sits in swatch [cx, cy] (and passes test(x, y, z) in model units): their corners */
-  function corners(mesh, [cx, cy], test = () => true) {
-    const g = mesh?.geometry; if (!g) return new Set();
-    const uv = g.attributes.uv, pos = g.attributes.position, idx = g.index, out = new Set(), n = idx ? idx.count : uv.count;
-    for (let i = 0; i < n; i += 3) {
-      const v = [0, 1, 2].map(k => (idx ? idx.getX(i + k) : i + k));
-      const u0 = v.reduce((s, j) => s + uv.getX(j), 0) / 3, v0 = v.reduce((s, j) => s + uv.getY(j), 0) / 3;
-      if (Math.floor(u0 * 8) !== cx || Math.floor(v0 * 4) !== cy) continue;
-      const m = [0, 1, 2].map(a => v.reduce((s, j) => s + [pos.getX(j), pos.getY(j), pos.getZ(j)][a], 0) / 3);
-      if (test(...m)) v.forEach(j => out.add(j));
-    }
-    return out;
-  }
-  /** moves those corners' UVs from one swatch to another (a sleeve onto skin: a bare arm) */
-  function remap(mesh, from, to, test) {
-    const uv = mesh?.geometry?.attributes.uv; if (!uv) return;
-    corners(mesh, from, test).forEach(j => uv.setXY(j, uv.getX(j) + (to[0] - from[0]) / 8, uv.getY(j) + (to[1] - from[1]) / 4));
-    uv.needsUpdate = true;
-  }
-  /** the model's palette redrawn: swatches refilled with a colour (each keeps its light and shade), or painted by draw(c, x, y, w, h) */
-  function repaint(m, fills) {
-    let material = null; m.scene?.traverse(o => { if (!material && o.isMesh && o.material?.map) material = o.material; });
-    const img = material?.map?.image; if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d'); c.drawImage(img, 0, 0);
-    const w = img.width / 8, h = img.height / 4;
-    for (const [cx, cy, fill] of fills) {
-      if (typeof fill === 'function') { fill(c, cx * w, cy * h, w, h); continue; }
-      const d = c.getImageData(cx * w, cy * h, w, h), p = d.data;
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      const [r, g, b] = [1, 3, 5].map(i => parseInt(fill.slice(i, i + 2), 16));
-      for (let i = 0; i < p.length; i += 4) {
-        const k = .35 + .65 * (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1);   // a softer shade: flat colours read better small
-        p[i] = Math.min(255, r * k); p[i + 1] = Math.min(255, g * k); p[i + 2] = Math.min(255, b * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT;
-    t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    material.map = t; material.needsUpdate = true; old.dispose();
+  /** a group on one of a model's bones that keeps the model's own frame as it stands at rest (card widths from its feet,
+      +x its left, +y up, +z where it faces): what is built in it goes where the bone goes (a turn of the head, a bend).
+      Make it before the model moves (in build) */
+  function onBone(m, bone) {
+    const b = m.node(bone), g = new THREE.Group(); if (!b) return g;
+    m.root.updateMatrixWorld(true);
+    new THREE.Matrix4().copy(b.matrixWorld).invert().multiply(m.root.matrixWorld).decompose(g.position, g.quaternion, g.scale);
+    b.add(g); return g;
   }
 
-  /* ── him: shaved, dark hair, a navy-and-white striped shirt with a navy collar, cream trousers ── */
-  const SHIRT = [0, 1], NAVY = [1, 1], SKIN = [0, 0], TROUSERS = [7, 1];
-  const SHIRT_TOP = 1.3, SHIRT_BOTTOM = .74;                          // the shirt's height on the model: its stripes run round it
-  function stripes(c, x, y, w, h) {
-    const n = 11;
-    for (let i = 0; i < n; i++) {
-      const y0 = y + h * (.04 + .92 * i / n), y1 = y + h * (.04 + .92 * (i + 1) / n), shade = 1 - .18 * i / n;
-      c.fillStyle = i % 2 ? `rgb(${248 * shade | 0},${246 * shade | 0},${238 * shade | 0})` : `rgb(${30 * shade | 0},${46 * shade | 0},${96 * shade | 0})`;
-      c.fillRect(x, y0, w, y1 - y0 + 1);
-    }
-    c.fillStyle = '#1e2e60'; c.fillRect(x, y, w, h * .04 + 1); c.fillRect(x, y + h * .96, w, h * .04);
-  }
-  /** the shirt's corners: their UVs go down the stripes by height, so the stripes run round him */
-  function stripeShirt(mesh, cells) {
-    const uv = mesh?.geometry?.attributes.uv, pos = mesh?.geometry?.attributes.position; if (!uv) return;
-    for (const [cell, test] of cells) {
-      corners(mesh, cell, test).forEach(j => {
-        const k = clamp((SHIRT_TOP - pos.getY(j)) / (SHIRT_TOP - SHIRT_BOTTOM));
-        uv.setXY(j, (SHIRT[0] + .3 + .4 * clamp(.5 + pos.getX(j))) / 8, (SHIRT[1] + .04 + .92 * k) / 4);
-      });
-    }
-    uv.needsUpdate = true;
-  }
-  /** the beard pulled into his face: a young man, clean-shaven */
-  function shave(head) {
-    const pos = head?.geometry?.attributes.position; if (!pos) return;
-    corners(head, [1, 0], (x, y) => y < 1.6).forEach(j => pos.setXYZ(j, pos.getX(j) * .12, 1.45 + (pos.getY(j) - 1.45) * .12, pos.getZ(j) * .12));
-    pos.needsUpdate = true; head.geometry.computeBoundingSphere();
-  }
-  /** his hair: a shell grown out of the top of his own head (it fits it exactly), a fringe swept by the wind, two tufts */
-  function hairFor(head) {
-    const g = head.geometry, pos = g.attributes.position, nor = g.attributes.normal, idx = g.index, uv = g.attributes.uv;
-    const hairline = (x, z) => { const a = Math.atan2(x, z); return 1.9 - .2 * (1 - Math.cos(a)) - .14 * Math.max(0, -Math.cos(a)); };
-    const out = [];
-    for (let i = 0; i < idx.count; i += 3) {
-      const v = [0, 1, 2].map(k => idx.getX(i + k));
-      const [cx, cy] = cellOf(uv, v[0]); if (cx !== 0 || cy !== 0) continue;
-      const m = [0, 1, 2].map(a => v.reduce((s, j) => s + [pos.getX(j), pos.getY(j), pos.getZ(j)][a], 0) / 3);
-      if (m[1] < hairline(m[0], m[2])) continue;
-      for (const j of v) {
-        const lift = .05 + .05 * clamp((pos.getY(j) - 1.75) / .4);   // thicker on top
-        out.push(pos.getX(j) + nor.getX(j) * lift, pos.getY(j) + nor.getY(j) * lift - HEAD_BONE, pos.getZ(j) + nor.getZ(j) * lift);
-      }
-    }
-    const shell = new THREE.BufferGeometry(); shell.setAttribute('position', new THREE.Float32BufferAttribute(out, 3)); shell.computeVertexNormals();
-    const dark = mat('#2b1c15', { roughness: .5, side: THREE.DoubleSide }), root = new THREE.Group();
-    root.add(mesh(shell, dark));
-    const lock = geo(new THREE.SphereGeometry(.1, 10, 8).scale(.8, 1.5, .5));   // a fringe swept to his right, clear of his brows
-    for (const [x, y, z, rz, rx, s] of [[-.32, .76, .38, -1.05, .45, .9], [-.13, .8, .42, -1.15, .45, 1.1], [.08, .8, .42, -1.2, .45, 1.05], [.28, .76, .38, -1.25, .4, .85]]) {
-      const l = mesh(lock, dark, x, y, z); l.rotation.set(rx, 0, rz); l.scale.multiplyScalar(s); root.add(l);
-    }
-    const tuft = geo(new THREE.ConeGeometry(.12, .4, 7));
-    const tufts = [[.05, .98, -.05, -.9, .2], [-.18, .95, -.12, -1.05, .5]].map(([x, y, z, rx, rz]) => { const t = mesh(tuft, dark, x, y, z); t.rotation.set(rx, 0, rz); root.add(t); return t; });
-    return { root, tufts };
-  }
-  function dressBoy(boy) {
-    const body = boy.node('Barbarian_Body'), head = boy.node('Barbarian_Head');
-    for (const arm of ['Barbarian_ArmLeft', 'Barbarian_ArmRight'].map(n => boy.node(n))) {
-      remap(arm, [6, 0], NAVY, x => Math.abs(x) < .42); remap(arm, [6, 0], SKIN); remap(arm, [7, 2], SKIN); remap(arm, [2, 1], SKIN); remap(arm, [3, 0], SKIN);
-    }
-    remap(body, [6, 0], NAVY, (x, y) => y > .56 && y <= .74);           // a navy belt
-    remap(body, [6, 0], TROUSERS, (x, y) => y <= .56);
-    remap(body, [7, 0], NAVY);                                           // the fur on his shoulders: a sailor's collar
-    stripeShirt(body, [[SHIRT], [[6, 0], (x, y) => y > .74]]);           // the strap across his chest: shirt now
-    for (const leg of ['Barbarian_LegLeft', 'Barbarian_LegRight'].map(n => boy.node(n))) remap(leg, [6, 0], TROUSERS);
-    shave(head);
-    repaint(boy, [[SHIRT[0], SHIRT[1], stripes], [NAVY[0], NAVY[1], '#24356e'], [TROUSERS[0], TROUSERS[1], '#efe6d2'], [2, 1, '#efe6d2'],
-      [3, 2, '#5a3a26'], [1, 0, '#3a2418'], [3, 0, '#e2b34a']]);
-    const hair = hairFor(head); boy.node('head')?.add(hair.root);
-    return hair;
-  }
-
-  /* ── her: a coral dress with a cream collar and buttons, a gold sash, bare calves and white shoes, a bow in her hair ── */
+  /* ── her: a sky-blue bow in her hair, above her left ear (the shared couple's girl fit to .2835: docs/models) ── */
   function dressGirl(girl) {
-    const body = girl.node('Mage_Body');
-    for (const leg of ['Mage_LegLeft', 'Mage_LegRight'].map(n => girl.node(n))) { remap(leg, [7, 1], SKIN); remap(leg, [3, 2], SKIN, (x, y) => y > .13); }
-    remap(body, [7, 1], [0, 1], (x, y) => y > .5);                      // the dark lining above the hem: dress
-    repaint(girl, [[0, 1, '#ff7a64'], [7, 1, '#d9524a'], [3, 0, '#fff4e4'], [4, 0, '#fff4e4'], [5, 0, '#f2c14e'], [2, 2, '#fff4e4'], [3, 2, '#fffaf3'],
-      [1, 0, '#201a24'], [1, 1, '#7cc4f5']]);                          // her hair tie sky blue, like her bow
     const bow = new THREE.Group(), blue = mat('#8fd0ff', { roughness: .45, emissive: 0x3d8fd0, emissiveIntensity: .15 }), knot = mat('#5fb2ee', { roughness: .45 });
     for (const s of [-1, 1]) { const l = mesh(new THREE.SphereGeometry(.15, 12, 10), blue, s * .17, 0, 0); l.scale.set(1.1, .75, .45); l.rotation.z = s * .35; bow.add(l); }
     bow.add(mesh(new THREE.SphereGeometry(.07, 10, 8), knot));
     for (const s of [-1, 1]) { const t = mesh(new THREE.BoxGeometry(.07, .22, .03), blue, s * .07, -.15, 0); t.rotation.z = s * .45; bow.add(t); }
-    bow.position.set(.33, .9, .12); bow.rotation.set(.15, .45, -.55); girl.node('head')?.add(bow);
+    bow.scale.setScalar(.022); bow.position.set(.021, .274, -.01); bow.rotation.set(.15, .9, -.55); onBone(girl, 'head').add(bow);
     return { bow };
   }
   /** his red kerchief with white dots: knotted at his collar; then a blindfold round her eyes, knotted behind; then a streamer
@@ -150,14 +36,16 @@
     });
     const cloth = (rx, ry) => { const t = kit.keep(paint.clone()); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
       return kit.keep(new THREE.MeshStandardMaterial({ map: t, side: THREE.DoubleSide, roughness: .7, emissive: 0xff4a4a, emissiveIntensity: .1 })); };
-    const neck = new THREE.Group(), knotted = cloth(1, 1);             // at his collar (his chest bone's units)
-    const tri = new THREE.Shape(); tri.moveTo(-.2, 0); tri.lineTo(.2, 0); tri.lineTo(0, -.3); tri.closePath();
-    const front = new THREE.Mesh(geo(new THREE.ShapeGeometry(tri)), knotted); front.position.set(0, .3, .37); front.rotation.x = -.3; neck.add(front);
-    neck.add(mesh(new THREE.SphereGeometry(.07, 8, 6), knotted, 0, .3, .37));
-    const band = new THREE.Group(), wrap = new THREE.Group(); band.add(wrap);   // round her eyes (her head bone's units)
-    wrap.add(mesh(new THREE.CylinderGeometry(.6, .6, .17, 30, 1, true), cloth(6, 1), 0, .38, -.04));
-    wrap.add(mesh(new THREE.SphereGeometry(.08, 8, 6), knotted, 0, .38, -.67));
-    const tails = [-1, 1].map(sd => { const tl = new THREE.Mesh(geo(new THREE.PlaneGeometry(.11, .34).translate(0, -.17, 0)), knotted); tl.position.set(sd * .05, .38, -.7); band.add(tl); return tl; });
+    /* at his collar and round her eyes: in onBone frames (card widths from the feet, him fit to .3 and her to .2835) */
+    const neck = new THREE.Group(), knotted = cloth(1, 1);
+    const tri = new THREE.Shape(); tri.moveTo(-.011, 0); tri.lineTo(.011, 0); tri.lineTo(0, -.016); tri.closePath();
+    const front = new THREE.Mesh(geo(new THREE.ShapeGeometry(tri)), knotted); front.position.set(0, .2395, .0125); front.rotation.x = -.15; neck.add(front);
+    neck.add(mesh(new THREE.SphereGeometry(.0042, 8, 6), knotted, 0, .2395, .0125));
+    const band = new THREE.Group(), wrap = new THREE.Group(); band.add(wrap);   // the wrap grows round her head from its middle
+    wrap.position.set(-.0017, .2625, -.005);
+    wrap.add(mesh(new THREE.CylinderGeometry(1, 1, 1, 30, 1, true), cloth(12, .4))); wrap.children[0].scale.set(.0295, .0058, .027);
+    wrap.add(mesh(new THREE.SphereGeometry(.0036, 8, 6), knotted, 0, 0, -.0285));
+    const tails = [-1, 1].map(sd => { const tl = new THREE.Mesh(geo(new THREE.PlaneGeometry(.0042, .015).translate(0, -.0075, 0)), knotted); tl.position.set(-.0017 + sd * .002, .2625, -.0335); band.add(tl); return tl; });
     const N = 12, len = .17, wid = .05, sm = cloth(1, 3);              // in her hand: a ribbon in the stage's space
     const g = new THREE.BufferGeometry(), pos = new Float32Array((N + 1) * 6), uv = new Float32Array((N + 1) * 4), idx = [];
     for (let i = 0; i <= N; i++) { uv.set([0, i / N, 1, i / N], i * 4); if (i) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } }
@@ -348,5 +236,5 @@
     return { root, cloth, gulls, wave, width, height: h };
   }
 
-  return { remap, repaint, dressBoy, dressGirl, makeKerchief, makeGull, makeDolphin, makeTag, makeLogPage, makeBanner };
+  return { onBone, dressGirl, makeKerchief, makeGull, makeDolphin, makeTag, makeLogPage, makeBanner };
 };

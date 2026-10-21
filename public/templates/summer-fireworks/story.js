@@ -16,8 +16,8 @@
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own;
    the water, lanterns, strips, fish and the small fireworks while a stop holds go by T, the act's own time. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
-  const { THREE, stage, tween, ease, seg, lerp, rng, words } = kit;
-  const TAU = Math.PI * 2, R = Math.PI / 2;
+  const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
+  const TAU = Math.PI * 2, R = Math.PI / 2, H = .3;                  // H: his height, in card widths
   const PAGE = { width: 1.1, height: .78, curve: .08, z: -.3 }, HORIZON = .2, BANK = .014;   // the banks' top: where they stand
   const RIVER = { x0: -.1, x1: .14 }, BRIDGE = { x: .02, half: .21, rise: .065, z: -.045, width: .12 };
   const S = window.NM_SUMMER.scenery(kit, { PAGE, HORIZON, BANK, RIVER, BRIDGE });
@@ -46,135 +46,53 @@
       .map(([at, x, y, kind, colors, life]) => ({ at, x, y, kind, colors, life, r: kind === 'heart' ? .13 : .2, rise: .75 }))
   ];
 
-  /* ── the two of them: their summer robes are the palette texture's swatches recoloured (her flowers painted on it) ── */
-  const cell = (cx, cy) => ({ cx, cy });
-  /** moves the UV islands of `mesh` in swatch `from` onto swatch `to`; `above` keeps to triangles higher than that (model units) */
-  function remap(mesh, from, to, above = -Infinity) {
-    const uv = mesh?.geometry?.attributes.uv, pos = mesh?.geometry?.attributes.position; if (!uv) return;
-    const idx = mesh.geometry.index, n = idx ? idx.count : uv.count, move = new Set();
-    for (let i = 0; i < n; i += 3) {                                   // which corners first, then move them
-      const v = [0, 1, 2].map(k => (idx ? idx.getX(i + k) : i + k));
-      const u0 = (uv.getX(v[0]) + uv.getX(v[1]) + uv.getX(v[2])) / 3, v0 = (uv.getY(v[0]) + uv.getY(v[1]) + uv.getY(v[2])) / 3;
-      if (Math.floor(u0 * 8) !== from.cx || Math.floor(v0 * 4) !== from.cy) continue;
-      if ((pos.getY(v[0]) + pos.getY(v[1]) + pos.getY(v[2])) / 3 > above) v.forEach(j => move.add(j));
-    }
-    move.forEach(j => uv.setXY(j, uv.getX(j) + (to.cx - from.cx) / 8, uv.getY(j) + (to.cy - from.cy) / 4));
-    uv.needsUpdate = true;
-  }
-  /** the palette with swatches recoloured, each keeping its own shading; then `after` paints on it */
-  function repaint(m, partName, colours, after) {
-    const material = m.node(partName)?.material, img = material?.map?.image;
-    if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(img, 0, 0);
-    const w = img.width / 8, h = img.height / 4;
-    for (const [key, hex] of Object.entries(colours)) {
-      const [cx, cy] = key.split(',').map(Number), d = c.getImageData(cx * w, cy * h, w, h), p = d.data;
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-      for (let i = 0; i < p.length; i += 4) {
-        const k = (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1);
-        p[i] = Math.min(255, r * k); p[i + 1] = Math.min(255, g * k); p[i + 2] = Math.min(255, b * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    if (after) after(c, w, h);
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT;
-    t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    material.map = t; material.needsUpdate = true; old.dispose();
-  }
-  function dressBoy() {                                              // a dark indigo pinstriped robe, a pale sash, black hair, bare hands
-    for (const arm of ['Barbarian_ArmLeft', 'Barbarian_ArmRight']) {
-      remap(boy.node(arm), cell(7, 2), cell(0, 0));                   // the gloves: bare hands
-      for (const c of [cell(6, 0), cell(3, 0), cell(2, 1)]) remap(boy.node(arm), c, cell(1, 1));   // bracers and cuffs: sleeve
-    }
-    remap(boy.node('Barbarian_Body'), cell(6, 0), cell(0, 1), .78);   // the strap across his chest: robe
-    repaint(boy, 'Barbarian_Body', { '1,0': '#29232b', '0,1': '#2e3672', '1,1': '#2e3672', '7,0': '#242a5c', '7,1': '#2e3672', '6,0': '#d9cfb6', '2,1': '#242a5c',
-      '3,2': '#2a2228', '3,0': '#cbbf9f' }, (c, w, h) => {
-      c.save(); c.globalAlpha = .35; c.strokeStyle = '#9fb0ea'; c.lineWidth = 2;                // fine pinstripes on the robe and sleeves
-      for (const cx of [0, 1]) for (let x = cx * w + 4; x < (cx + 1) * w; x += 9) { c.beginPath(); c.moveTo(x, h); c.lineTo(x, 2 * h); c.stroke(); }
-      c.restore();
-    });
-    const head = boy.node('head'); if (head) head.add(makeHair(boy.node('Barbarian_Head').material));
-  }
-  function dressGirl() {                                             // a pale robe with flowers, a red sash and bow, black hair
-    repaint(girl, 'Mage_Body', { '1,0': '#1d1b26', '0,1': '#fbf4e8', '7,1': '#fbf4e8', '5,0': '#d6283b', '3,0': '#e8425a', '4,0': '#f08aa0', '2,2': '#ffd25a',
-      '1,1': '#d6283b', '3,2': '#9a5b3a' }, (c, w, h) => {
-      const r = seeded(5);                                             // little five-petal flowers, multiplied so they keep the shading
-      c.save(); c.beginPath(); c.rect(0, h, w, h); c.clip();
-      for (let i = 0; i < 24; i++) {
-        const x = r() * w, y = h + r() * h, s = 15 * (.75 + .5 * r()), a0 = r() * TAU;
-        c.globalCompositeOperation = 'multiply'; c.fillStyle = ['#f48fb1', '#ef6a6a', '#8fb1e8', '#f6a5c0'][i % 4];
-        for (let k = 0; k < 5; k++) { const a = a0 + k * TAU / 5; c.beginPath(); c.ellipse(x + Math.cos(a) * s * .55, y + Math.sin(a) * s * .55, s * .5, s * .32, a, 0, TAU); c.fill(); }
-        c.globalCompositeOperation = 'source-over'; c.fillStyle = '#ffd84a'; c.beginPath(); c.arc(x, y, s * .22, 0, TAU); c.fill();
-        if (r() < .6) { c.globalCompositeOperation = 'multiply'; c.fillStyle = '#9ccc8a'; c.beginPath(); c.ellipse(x + Math.cos(a0) * s * 1.2, y + Math.sin(a0) * s * 1.2, s * .45, s * .18, a0, 0, TAU); c.fill(); }
-      }
-      c.restore();
-    });
-  }
-  /** black hair for the bare-headed Barbarian: a rounded-box cap over the skull (head bone units) with a jagged fringe,
-      shaded from the beard's own swatch so the two match */
-  function makeHair(material) {
-    const NU = 48, NV = 14, pos = [], uvs = [], idx = [], half = [.565, .49, .5], at = [0, .47, -.01], p = 3.2;
-    for (let i = 0; i <= NU; i++) {
-      const u = i / NU * TAU, front = Math.max(0, Math.sin(u)), side = Math.abs(Math.cos(u)), back = Math.max(0, -Math.sin(u));
-      const vmax = .8 * front + 1.35 * side * (1 - back) + 1.85 * back + .14 * Math.abs(Math.sin(u * 7)) * front;   // how far down from the crown
-      for (let j = 0; j <= NV; j++) {
-        const v = j / NV * vmax, d = [Math.sin(v) * Math.cos(u), Math.cos(v), Math.sin(v) * Math.sin(u)];
-        const r = 1 / Math.pow(Math.abs(d[0]) ** p + Math.abs(d[1]) ** p + Math.abs(d[2]) ** p, 1 / p);
-        pos.push(at[0] + d[0] * r * half[0], at[1] + d[1] * r * half[1], at[2] + d[2] * r * half[2]);
-        uvs.push(1.35 / 8, (.04 + .8 * Math.min(1, v / 1.9)) / 4);      // lighter on top, as the palette shades it
-      }
-    }
-    for (let i = 0; i < NU; i++) for (let j = 0; j < NV; j++) { const a = i * (NV + 1) + j, b = a + NV + 1; idx.push(a, a + 1, b, b, a + 1, b + 1); }
-    const g = new THREE.BufferGeometry(); g.setIndex(idx);
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.computeVertexNormals();
-    const m = new THREE.Mesh(kit.keep(g), material); m.castShadow = true;
-    return m;
-  }
-
-  /* ── the pose a character holds at story time g: which clip ── */
+  /* ── the pose a character holds at story time g: which clip (the jolts the couple has no clip for are in jolt below) ── */
   const BOY = [                                                      // [from g, clip, options]
     [0, 'Idle'], [.3, 'Walking_A', { speed: 1.35, fade: .25 }], [2.8, 'Walking_A', { speed: 2.3, fade: .1 }], [3.35, 'Idle', { fade: .2 }],
     [3.45, 'Interact', { once: true, fade: .15 }], [4.75, 'Walking_A', { speed: 2.4, fade: .2 }], [5.4, 'Idle', { fade: .2 }],
-    [8.35, 'Hit_A', { once: true, fade: .1 }], [9.05, 'Idle', { fade: .3 }],
-    [10.6, 'Walking_A', { speed: 2.2, fade: .25 }], [14.05, 'Idle', { fade: .2 }], 
-    [21.2, 'Hit_A', { once: true, fade: .1 }], [21.85, 'Running_B', { speed: .75, fade: .15 }], [23.25, 'Idle', { fade: .2 }],
-    [32.3, 'Walking_Backwards', { speed: 1.4, fade: .15 }], [32.65, 'Idle', { fade: .2 }], [34.65, 'Walking_A', { speed: 1.8, fade: .15 }], [35, 'Idle', { fade: .2 }]
+    [6.7, 'Walking_A', { speed: 2.2, fade: .15 }], [7.1, 'Idle', { fade: .15 }], [8.35, 'Walking_Backwards', { speed: 2, fade: .1 }], [8.8, 'Idle', { fade: .2 }],
+    [10.6, 'Walking_A', { speed: 2.2, fade: .25 }], [14.05, 'Idle', { fade: .2 }],
+    [21.85, 'Running_B', { speed: .75, fade: .15 }], [23.25, 'Idle', { fade: .2 }],
+    [32.3, 'Walking_Backwards', { speed: 1.4, fade: .15 }], [32.65, 'Idle', { fade: .2 }], [34.65, 'Walking_A', { speed: 1.85, fade: .15 }], [35, 'Idle', { fade: .2 }]
   ];
   const GIRL = [
-    [0, 'Idle'], [.3, 'Walking_A', { speed: 1.35, fade: .25 }], [2.8, 'Idle', { fade: .25 }], [7.75, 'Hit_B', { once: true, speed: 1.3, fade: .1 }], [8.3, 'Idle', { fade: .2 }],
-    [10.75, 'Walking_A', { speed: 2.25, fade: .25 }], [14.8, 'Idle', { fade: .2 }],
-    [21.15, 'Hit_B', { once: true, fade: .1 }], [22.25, 'Running_B', { speed: .75, fade: .15 }], [23.42, 'Idle', { fade: .2 }],
-    [24.35, 'Hit_A', { once: true, fade: .1 }], [25.05, 'Idle', { fade: .3 }], [28.1, 'Cheer', { once: true, fade: .2 }], [29.8, 'Idle', { fade: .4 }]
+    [0, 'Idle'], [.3, 'Walking_A', { speed: 1.43, fade: .25 }], [2.8, 'Idle', { fade: .25 }],
+    [10.75, 'Walking_A', { speed: 2, fade: .25 }], [14.8, 'Idle', { fade: .2 }],
+    [22.25, 'Running_B', { speed: .75, fade: .15 }], [23.42, 'Idle', { fade: .2 }], [28.1, 'Cheer', { once: true, fade: .2 }], [29.8, 'Idle', { fade: .4 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
+  /** a jolt from g0 (a start at her stolen bite, the swat landing on him, a firework's bang): k rises at once, then settles */
+  const jolt = (g, g0, len = .6) => (g < g0 || g > g0 + len ? 0 : Math.min(1, (g - g0) / .08) * (1 - ease.smooth(seg(g, g0 + .12, g0 + len))));
+  /** the body jerks back, the chest and head turned a little (turn: + towards their own left), the head after it */
+  function flinch(m, k, turn = 0) {
+    if (k <= 0) return;
+    m.bend('spine', -.12 * k, 0, 0); m.bend('chest', -.16 * k, .22 * turn * k, 0); m.bend('head', -.18 * k, .3 * turn * k, 0);
+  }
 
   /* where each of them is: [from g, x, z, facing, ease into it (smooth by default)]; facing 0 looks at you, R to the right */
   const unwrap = way => { let p = way[0][3]; return way.map(k => { let a = k[3]; while (a - p > Math.PI) a -= TAU; while (p - a > Math.PI) a += TAU; p = a; return [k[0], k[1], k[2], a, k[4]]; }); };
-  const STAND = { boy: [-.045, BRIDGE.z], girl: [.095, BRIDGE.z] };     // on the top of the bridge
+  const STAND = { boy: [-.012, BRIDGE.z], girl: [.062, BRIDGE.z] };     // on the top of the bridge, shoulder to shoulder
   const BOY_WAY = unwrap([
     [0, -.62, .03, R], [.3, -.62, .03, R], [.55, -.608, .03, R, 'in'], [2.55, -.338, .03, R, 'linear'], [2.8, -.3, .03, R, 'out'],
     [2.95, -.3, .03, -2.6], [3.35, -.258, -.1, -2.55], [4.75, -.258, -.1, -2.55], [4.95, -.258, -.1, -.3], [5.4, -.29, .035, -.25], [5.6, -.29, .035, -R],
-    [6.9, -.29, .035, -R], [7.15, -.3, .035, -1.75], [7.7, -.3, .035, -1.75], [7.9, -.29, .035, -1.4], [9.2, -.29, .035, -1.4], [9.7, -.29, .035, -.6],
+    [6.7, -.29, .035, -R], [6.9, -.317, .07, -.8], [7.1, -.344, .105, -1.75], [8.35, -.344, .105, -1.6], [8.8, -.29, .035, -1.4],   // in for the bite; back when the fan lands
+    [9.2, -.29, .035, -1.4], [9.7, -.29, .035, -.6],
     [10.45, -.29, .035, -.6], [10.6, -.29, .035, 2.5], [11.1, -.235, -.045, R, 'linear'], [13.4, .275, -.045, R, 'linear'], [13.6, .285, .0, -.2],
     [14.05, .2, .11, -.45, 'out'], [14.35, .2, .11, 1.17], [16.9, .2, .11, 1.17], [17.25, .2, .11, 2.9], [18, .2, .11, 2.9], [18.4, .2, .11, .9],
     [21.7, .2, .11, .9], [21.85, .2, .11, 2.8], [22.25, .255, -.045, 2.8, 'linear'], [22.4, .24, -.045, -R], [23.25, STAND.boy[0], STAND.boy[1], -R, 'linear'], [23.6, STAND.boy[0], STAND.boy[1], Math.PI - .35],
     [31.6, STAND.boy[0], STAND.boy[1], Math.PI - .35], [32.1, STAND.boy[0], STAND.boy[1], R], [32.3, STAND.boy[0], STAND.boy[1], R],
-    [32.65, STAND.boy[0] - .065, STAND.boy[1], R], [34.6, STAND.boy[0] - .065, STAND.boy[1], R], [35, STAND.boy[0] + .02, STAND.boy[1], R]
+    [32.65, STAND.boy[0] - .065, STAND.boy[1], R], [34.6, STAND.boy[0] - .065, STAND.boy[1], R], [35, STAND.boy[0], STAND.boy[1], R]
   ]);
   const GIRL_WAY = unwrap([
-    [0, -.77, .07, R], [.3, -.77, .07, R], [.55, -.758, .07, R, 'in'], [2.55, -.488, .07, R, 'linear'], [2.8, -.45, .07, R, 'out'],
-    [3.2, -.45, .07, 2.2], [4.9, -.45, .07, 2.2], [5.3, -.45, .07, 1.6], [6.95, -.45, .07, 1.6], [7.3, -.45, .07, .7], [7.75, -.45, .07, .9],
-    [8, -.45, .07, 1.5], [9.2, -.45, .07, 1.5], [9.7, -.45, .07, .6],
-    [10.6, -.45, .07, .6], [10.75, -.45, .07, 2.1], [11.6, -.27, -.035, 2.05, 'linear'], [11.85, -.245, -.045, R], [14.25, .275, -.045, R, 'linear'],
+    [0, -.71, .07, R], [.3, -.71, .07, R], [.55, -.698, .07, R, 'in'], [2.55, -.428, .07, R, 'linear'], [2.8, -.39, .07, R, 'out'],
+    [3.2, -.39, .07, 2.2], [4.9, -.39, .07, 2.2], [5.3, -.39, .07, 1.6], [6.95, -.39, .07, 1.6], [7.3, -.39, .07, .7], [7.75, -.39, .07, .9],
+    [8, -.39, .07, 1.5], [9.2, -.39, .07, 1.5], [9.7, -.39, .07, .6],
+    [10.6, -.39, .07, .6], [10.75, -.39, .07, 2.1], [11.6, -.27, -.035, 2.05, 'linear'], [11.85, -.245, -.045, R], [14.25, .275, -.045, R, 'linear'],
     [14.45, .305, -.005, .9], [14.8, .345, .085, .3, 'out'], [15, .345, .085, -1.17], [16.6, .345, .085, -1.17], [16.95, .345, .085, 2.92],
     [17.95, .345, .085, 2.92], [18.3, .345, .085, -.9],
     [22.25, .345, .085, -.9], [22.45, .32, .03, -2.4], [22.83, .285, -.045, -R, 'linear'], [23.42, STAND.girl[0], STAND.girl[1], -R, 'linear'], [23.75, STAND.girl[0], STAND.girl[1], Math.PI + .35],
     [31.7, STAND.girl[0], STAND.girl[1], Math.PI + .35], [32.2, STAND.girl[0], STAND.girl[1], -R], [34.5, STAND.girl[0], STAND.girl[1], -R],
-    [35, STAND.girl[0] - .02, STAND.girl[1], -R]
+    [35, STAND.girl[0], STAND.girl[1], -R]
   ]);
   const keysOf = way => [1, 2, 3].map(i => way.map(k => [k[0], k[i], k[4] || 'smooth']));
   const BOY_KEYS = keysOf(BOY_WAY), GIRL_KEYS = keysOf(GIRL_WAY);
@@ -186,25 +104,37 @@
   const STAR_KEYS = STARS.map((_, i) => `star${i}`);
 
   /* ── where things are in someone's hands ── */
-  const mStage = new THREE.Matrix4(), qInv = new THREE.Quaternion(), vShoulder = new THREE.Vector3(), vTmp = new THREE.Vector3(), vTmp2 = new THREE.Vector3();
+  const mStage = new THREE.Matrix4(), qInv = new THREE.Quaternion(), vTmp = new THREE.Vector3(), vTmp2 = new THREE.Vector3(), vLip = new THREE.Vector3();
+  const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vD = new THREE.Vector3(), vP = new THREE.Vector3(), vT = new THREE.Vector3(), AIM = [0, 0, 0];
   const vMeet = new THREE.Vector3(), vHand = new THREE.Vector3(), vHandL = new THREE.Vector3(), vHandG = new THREE.Vector3(), vHandGL = new THREE.Vector3();
   /** a bone's place on the stage */
   const at = (m, bone, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return out.setFromMatrixPosition(b.matrixWorld).applyMatrix4(mStage); };
-  const D = [0, 0, 0], U = [0, 0, 0];                                 // directions handed to aim(), filled in place
-  const toward = (m, side, target) => { at(m, `upperarm.${side}`, vShoulder); vShoulder.subVectors(target, vShoulder).applyQuaternion(qInv.copy(m.root.quaternion).invert()); return vShoulder.toArray(D); };
-  /** an arm reaching for a point: the upper arm a little below the line, the forearm along it */
+  /** the lips' place on the stage (a mark on each head bone: its own units, centimetres) */
+  const LIPS = { girl: [0, 6.7, 11.2], boy: [0, 2, 9] };
+  const onLips = (m, out) => { const o = m.lips; o.updateWorldMatrix(true, false); return out.setFromMatrixPosition(o.matrixWorld).applyMatrix4(mStage); };
+  /* the arms, in the models' own units (metres): shoulder to elbow, elbow to the middle of the fist */
+  const ARMS = { boy: [.265, .328], girl: [.23, .308] };
+  /** an arm reaching for a point: the elbow found from the two bones' lengths, bent down and out; the hand on the point
+      when it is in reach, the arm straight towards it when not */
   function reach(m, side, target, k) {
     if (k <= 0) return;
-    const d = toward(m, side, target); U[0] = d[0]; U[1] = d[1] - .25 * Math.hypot(d[0], d[2]); U[2] = d[2];
-    m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k);
+    const sc = m.scene.scale.x, [ua, fa] = m === boy ? ARMS.boy : ARMS.girl, a = ua * sc, b = fa * sc, out = side === 'l' ? 1 : -1;
+    at(m, `upperarm.${side}`, vS);
+    vD.subVectors(target, vS); const L = clamp(vD.length(), .3 * (a + b), .995 * (a + b)); vD.normalize();
+    const cosA = clamp((a * a + L * L - b * b) / (2 * a * L), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
+    vP.set(out * .5, -1, -.2).applyQuaternion(m.root.quaternion); vP.addScaledVector(vD, -vP.dot(vD)).normalize();
+    vE.copy(vS).addScaledVector(vD, a * cosA).addScaledVector(vP, a * sinA);
+    qInv.copy(m.root.quaternion).invert();
+    m.aim(`upperarm.${side}`, vT.subVectors(vE, vS).applyQuaternion(qInv).toArray(AIM), k);
+    m.aim(`lowerarm.${side}`, vT.copy(vS).addScaledVector(vD, L).sub(vE).applyQuaternion(qInv).toArray(AIM), k);
   }
   /** an arm in the character's own space: [upper arm, forearm] for the right arm (the left mirrors x) */
   const arm = (m, side, [ua, fa], k) => { if (k <= 0) return; const s = side === 'l' ? -1 : 1; m.aim(`upperarm.${side}`, [ua[0] * s, ua[1], ua[2]], k); m.aim(`lowerarm.${side}`, [fa[0] * s, fa[1], fa[2]], k); };
   const ARM = {
     up: [[-.3, .9, .3], [-.2, 1, .2]],                                 // a hand up high: pointing at the sky
-    chest: [[-.15, -.4, .9], [.55, .35, .75]],                         // a hand in front of the chest: holding a strip, a candy
-    mouth: [[-.2, -.1, .95], [.5, .75, .5]],                           // a hand to the mouth
-    head: [[-.5, .8, .2], [.6, .55, -.55]]                             // a hand to the back of the head: sheepish
+    chest: [[-.12, -.88, .47], [.49, .03, .87]],                       // a hand in front of the chest: holding a strip, a candy
+    mouth: [[-.24, -.65, .71], [.5, .78, .37]],                        // a hand over the mouth
+    head: [[-.9, .38, .12], [.75, .55, -.34]]                          // a hand to the back of the head: sheepish
   };
 
   let boy, girl, page, ground, river, bridge, stalls, stand, bamboo, fish, lanterns = [], warm = [], fw, fwLight;
@@ -214,10 +144,10 @@
     seconds: [10, 10, 10, 10],
 
     build() {
-      /* the two of them */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .29 });
+      /* the two of them, her at her real height to his (1.70 m to 1.80 m) */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: H * .945 });
       stage.add(boy.root, girl.root);
-      dressBoy(); dressGirl();
+      for (const [m, p] of [[girl, LIPS.girl], [boy, LIPS.boy]]) { m.lips = new THREE.Object3D(); m.lips.position.set(...p); (m.node('head') || m.root).add(m.lips); }
 
       /* the festival: the sky page, the banks and the river, the bridge, the stalls and what is on them */
       page = S.makePage(); stage.add(page.root);
@@ -325,6 +255,10 @@
       const steal = bump(g, 7.1, 7.35, 7.55, 7.85), bow = bump(g, 32.7, 33.05, 33.7, 34.1);
       if (steal) { boy.bend('spine', .15 * steal, 0, 0); boy.bend('chest', .32 * steal, 0, 0); }
       if (bow) { boy.bend('spine', .12 * bow, 0, 0); boy.bend('chest', .32 * bow, 0, 0); boy.bend('head', .22 * bow, 0, 0); }
+      flinch(girl, jolt(g, 7.75, .55));                              // her bite, stolen: she starts
+      flinch(boy, jolt(g, 8.35, .7), .8);                            // the fan lands
+      flinch(girl, jolt(g, 21.15, .7)); flinch(boy, jolt(g, 21.2, .65));   // the first bang
+      flinch(girl, jolt(g, 24.35, .7), .5);                          // a loud one: she turns to him, on her left
 
       /* ── chapter 1: in by the hand, the cotton candy, the fan ── */
       const hands1 = bump(g, .3, .5, 2.75, 2.95);
@@ -335,7 +269,10 @@
       if (offer) arm(boy, 'r', [[-.15, -.15, 1], [.05, .2, 1]], offer);
       if (take) reach(girl, 'r', at(boy, 'handslot.r', vHand), take);
       const bite = bump(g, 6.15, 6.4, 6.6, 6.85), away = bump(g, 6.9, 7.15, 7.65, 7.9);
-      if (bite) { arm(girl, 'r', ARM.mouth, bite); girl.bend('head', .25 * bite * Math.max(0, Math.sin((g - 6.15) * 9)), 0, 0); }
+      if (bite) {                                                     // the candy's cloud to her lips: her hand under her chin
+        vTmp.set(Math.sin(gr), 0, Math.cos(gr)).multiplyScalar(.022).add(onLips(girl, vLip)).sub(vTmp2.set(.062 * Math.sin(.3), .062 * Math.cos(.3) - .012, 0));
+        reach(girl, 'r', vTmp, bite); girl.bend('head', .25 * bite * Math.max(0, Math.sin((g - 6.15) * 9)), 0, 0);
+      }
       if (away) { arm(girl, 'r', ARM.chest, away); girl.bend('head', -.35 * away, .55 * away, 0); }   // the candy at her chest, her eyes on the lanterns
       if (steal) boy.bend('head', .2 * steal, -.2 * steal, 0);
       const sheepish = bump(g, 7.85, 8.05, 8.3, 8.45), chew = bump(g, 7.6, 7.7, 8.2, 8.4);
@@ -358,8 +295,8 @@
       if (point) { arm(girl, 'r', ARM.up, point); girl.bend('head', -.35 * point, 0, 0); }
       const give = bump(g, 15.25, 15.45, 15.65, 15.85), hold = bump(g, 15.6, 15.8, 16.45, 16.65), holdHim = bump(g, 15.45, 15.65, 16.5, 16.7);
       if (give) { arm(boy, 'r', [[-.15, -.15, 1], [.05, .2, 1]], give); }
-      if (hold) { arm(girl, 'l', ARM.chest, hold); arm(girl, 'r', [[-.2, -.35, .9], [.4 + .15 * Math.sin(T * 14), .3, .85]], hold); }
-      if (holdHim) { arm(boy, 'l', ARM.chest, holdHim); arm(boy, 'r', [[-.2, -.35, .9], [.4 + .15 * Math.sin(T * 13 + 1), .3, .85]], holdHim); }
+      if (hold) { arm(girl, 'l', ARM.chest, hold); arm(girl, 'r', [[-.15, -.85, .5], [.5 + .15 * Math.sin(T * 14), .15, .85]], hold); }
+      if (holdHim) { arm(boy, 'l', ARM.chest, holdHim); arm(boy, 'r', [[-.15, -.85, .5], [.5 + .15 * Math.sin(T * 13 + 1), .15, .85]], holdHim); }
       const peek = bump(g, 15.85, 16.05, 16.3, 16.5), hide = bump(g, 15.95, 16.1, 16.35, 16.55);
       if (peek) boy.bend('head', .2 * peek, .5 * peek, 0);
       if (hide) girl.bend('head', .25 * hide, 0, 0);
@@ -443,7 +380,7 @@
       if (hands3) { at(boy, 'upperarm.l', vMeet).add(at(girl, 'upperarm.r', vTmp)).multiplyScalar(.5); vMeet.y -= .045; reach(boy, g < 23.3 ? 'l' : 'r', vMeet, hands3); reach(girl, g < 23.3 ? 'r' : 'l', vMeet, hands3); }
       const watch = bump(g, 23.4, 23.8, 31.5, 31.9), lean = bump(g, 24.8, 25.3, 31.4, 31.8);
       if (watch) { boy.bend('head', -.3 * watch, 0, 0); girl.bend('head', -.32 * watch, 0, 0); }
-      if (lean) { girl.bend('chest', 0, 0, .12 * lean); girl.bend('head', 0, 0, .3 * lean); boy.bend('head', 0, 0, -.12 * lean); }
+      if (lean) { girl.bend('chest', 0, 0, -.12 * lean); girl.bend('head', 0, 0, -.3 * lean); boy.bend('head', 0, 0, .12 * lean); }   // he is on her left
 
       /* the photo: the golden frame shell's stars gather round it, it glows in the sky; at the last chapter it moves aside */
       const pIn = ease.out(seg(g, 27.35, 27.95)), aside = ease.inOut(seg(g, 30, 30.8));

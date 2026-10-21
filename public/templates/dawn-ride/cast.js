@@ -1,76 +1,11 @@
-/* Đạp xe đón bình minh: the two of them, for story.js (template.json "story" loads this file before it): their clothes
-   (each KayKit character wears one small palette of 8 x 4 flat swatches: parts move onto other swatches, swatches are
-   repainted), a two-bone reach for legs and arms (feet on the pedals, hands on the grips, a knee on the ground), and the
-   carriers of the card's words that are not the act's own: a page torn from a notebook, the road sign's plank.
-     NM_DAWN.cast(kit) → { dressBoy(m), dressGirl(m), ik(m, a, b, end, target, pole, k), at(m, bone, out), notePage(text),
-                           plank(text) } */
+/* Đạp xe đón bình minh: the two of them, for story.js (template.json "story" loads this file before it): a two-bone
+   reach for legs and arms (feet on the pedals, hands on the grips, a knee on the ground), and the carriers of the card's
+   words that are not the act's own: a page torn from a notebook, the road sign's plank.
+     NM_DAWN.cast(kit) → { ik(m, a, b, end, target, pole, k), at(m, bone, out), own(m, v), frame(), notePage(text),
+                           plankTexture(text) } */
 (window.NM_DAWN = window.NM_DAWN || {}).cast = kit => {
   const { THREE, fitText, HAND } = kit;
   const TAU = Math.PI * 2;
-
-  /** moves the triangles of `part` that sit in swatch `from` ("col,row") and pass `test` on their middle (the model's own
-      units, standing in a T) onto swatch `to`: a gauntlet becomes a bare hand, a boot's top a trouser leg */
-  function remap(m, part, from, to, test = () => true) {
-    const g = m.node(part)?.geometry; if (!g) return;
-    const uv = g.attributes.uv, pos = g.attributes.position, idx = g.index, n = idx ? idx.count : uv.count, move = new Set();
-    const [fx, fy] = from.split(',').map(Number), [tx, ty] = to.split(',').map(Number), c = { x: 0, y: 0, z: 0 };
-    for (let i = 0; i < n; i += 3) {                                  // which corners first, then move them: moving as we go
-      const v = [0, 1, 2].map(k => (idx ? idx.getX(i + k) : i + k));    // would take the next triangle's middle out of the swatch
-      const u0 = (uv.getX(v[0]) + uv.getX(v[1]) + uv.getX(v[2])) / 3, v0 = (uv.getY(v[0]) + uv.getY(v[1]) + uv.getY(v[2])) / 3;
-      if (Math.floor(u0 * 8) !== fx || Math.floor(v0 * 4) !== fy) continue;
-      c.x = (pos.getX(v[0]) + pos.getX(v[1]) + pos.getX(v[2])) / 3; c.y = (pos.getY(v[0]) + pos.getY(v[1]) + pos.getY(v[2])) / 3;
-      c.z = (pos.getZ(v[0]) + pos.getZ(v[1]) + pos.getZ(v[2])) / 3;
-      if (test(c)) v.forEach(j => move.add(j));
-    }
-    move.forEach(j => uv.setXY(j, uv.getX(j) + (tx - fx) / 8, uv.getY(j) + (ty - fy) / 4));
-    uv.needsUpdate = true;
-  }
-  /** the palette with swatches repainted: { "col,row": [colour, shade] }, each keeping `shade` of its own light and dark */
-  function repaint(m, part, colours) {
-    const material = m.node(part)?.material, img = material?.map?.image;
-    if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(img, 0, 0);
-    const w = img.width / 8, h = img.height / 4;
-    for (const [key, [hex, shade]] of Object.entries(colours)) {
-      const [cx, cy] = key.split(',').map(Number), d = c.getImageData(cx * w, cy * h, w, h), p = d.data;
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-      for (let i = 0; i < p.length; i += 4) {
-        const k = 1 + ((p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1) - 1) * shade;
-        p[i] = Math.min(255, r * k); p[i + 1] = Math.min(255, g * k); p[i + 2] = Math.min(255, b * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT;
-    t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    material.map = t; material.needsUpdate = true; old.dispose();
-  }
-  /** him: black hair, a white shirt with its sleeves rolled to the elbow, navy trousers, brown shoes (the Knight's armour
-      gone: gauntlets to hands, vambraces to forearms, boots to trouser legs and shoes, the red crest to a pocket) */
-  function dressBoy(m) {
-    for (const arm of ['Knight_ArmLeft', 'Knight_ArmRight']) {
-      remap(m, arm, '3,0', '0,0', c => Math.abs(c.x) > .74); remap(m, arm, '7,0', '0,0', c => Math.abs(c.x) > .56); remap(m, arm, '6,0', '4,0');
-    }
-    for (const leg of ['Knight_LegLeft', 'Knight_LegRight']) {
-      remap(m, leg, '3,0', '5,1', c => c.y < .1); remap(m, leg, '3,0', '7,1'); remap(m, leg, '7,0', '7,1'); remap(m, leg, '6,0', '7,1');
-    }
-    remap(m, 'Knight_Body', '7,1', '3,0', c => c.y > .66); remap(m, 'Knight_Body', '0,1', '7,0');
-    repaint(m, 'Knight_Body', { '1,0': ['#33313d', .8], '3,0': ['#f7f5f0', .45], '7,0': ['#eef0f4', .45], '4,0': ['#e3e2dc', .5],
-      '7,1': ['#2c3d6e', .8], '5,1': ['#6b4630', .8], '6,0': ['#5e3b26', .9] });
-  }
-  /** her: the hood dusty rose, a honey knit top with long sleeves, a red skirt with a cream sash, dark tights, brown boots,
-      chestnut hair; the cowl on her shoulders becomes the scarf (its two ends are built in bike.js) */
-  function dressGirl(m, scarf, hood) {
-    for (const arm of ['Rogue_ArmLeft', 'Rogue_ArmRight']) { remap(m, arm, '5,2', '0,0', c => Math.abs(c.x) > .84); remap(m, arm, '5,2', '0,1'); remap(m, arm, '5,0', '0,1'); }
-    remap(m, 'Rogue_Body', '0,1', '7,1', c => c.y < .55); remap(m, 'Rogue_Body', '6,0', '0,1', c => c.y > .66);
-    remap(m, 'Rogue_Body', '3,0', '7,1'); remap(m, 'Rogue_Body', '5,0', '7,1'); remap(m, 'Rogue_Body', '1,1', '2,2');
-    for (const leg of ['Rogue_LegLeft', 'Rogue_LegRight']) { remap(m, leg, '7,1', '4,1'); remap(m, leg, '0,0', '4,1'); }
-    repaint(m, 'Rogue_Body', { '1,1': [hood, .7], '0,1': ['#e6a640', .7], '7,1': ['#d23c3f', .7], '4,1': ['#3d3248', .7],
-      '3,2': ['#6e4632', .8], '1,0': ['#5b3324', .8], '2,2': [scarf, .5], '6,0': ['#f4ead6', .5] });
-  }
 
   /* ── a two-bone reach: a hip, a knee and a foot (or a shoulder, an elbow and a hand) ── */
   const mStage = new THREE.Matrix4(), qInv = new THREE.Quaternion();
@@ -149,5 +84,5 @@
     });
   }
 
-  return { dressBoy, dressGirl, ik, at, own, frame, notePage, plankTexture, HAND };
+  return { ik, at, own, frame, notePage, plankTexture, HAND };
 };

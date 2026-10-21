@@ -13,7 +13,7 @@
   const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
   const TAU = Math.PI * 2;
   const rand = (s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)(1508);   // the hill's own seed: the same grass every time
-  const H = .3;                                                     // the sweethearts' height, in card widths
+  const H = .3, HER = H * .945;                                     // their heights, in card widths (her 1.70 m to his 1.80)
   const SPOT = { boy: -.074, girl: .074, z: .09 };                  // where their feet are when they lie down side by side
   const HILL = { x: 0, z: -.17, top: .085, rx: .47, front: .44, back: .32 };   // a soft mound, highest behind their heads
   const TREE = { x: -.35, z: -.19 }, LANTERN = { x: .29, z: -.07 };
@@ -31,13 +31,32 @@
   const BANG = new THREE.Vector3(0, .63, -.04);                     // where the last meteor bursts, just behind the banner
 
   /* points of the models on the stage; reaches: an arm aimed at a point (the moon) from its shoulder, in the character's own space */
-  const mStage = new THREE.Matrix4(), SHOULDER = new THREE.Vector3(), vTo = new THREE.Vector3(), qInv = new THREE.Quaternion();
+  const mStage = new THREE.Matrix4(), SHOULDER = new THREE.Vector3(), vTo = new THREE.Vector3(), qInv = new THREE.Quaternion(), vMeet = new THREE.Vector3();
   const onStage = (o, out) => out.setFromMatrixPosition(o.matrixWorld).applyMatrix4(mStage);
   const toward = (m, side, target) => {
     const b = m.node(`upperarm.${side}`); b.updateWorldMatrix(true, false);
     SHOULDER.setFromMatrixPosition(b.matrixWorld).applyMatrix4(mStage);
     vTo.copy(target).sub(SHOULDER).applyQuaternion(qInv.copy(m.root.quaternion).invert());
     return [vTo.x, vTo.y, vTo.z];
+  };
+  const vS1 = new THREE.Vector3(), vS2 = new THREE.Vector3(), vS3 = new THREE.Vector3(), vU = new THREE.Vector3(), vW = new THREE.Vector3(), vE = new THREE.Vector3();
+  /** an arm bent at the elbow so its hand lands on a point on the stage (as near as it reaches), the elbow out along
+      pole (a direction in the character's own space), k of the way: holding hands with grown-up arms */
+  function grasp(m, side, target, pole, k) {
+    for (const [n, out] of [[`upperarm.${side}`, vS1], [`lowerarm.${side}`, vS2], [`handslot.${side}`, vS3]]) { const bone = m.node(n); bone.updateWorldMatrix(true, false); onStage(bone, out); }
+    const a = vS1.distanceTo(vS2), b = vS2.distanceTo(vS3), [dx, dy, dz] = toward(m, side, target);
+    const dist = clamp(Math.hypot(dx, dy, dz), .3 * (a + b), .999 * (a + b)), u = vU.set(dx, dy, dz).normalize();
+    const cos = (a * a + dist * dist - b * b) / (2 * a * dist), sin = Math.sqrt(Math.max(0, 1 - cos * cos));
+    vW.set(pole[0], pole[1], pole[2]); vW.addScaledVector(u, -vW.dot(u)).normalize();
+    vE.copy(u).multiplyScalar(a * cos).addScaledVector(vW, a * sin);   // the elbow, from the shoulder
+    m.aim(`upperarm.${side}`, [vE.x, vE.y, vE.z], k);
+    m.aim(`lowerarm.${side}`, [u.x * dist - vE.x, u.y * dist - vE.y, u.z * dist - vE.z], k);
+  }
+  /** where his left hand meets her right: between their shoulders, `drop` below them, on the grass at the lowest */
+  const meet = drop => {
+    onStage(girl.node('upperarm.r'), vMeet).add(onStage(boy.node('upperarm.l'), vTo)).multiplyScalar(.5);
+    vMeet.y = Math.max(vMeet.y - drop, hillAt(vMeet.x, vMeet.z) + .012);
+    return vMeet;
   };
 
   /* the hill: how high it is at (x, z); 0 off its edge. Its rim wobbles so it looks like a real mound, not a dish */
@@ -61,29 +80,13 @@
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
   /** a walk from a to b between g0 and g1 at an even pace, easing in and out over its first and last .35 s: [where it is,
-      Walking_A's speed for that pace (.1 card widths a second at speed 1), so the feet do not slide] */
-  function stride(g, g0, g1, a, b) {
+      Walking_A's speed for that pace (.1 card widths a second at speed 1 for a .3-tall walker; the kit paces it), so
+      the feet do not slide] */
+  function stride(g, g0, g1, a, b, h) {
     const r = .35, v = (b - a) / (g1 - g0 - 2 * r + 2 * r / 3), e = v * r / 3;   // an eased end covers a third of what the pace would
     const x = tween(g, [[g0, a], [g0 + r, a + e, 'in'], [g1 - r, b - e, 'linear'], [g1, b, 'out']]);
     const ramp = Math.min(1, seg(g, g0, g0 + r), 1 - seg(g, g1 - r, g1)) ** 2;
-    return [x, Math.max(.3, Math.abs(v) * ramp / .1)];
-  }
-
-  /* ── the cast's colours: a night-blue cape for him, a rose dress for her (each a swatch of the model's palette) ── */
-  function recolor(m, fills) {
-    let mat = null; m.scene.traverse(o => { if (!mat && o.isMesh && o.material && o.material.map) mat = o.material; });
-    const img = mat && mat.map && mat.map.image; if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d'), w = img.width / 8, h = img.height / 4;
-    c.drawImage(img, 0, 0);
-    for (const [col, row, cols, stops] of fills) {                  // a new top-to-bottom shading in the swatch's place
-      const gr = c.createLinearGradient(0, row * h, 0, (row + 1) * h);
-      stops.forEach((s, i) => gr.addColorStop(i / (stops.length - 1), s));
-      c.fillStyle = gr; c.fillRect(col * w, row * h, cols * w, h);
-    }
-    const old = mat.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter;
-    mat.map = t; mat.needsUpdate = true; old.dispose();             // one material for all of a model's parts
+    return [x, Math.max(.3, Math.abs(v) * ramp / (.1 * h / .3))];
   }
 
   /* ── the hill: a mound of grass with a soil rim, tufts that sway, a few wildflowers ── */
@@ -376,10 +379,8 @@
     seconds: [6.8, 6.2, 6.0],
 
     build() {
-      /* the two of them: he keeps his cape (night blue now), she leaves her hat off (a rose dress) */
-      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: H * .97 });
-      recolor(boy, [[0, 1, 1, ['#7d8ff0', '#3a46a8', '#1b1f5c']]]);
-      recolor(girl, [[0, 1, 2, ['#ffd0dd', '#f387a9', '#c2456f', '#7a2347']]]);
+      /* the two of them */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       for (const m of [boy, girl]) m.root.rotation.order = 'YXZ';     // a turn, then a tip with the ground under them
       stage.add(boy.root, girl.root);
 
@@ -484,14 +485,14 @@
       });
 
       /* the sweethearts: she leads him up the hill by the hand; at the top she points at the moon; they lie down to watch it */
-      const [gx, gPace] = stride(g, .15, 2.85, -.38, SPOT.girl), [bx, bPace] = stride(g, .1, 2.95, -.52, SPOT.boy);   // about 2 and 1.9
-      const gz = lerp(SPOT.z - .05, SPOT.z, ease.inOut(seg(g, 2.6, 3.2))), bz = lerp(SPOT.z + .05, SPOT.z, ease.inOut(seg(g, 2.7, 3.35)));
+      const [gx, gPace] = stride(g, .15, 2.85, -.38, SPOT.girl, HER), [bx, bPace] = stride(g, .1, 2.95, -.47, SPOT.boy, H);   // he follows close
+      const gz = lerp(SPOT.z - .025, SPOT.z, ease.inOut(seg(g, 2.6, 3.2))), bz = lerp(SPOT.z + .025, SPOT.z, ease.inOut(seg(g, 2.7, 3.35)));
       const gYaw = tween(g, [[2.8, Math.PI / 2], [3.15, .55], [3.8, .55], [4.05, .06]]), bYaw = tween(g, [[2.9, Math.PI / 2], [3.3, .3], [3.85, .3], [4.15, -.06]]);
       const gDown = ease.inOut(seg(g, 4.55, 5.6)), bDown = ease.inOut(seg(g, 4.75, 5.8));   // lying: tipped back with the ground
       const gUp = ease.inOut(seg(g, 7.75, 8.55)), bUp = ease.inOut(seg(g, 8, 8.8));        // and sitting up again
-      const close = ease.inOut(seg(g, 13.4, 14));                     // scooting in, close
+      const close = ease.inOut(seg(g, 13.4, 14));                     // scooting in, close (and no closer: his left leg lies out her way)
       const place = (m, x, z, yaw, down, up, side) => {
-        m.root.position.set(x - side * .015 * close, hillAt(x, z) * swell + .006 * down * (1 - up), z);
+        m.root.position.set(x - side * .012 * close, hillAt(x, z) * swell + .006 * down * (1 - up), z);
         m.root.rotation.set(slopeAt(x, z) * down * (1 - up), yaw, 0);
       };
       place(girl, gx, gz, gYaw, gDown, gUp, 1);
@@ -500,15 +501,15 @@
       girl.play(gc[1], gc[1] === walk ? { speed: gPace } : gc[2]); boy.play(bc[1], bc[1] === walk ? { speed: bPace } : bc[2]);
       girl.root.updateMatrixWorld(true); boy.root.updateMatrixWorld(true);
 
-      /* hand in hand up the hill: her right reaches back to him, his left forward to her; she looks back at him */
+      /* hand in hand up the hill: her right reaches back to him, his left forward to her, meeting between them a little
+         below their shoulders; she looks back at him */
       const hand = seg(g, .25, .6) * (1 - seg(g, 2.75, 3));
       if (hand) {
-        girl.aim('upperarm.r', [-.45, -.55, -.7], hand); girl.aim('lowerarm.r', [-.4, -.35, -.85], hand);
-        boy.aim('upperarm.l', [.45, -.55, .7], hand); boy.aim('lowerarm.l', [.4, -.35, .85], hand);
+        meet(.065); grasp(girl, 'r', vMeet, [-.3, -1, 0], hand); grasp(boy, 'l', vMeet, [.3, -1, 0], hand);   // elbows down
         girl.bend('head', 0, -.55 * bump(g, .6, 1, 1.9, 2.4), .1 * Math.sin(g * 6));
       }
-      /* "look!": her free arm out straight at the moon (a chibi arm only shows past the head held out to the side), a
-         little shake in it; he follows her finger */
+      /* "look!": her free arm out straight at the moon (swung out to the side, so it shows against the sky rather than
+         behind her), a little shake in it; he follows her finger */
       const point = bump(g, 3.05, 3.3, 3.75, 4);
       if (point) {
         const d = toward(girl, 'l', MOON_AT), out = [d[0] * 1.6, d[1] * .55, d[2] * .5], wig = .14 * Math.sin(T * 8) * seg(g, 3.3, 3.45);
@@ -605,10 +606,7 @@
 
       /* they scoot close, hold hands, then wish with their hands together and their eyes on the sky */
       const hands = ease.smooth(seg(g, 13.8, 14.3)) * (1 - ease.smooth(seg(g, 14.8, 15.1))) + ease.smooth(seg(g, 17.5, 18));
-      if (hands) {
-        girl.aim('upperarm.r', [-.55, -.8, .25], hands); girl.aim('lowerarm.r', [-.75, -.5, .4], hands);
-        boy.aim('upperarm.l', [.55, -.8, .25], hands); boy.aim('lowerarm.l', [.75, -.5, .4], hands);
-      }
+      if (hands) { meet(1); grasp(girl, 'r', vMeet, [-.4, -.2, -1], hands); grasp(boy, 'l', vMeet, [.4, -.2, -1], hands); }   // on the grass, elbows back
       const wish = ease.smooth(seg(g, 14.9, 15.4)) * (1 - ease.smooth(seg(g, 17.1, 17.5)));
       if (wish) for (const m of [boy, girl]) {
         m.aim('upperarm.r', [-.25, -.4, .88], wish); m.aim('lowerarm.r', [.55, .7, .45], wish);

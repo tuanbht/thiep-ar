@@ -6,7 +6,8 @@
        "sofa": { "from": "furniture/couch_pillows" } }
    and writes public/templates/<template>/models/<name>.glb: the parts in "drop" removed (weapons, a helmet), only the
    animations in "clips" kept (all of them when "clips" is left out), then pruned, deduplicated and resampled. It also
-   sets template.json "models" (name -> file) and "credits" (one line per pack). Downloads are cached in .cache/. */
+   sets template.json "models" (name -> file) and "credits" (one line per pack) for what it packs, and keeps the rest:
+   the shared couple (../_models, docs/models/README.md) and anything made by hand. Downloads are cached in .cache/. */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -180,11 +181,24 @@ export async function packTemplate(template, { log = console.log } = {}) {
         ]),
     ).values(),
   ];
+  /* what it packed replaces those names; the rest stays (the shared couple, models made by hand), and so do the credits
+     that are not a pack's (a pack it no longer uses loses its line) */
+  const packs = new Set(Object.values(SOURCES).map((s) => s.title));
+  const all = {
+    ...Object.fromEntries(
+      Object.entries(tpl.models ?? {}).filter(([n]) => !(n in models)),
+    ),
+    ...models,
+  };
+  const allCredits = [
+    ...(tpl.credits ?? []).filter((c) => !packs.has(c.model)),
+    ...credits,
+  ];
   await fs.writeFile(
     tplFile,
-    `${JSON.stringify({ ...tpl, models, credits }, null, 2)}\n`,
+    `${JSON.stringify({ ...tpl, models: all, credits: allCredits }, null, 2)}\n`,
   );
-  return { models, credits };
+  return { models: all, credits: allCredits };
 }
 
 if (

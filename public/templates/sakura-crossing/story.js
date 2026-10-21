@@ -18,10 +18,12 @@
 
   /* the layout, in card widths: the tracks run along x; she waits on the far side (-z), he on the near side, a little apart
      in x so neither hides the other from the phone */
+  const H = .3, HER = H * .945;                                      // their heights (her 1.70 m to his 1.80)
   const TZ = -.03, RAIL_Z = [TZ - .035, TZ + .035], RAIL_TOP = .022, DECK = .021, LANE = .115;
   const SHE = { x: .03, z: -.2 }, HE = { x: -.1, z: .17 };
   const FACE_HE = Math.atan2(SHE.x - HE.x, SHE.z - HE.z), FACE_SHE = FACE_HE - Math.PI;   // across the tracks, at each other
-  const HUG = .06, AXIS = [Math.sin(FACE_HE), Math.cos(FACE_HE)];   // half the space between them in the hug; him to her
+  const HUG = .023, AXIS = [Math.sin(FACE_HE), Math.cos(FACE_HE)];  // half the space between them in the hug (chest to chest); him to her
+  const BAR = .118;                                                  // the barrier arm's pivot: an adult's waist
   const MEET = { he: { x: -HUG * AXIS[0], z: TZ - HUG * AXIS[1] }, she: { x: HUG * AXIS[0], z: TZ + HUG * AXIS[1] } };
   const SPIN = -R - FACE_HE;                                         // he swings her round two thirds of a turn: she ends on the left
   const SIGNALS = [{ x: -.165, z: -.152 }, { x: .165, z: .097 }];    // far, near: crossbuck, two red lamps, the arrow, a bell
@@ -42,9 +44,9 @@
   const ground = z => Math.max(.002, DECK * clamp((z - (TZ - .12)) / .035) * clamp((TZ + .12 - z) / .035));
 
   /* the clip each of them plays from story time g: [from g, clip, options] */
-  const HE_CLIPS = [[0, 'Idle'], [.35, 'Walking_A', { speed: 1.75 }], [2.75, 'Idle', { fade: .25 }], [13.42, 'Running_A', { speed: .85, fade: .12 }],
+  const HE_CLIPS = [[0, 'Idle'], [.35, 'Walking_A', { speed: 1.75 }], [2.75, 'Idle', { fade: .25 }], [13.42, 'Running_A', { speed: .8, fade: .12 }],
     [13.86, 'Idle', { fade: .2 }]];
-  const SHE_CLIPS = [[0, 'Idle'], [.1, 'Walking_A', { speed: 2 }], [2.6, 'Idle', { fade: .25 }], [13.38, 'Running_A', { speed: .55, fade: .12 }],
+  const SHE_CLIPS = [[0, 'Idle'], [.1, 'Walking_A', { speed: 2.1 }], [2.6, 'Idle', { fade: .25 }], [13.38, 'Running_A', { speed: .6, fade: .12 }],
     [13.86, 'Idle', { fade: .2 }]];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
 
@@ -64,18 +66,38 @@
     return [lerp(a[1], b[1], k), lerp(a[2], b[2], k), lerp(a[3], b[3], k)];
   }
 
-  /* arm poses in a character's own space, [upper arm, forearm], for the right arm (the left one mirrors x); some move */
+  /* arm poses in a character's own space, [upper arm, forearm], for the right arm (the left one mirrors x); some move.
+     The hug is worked out each frame (hugArm) */
   const ARM = {
-    chest: [[-.25, -.55, .75], [.75, .4, .5]],                          // a hand on the heart
+    chest: [[-.28, -.88, .38], [.72, .43, .55]],                        // a hand on the heart, the other on top of it
     shy: T => [[-.3, .15, .95], [-.05 + .22 * Math.sin(T * 10), .95, .35]],   // a small wave by her cheek
     wave: T => [[-.9, .42, .12], [-.4 + .45 * Math.sin(T * 9), .9, .12]],    // out to the side, so it shows past his head from behind
     point: [[-.25, .75, .6], [-.12, .85, .55]],                        // up at the photo
-    scratch: [[-.5, .8, .2], [.6, .55, -.55]],                          // a shy hand to the back of the head
+    scratch: [[-.33, .56, -.76], [.65, .5, .57]],                       // a shy hand to the back of the head
     shield: [[-.5, .45, .55], [.4, .8, .35]],                           // a forearm up against the wind
     clasp: [[-.25, -.6, .75], [.72, .25, .6]],                          // hands together, delighted
-    joy: [[-.45, .9, .1], [-.15, 1, .05]],
-    hug: [[-.42, .05, .9], [.8, .1, .6]]
+    joy: [[-.45, .9, .1], [-.15, 1, .05]]
   };
+  /* the hug: her hands meet behind his neck, his rest on her back. Worked out each frame, so they hold on through the
+     swing, the lift and the turn towards you: a reach for two bones, the elbows out and down */
+  const hS = new THREE.Vector3(), hE = new THREE.Vector3(), hP = new THREE.Vector3(), hT = new THREE.Vector3(), hU = new THREE.Vector3(), hQ = new THREE.Vector3(), hW = new THREE.Quaternion();
+  function hugArm(m, side) {
+    const her = m === girl, other = her ? boy : girl, s = side === 'r' ? 1 : -1;
+    other.root.getWorldQuaternion(hW);
+    other.node(her ? 'neck' : 'spine').getWorldPosition(hT)
+      .add(hU.set(0, 0, -1).applyQuaternion(hW).multiplyScalar(her ? .012 : .021))       // behind it
+      .add(hU.set(s, 0, 0).applyQuaternion(hW).multiplyScalar(her ? .013 : .016));      // on the side this hand comes round
+    m.root.worldToLocal(hT);
+    m.root.worldToLocal(m.node(`upperarm.${side}`).getWorldPosition(hS));
+    m.root.worldToLocal(m.node(`lowerarm.${side}`).getWorldPosition(hE));
+    m.root.worldToLocal(m.node(`handslot.${side}`).getWorldPosition(hP));
+    const a = hS.distanceTo(hE), b = hE.distanceTo(hP), d = clamp(hS.distanceTo(hT), Math.abs(a - b) + 1e-4, a + b - 1e-4);
+    hU.copy(hT).sub(hS).normalize();
+    hQ.set(-s, her ? -.6 : -.3, her ? 0 : -.2); hQ.sub(hP.copy(hU).multiplyScalar(hQ.dot(hU))).normalize();   // the elbow's way, square to the reach
+    const cosA = (a * a + d * d - b * b) / (2 * a * d);
+    hE.copy(hS).addScaledVector(hU, a * cosA).addScaledVector(hQ, a * Math.sqrt(Math.max(0, 1 - cosA * cosA)));
+    return [hE.clone().sub(hS).toArray(), hT.clone().sub(hE).toArray()];
+  }
   /* each arm through the story: [from g, pose (null: the clip's own), seconds to blend in] */
   const ARMS = {
     he: { r: [[0, null, 0], [4.55, 'scratch', .3], [5.25, 'wave', .25], [6.05, null, .35], [7.42, 'shield', .18], [8.6, null, .45], [9.45, 'point', .4],
@@ -85,16 +107,19 @@
       [12.9, 'joy', .2], [13.32, null, .12], [13.72, 'hug', .22]],
     l: [[0, null, 0], [3.2, 'chest', .25], [7.4, 'chest', .3], [8.6, null, .4], [9.5, 'clasp', .4], [12.9, 'joy', .2], [13.32, null, .12], [13.72, 'hug', .22]] }
   };
-  const armPose = (name, T, side) => { const p = typeof ARM[name] === 'function' ? ARM[name](T) : ARM[name]; return side === 'l' ? p.map(d => [-d[0], d[1], d[2]]) : p; };
+  const armPose = (name, T, side, m) => {
+    if (name === 'hug') return hugArm(m, side);
+    const p = typeof ARM[name] === 'function' ? ARM[name](T) : ARM[name]; return side === 'l' ? p.map(d => [-d[0], d[1], d[2]]) : p;
+  };
   function arms(m, keys, g, T) {
     for (const side of ['r', 'l']) {
       const list = keys[side]; let i = 0;
       while (i + 1 < list.length && g >= list[i + 1][0]) i++;
       const [t0, now, blend] = list[i], prev = i > 0 ? list[i - 1][1] : null, k = blend ? ease.inOut(clamp((g - t0) / blend)) : 1;
       let pose = null, w = 1;
-      if (now && prev) { const a = armPose(prev, T, side), b = armPose(now, T, side); pose = a.map((d, j) => d.map((v, n) => lerp(v, b[j][n], k))); }
-      else if (now) { pose = armPose(now, T, side); w = k; }
-      else if (prev) { pose = armPose(prev, T, side); w = 1 - k; }
+      if (now && prev) { const a = armPose(prev, T, side, m), b = armPose(now, T, side, m); pose = a.map((d, j) => d.map((v, n) => lerp(v, b[j][n], k))); }
+      else if (now) { pose = armPose(now, T, side, m); w = k; }
+      else if (prev) { pose = armPose(prev, T, side, m); w = 1 - k; }
       if (pose && w > 0) { m.aim(`upperarm.${side}`, pose[0], w); m.aim(`lowerarm.${side}`, pose[1], w); }
     }
   }
@@ -142,34 +167,6 @@
       c.lineTo(s * .14, -s); c.bezierCurveTo(s * .5, -s * .95, s * .55, -s * .35, 0, 0); c.fill();
     }
     c.fillStyle = eye; c.beginPath(); c.arc(0, 0, s * .2, 0, TAU); c.fill(); c.restore();
-  }
-
-  /* the outfits: one small palette texture per character; a few swatches recoloured (a column, a quarter-row each) */
-  const LOOK = {
-    boy: [[3, 0, '#34477f'], [4, 0, '#26335f'], [7, 0, '#f1e9d2'], [7, 1, '#222b4d'], [2, 1, '#d9c27a'], [6, 0, '#4a3428'], [1, 1, '#d23c55'], [1, 0, '#3a2a22']],
-    girl: [[0, 1, '#fff0f4'], [1, 1, '#ec5f8a'], [3, 0, '#ffd27a'], [6, 0, '#c9875f'], [5, 0, '#f7a8c0'], [7, 1, '#f29bb8'], [5, 2, '#f6d2bd'],
-      [3, 2, '#8b5a45'], [1, 0, '#6b3a2a']]
-  };
-  /** a navy school jacket for him, a white top with a pink scarf for her, dark hair for both: each swatch keeps its shading */
-  function dress(m, list) {
-    let mt = null; m.scene?.traverse(x => { if (!mt && x.isMesh && x.material?.map) mt = x.material; });
-    const img = mt?.map?.image; if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(img, 0, 0);
-    const W = img.width / 8, H = img.height / 4, t = new THREE.Color();
-    for (const [col, row, hex] of list) {
-      const d = c.getImageData(col * W, row * H, W, H), p = d.data; t.set(hex);
-      let sum = 0; for (let i = 0; i < p.length; i += 4) sum += .299 * p[i] + .587 * p[i + 1] + .114 * p[i + 2];
-      const mean = sum / (p.length / 4) || 1;
-      for (let i = 0; i < p.length; i += 4) {
-        const k = (.299 * p[i] + .587 * p[i + 1] + .114 * p[i + 2]) / mean * 255;
-        p[i] = Math.min(255, t.r * k); p[i + 1] = Math.min(255, t.g * k); p[i + 2] = Math.min(255, t.b * k);
-      }
-      c.putImageData(d, col * W, row * H);
-    }
-    const old = mt.map, tex = kit.keep(new THREE.CanvasTexture(cv));
-    tex.flipY = old.flipY; tex.colorSpace = old.colorSpace; tex.wrapS = old.wrapS; tex.wrapT = old.wrapT; tex.magFilter = old.magFilter; tex.minFilter = old.minFilter;
-    mt.map = tex; mt.needsUpdate = true; old.dispose();
   }
 
   /* ── the spring sky behind it all: a painted pop-up page with a cloudy top edge; its lower part, behind the two of them,
@@ -313,10 +310,10 @@
   function makeGate(s) {
     const g = new THREE.Group(); g.position.set(s.x, 0, s.z); stage.add(g);
     const yellow = mat('#f4c021', { roughness: .45 }), black = mat('#2b2a31', { roughness: .45 });
-    const housing = boxM(.036, .084, .034, yellow); housing.position.y = .042; g.add(housing);
-    const band = boxM(.0372, .012, .0352, black); band.position.y = .058; g.add(band);
-    const top = boxM(.04, .006, .038, black); top.position.y = .087; g.add(top);
-    const pivot = new THREE.Group(); pivot.position.set(s.dir * .02, .072, .0); g.add(pivot);
+    const housing = boxM(.036, BAR + .012, .034, yellow); housing.position.y = (BAR + .012) / 2; g.add(housing);
+    const band = boxM(.0372, .012, .0352, black); band.position.y = BAR - .014; g.add(band);
+    const top = boxM(.04, .006, .038, black); top.position.y = BAR + .015; g.add(top);
+    const pivot = new THREE.Group(); pivot.position.set(s.dir * .02, BAR, .0); g.add(pivot);
     const arm = boxM(.27, .009, .007, painted(512, 24, stripes('#f6c51c', '#25232b', 14), { roughness: .5 })); arm.position.x = s.dir * .135; pivot.add(arm);
     const lamp = mat('#e8332f', { emissive: '#ff3020', emissiveIntensity: .3 });
     const tip = boxM(.012, .011, .0085, lamp); tip.position.x = s.dir * .266; pivot.add(tip);
@@ -588,14 +585,19 @@
     boy.root.rotation.y = br + .3 * open; girl.root.rotation.y = gr - .42 * open;
     const bc = clipAt(HE_CLIPS, g), gc = clipAt(SHE_CLIPS, g);
     boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
+    const hold = ease.inOut(clamp((g - 13.72) / .22));               // in the hug he leans in a little, so his hands reach her back
+    if (hold) { boy.bend('Spine02', .08, 0, 0, hold); boy.bend('spine', .08, 0, 0, hold); }
     arms(boy, ARMS.he, g, T); arms(girl, ARMS.she, g, T);
     const wind = bump(g, 7.38, 7.55, 8.35, 8.8);                     // leaning back from the train's wind
-    if (wind) for (const m of [boy, girl]) { m.bend('chest', -.16, 0, 0, wind); m.bend('head', -.06, 0, 0, wind); }
+    if (wind) for (const m of [boy, girl]) { m.bend('spine', -.1, 0, 0, wind); m.bend('chest', -.08, 0, 0, wind); m.bend('head', -.06, 0, 0, wind); }   // (the rig's "chest" is only the top of its back)
     const shy = bump(g, 3.2, 3.5, 6.6, 7) * (1 + .25 * Math.sin(T * 1.7));
     if (shy) girl.bend('head', .08, 0, .2, shy);
     look(boy, LOOKS.he, g); look(girl, LOOKS.she, g);
     const lean = ease.smooth(seg(g, 14.95, 15.6));                    // in the hug: heads together, her foot up behind her
-    if (lean) { girl.bend('head', .05, 0, .2, lean); boy.bend('head', .05, 0, -.14, lean); girl.bend('upperleg.r', .75 + .12 * Math.sin(T * 2.4), 0, 0, lean); }
+    if (lean) {
+      girl.bend('head', .05, 0, .2, lean); boy.bend('head', .05, 0, -.14, lean);
+      girl.aim('upperleg.r', [0, -1, -.14], lean); girl.aim('lowerleg.r', [0, .5 + .12 * Math.sin(T * 2.4), -.86], lean);   // the shin up behind her: flat, it reads as a kneel
+    }
   }
   function poseWords(g, T) {
     const n = ease.back(seg(g, 5.15, 5.85)) * (1 - ease.in(seg(g, 6.45, 6.95)));
@@ -667,9 +669,8 @@
     seconds: [6.4, 6, 6.3],
 
     build() {
-      /* the two of them: the Knight without his helmet and cape, the Rogue without her cape, both in new clothes */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .29 });
-      dress(boy, LOOK.boy); dress(girl, LOOK.girl);
+      /* the two of them: the shared couple, in their own clothes */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
 
       sky = kit.backdrop(paintSky, { width: 1.04, height: .72, curve: .08, z: -.31, alphaTest: .5 }); stage.add(sky);   // clear above its clouds

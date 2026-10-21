@@ -11,18 +11,24 @@
     2
   ],
   "reveal": null,
-  "notes": "Two little builders put up a house on the card (KayKit Adventurers, CC0: the Knight without his helmet or cape, recoloured in denim with a code-built yellow hard hat, and the hooded Rogue in a white smock, weapons dropped by scripts/pack-models.mjs; bushes from KayKit City Builder Bits; the house, the tools and the props are built in story.js). Stop 1: a sky folds up behind the card; he tosses a rolled blueprint onto the card and it unrolls, the plan glows and the foundation rises out of it; she tosses him one brick at a time and each hammer strike snaps a course of bricks round the house; they cheer and a blueprint with the card's first words (slot note1) in its title block unrolls. Stop 2: the walls finish, the gables fold up, the roof goes on tile by tile and the chimney drops in; she paints the door with a roller, the window frames snap in, and the card's photo flies out of the round attic window with its caption (slot caption). Stop 3: dusk; the photo moves aside, a mailbox springs up, flowers pop out of the window boxes, the lights come on, the door opens and heart-shaped smoke rises from the chimney; they cheer in the doorway, an arm round each other, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "The couple put up a house on the card (the shared grown-up pair in templates/_models: Grab3D's Casual Man and Woman with Quaternius's animations, CC0, sized so the door is a grown-up's; he wears a code-built yellow hard hat and swings his hammer with his own arm, as the couple has no chop clip; bushes from KayKit City Builder Bits; the house, the tools and the props are built in story.js). Stop 1: a sky folds up behind the card; he tosses a rolled blueprint onto the card and it unrolls, the plan glows and the foundation rises out of it; she tosses him one brick at a time and each hammer strike snaps a course of bricks round the house; they cheer and a blueprint with the card's first words (slot note1) in its title block unrolls. Stop 2: the walls finish, the gables fold up, the roof goes on tile by tile and the chimney drops in; she paints the door with a roller, the window frames snap in, and the card's photo flies out of the round attic window with its caption (slot caption). Stop 3: dusk; the photo moves aside, a mailbox springs up, flowers pop out of the window boxes, the lights come on, the door opens and heart-shaped smoke rises from the chimney; they cheer in the doorway, an arm round each other, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb",
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb",
     "bush": "models/bush.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     },
     {
       "model": "KayKit City Builder Bits",
@@ -31,7 +37,17 @@
       "url": "https://kaylousberg.itch.io/city-builder-bits"
     }
   ],
-  "categories": ["couple", "viral-scenes", "love"],
-  "tags": ["xây nhà", "mái nhà", "tương lai", "tổ ấm", "cùng nhau"],
+  "categories": [
+    "couple",
+    "viral-scenes",
+    "love"
+  ],
+  "tags": [
+    "xây nhà",
+    "mái nhà",
+    "tương lai",
+    "tổ ấm",
+    "cùng nhau"
+  ],
   "photos": 1
 }

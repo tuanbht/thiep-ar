@@ -23,22 +23,30 @@
   const PAGE = { width: 1.12, height: 1.12, curve: .03, z: -.31 };
   const QUAY = { z: -.228, top: .07, stepX: -.36 };                  // the quay's face, its top, where its steps go down
   /* the boat's own frame (bow +z, keel at 0): its waterline and floor (the floor sits below the water: the river leaves
-     a hole there), his bench (top, where his hips are), her cushion, the oar posts, the oars either side of a post */
-  const BOAT = { len: .44, beam: .085, depth: .062, water: .03, floor: .014, seatTop: .026, seat: .07, stern: -.15, lock: .05,
-    oarIn: .06, oarOut: .165, holeL: .205, holeB: .074 };
+     a hole there), the stern bench's top, his bench (thwart: its top, where his hips are; seat: where it is), her cushion
+     on the floor before the stern bench, the oar posts, the oars either side of a post */
+  const BOAT = { len: .44, beam: .085, depth: .062, water: .03, floor: .014, seatTop: .026, thwart: .052, seat: .07, stern: -.15, cushion: -.11,
+    lock: .05, oarIn: .06, oarOut: .165, holeL: .205, holeB: .074 };
+  /* the shared couple (docs/models): him .3 tall, her .945 of that. The chair clip sits him .0735 above his feet, the hips
+     .0495 behind where he stands; his thighs go up from the thwart so that his feet reach the floor. She sits on her
+     cushion leaning back on her hands, which rest on the stern bench (the floor clip puts her back .105 behind her feet) */
+  const H = .3, SEAT = .098 * H / .4, SIT_Z = -.1, BESIDE = -.082;    // BESIDE: where she stands, close at his right (he stands at -.012)
+  const KNEE = (BOAT.floor - BOAT.thwart + .2290 * H) / (.202 * H);   // the sine of his thighs' rise: the knee that far above the hip
   const S = window.NM_LANTERN.scenery(kit, { W, PAGE, QUAY, BOAT });
   const rand = S.seeded(1408);                                       // the card's own seed: the same lanterns every time
+  /* the folded lantern lies on the near gunwale in front of where he stands: no clip's hand comes lower than about .055 */
+  const PACKET = [-(S.halfBeam(-.015 / (BOAT.len / 2)) - .008), BOAT.depth + .006, -.015];
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
   const RED = { glow: '#ffb48a', paper: '#f0503e', top: '#c4202e', band: 'rgba(255,214,120,.95)', rib: 'rgba(120,20,20,.3)', accent: '#ffd27a' };   // red paper lanterns
   const DUSK = { hemi: new THREE.Color('#ffd2c4'), ground: new THREE.Color('#6a4a6a'), sun: new THREE.Color('#ffc09a') };
   const NIGHT = { hemi: new THREE.Color('#a9b0ee'), ground: new THREE.Color('#4a3050'), sun: new THREE.Color('#c0c8ff') };
-  let boy, girl, cape, shawl, page, quay, river, rings, boat, pads, packet, match, wish, ours, cords, photoLamp, photo, strings, banner, bannerLamps, ties;
+  let boy, girl, page, quay, river, rings, boat, pads, packet, match, wish, ours, cords, photoLamp, photo, strings, banner, bannerLamps, ties;
   let sky, drift = [], hero, sparks, hearts, drops, flies, particles;
 
   /* ── who does what, from story time g: [from g, clip, options] ── */
   const BOY = [
     [0, 'Sit_Chair_Idle'], [12.15, 'Sit_Chair_StandUp', { once: true, fade: .15 }], [12.95, 'Idle', { fade: .25 }], [13.05, 'Walking_A', { speed: .8, fade: .2 }],
-    [13.5, 'Idle', { fade: .2 }], [14.3, 'PickUp', { once: true, fade: .2 }], [15.55, 'Idle', { fade: .3 }]
+    [13.5, 'Idle', { fade: .2 }], [14.3, 'PickUp', { once: true, fade: .2, speed: 1.9 }], [15.55, 'Idle', { fade: .3 }]   // (its lowest at 14.88)
   ];
   const GIRL = [
     [0, 'Sit_Floor_Idle'], [11.2, 'Sit_Floor_StandUp', { once: true, fade: .15 }], [12.3, 'Idle', { fade: .2 }],
@@ -49,7 +57,7 @@
   const FRONT = -R;
   const BOY_WAY = [[0, BOAT.seat - .0545, Math.PI], [13.05, BOAT.seat - .0545, Math.PI], [13.5, -.012, Math.PI, 'out'], [13.6, -.012, Math.PI],
     [14.2, -.012, FRONT], [30.6, -.012, FRONT], [31.4, -.012, Math.PI]];
-  const GIRL_WAY = [[0, BOAT.stern - .0143, 0], [13.6, BOAT.stern - .0143, 0], [14.2, -.13, FRONT], [30.6, -.13, FRONT], [31.4, -.13, 0]];
+  const GIRL_WAY = [[0, SIT_Z, 0], [13.6, SIT_Z, 0], [14.2, BESIDE, FRONT], [30.6, BESIDE, FRONT], [31.4, BESIDE, 0]];
   const keysOf = way => [1, 2].map(i => way.map(k => [k[0], k[i], k[3] || 'smooth']));
   const BOY_KEYS = keysOf(BOY_WAY), GIRL_KEYS = keysOf(GIRL_WAY);
 
@@ -82,57 +90,6 @@
     if (s < d) return { sweep: 1 - ease.inOut(s / d), dip: 1, ship: 0 };
     const r = (s - d) / (1 - d);
     return { sweep: ease.inOut(seg(r, .1, .95)), dip: 1 - ease.out(seg(r, 0, .12)) + ease.in(seg(r, .9, 1)), ship: 0 };
-  }
-
-  /* ── the cast's clothes: the palette's swatches recoloured, some parts moved onto other swatches ── */
-  const cell = (cx, cy) => ({ cx, cy });
-  /** moves the UV islands of `mesh` in swatch `from` onto swatch `to`; keep(x, y, z) (its own units) picks the triangles */
-  function remap(mesh, from, to, keep = () => true) {
-    const uv = mesh?.geometry?.attributes.uv, pos = mesh?.geometry?.attributes.position; if (!uv) return;
-    const idx = mesh.geometry.index, n = idx ? idx.count : uv.count, move = new Set();
-    for (let i = 0; i < n; i += 3) {                                   // which corners first, then move them
-      const v = [0, 1, 2].map(k => (idx ? idx.getX(i + k) : i + k)), mid = f => (f(v[0]) + f(v[1]) + f(v[2])) / 3;
-      if (Math.floor(mid(j => uv.getX(j)) * 8) !== from.cx || Math.floor(mid(j => uv.getY(j)) * 4) !== from.cy) continue;
-      if (keep(mid(j => pos.getX(j)), mid(j => pos.getY(j)), mid(j => pos.getZ(j)))) v.forEach(j => move.add(j));
-    }
-    move.forEach(j => uv.setXY(j, uv.getX(j) + (to.cx - from.cx) / 8, uv.getY(j) + (to.cy - from.cy) / 4));
-    uv.needsUpdate = true;
-  }
-  /** the palette with swatches recoloured, each keeping a little of its own shading */
-  function repaint(m, part, colours) {
-    const material = m.node(part)?.material, img = material?.map?.image;
-    if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(img, 0, 0);
-    const w = img.width / 8, h = img.height / 4;
-    for (const [key, hex] of Object.entries(colours)) {
-      const [cx, cy] = key.split(',').map(Number), d = c.getImageData(cx * w, cy * h, w, h), p = d.data;
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-      for (let i = 0; i < p.length; i += 4) {
-        const k = .55 + .45 * (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1);
-        p[i] = Math.min(255, r * k); p[i + 1] = Math.min(255, g * k); p[i + 2] = Math.min(255, b * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT;
-    t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    material.map = t; material.needsUpdate = true; old.dispose();
-  }
-  function dress() {
-    /* him: black hair, a deep indigo tunic with gold piping, a red sash, dark trousers, bare hands, a cream cape */
-    for (const arm of ['Knight_ArmLeft', 'Knight_ArmRight']) remap(boy.node(arm), cell(3, 0), cell(0, 0), x => Math.abs(x) > .76);
-    for (const leg of ['Knight_LegLeft', 'Knight_LegRight']) remap(boy.node(leg), cell(3, 0), cell(5, 1));
-    repaint(boy, 'Knight_Body', { '1,0': '#2a2630', '3,0': '#2c3a8c', '4,0': '#2c3a8c', '1,1': '#2c3a8c', '7,0': '#e0b85a', '2,1': '#f0cf70',
-      '6,0': '#c0303e', '7,1': '#2a2f5a', '0,1': '#f3e8d0', '5,1': '#4a3026' });
-    /* her: black hair, a rose-red dress, her cape worn short as a golden shawl over the scarf, bare arms */
-    for (const arm of ['Rogue_ArmLeft', 'Rogue_ArmRight']) remap(girl.node(arm), cell(5, 2), cell(0, 0));
-    repaint(girl, 'Rogue_Body', { '1,0': '#2a2228', '0,1': '#d23a55', '7,1': '#a8243f', '1,1': '#f0c050', '6,0': '#7a1f30', '3,0': '#f5d070',
-      '5,0': '#f0c050', '3,2': '#6a2a2a' });
-    cape = boy.node('Knight_Cape'); shawl = girl.node('Rogue_Cape');
-    if (shawl) shawl.scale.set(1.08, .42, 1.15);
   }
 
   /* ── the words: a wish card out of the lotus, his lantern's front, a red paper banner ── */
@@ -235,16 +192,31 @@
   const vHand = new THREE.Vector3(), vHand2 = new THREE.Vector3(), vMid = new THREE.Vector3(), vMid2 = new THREE.Vector3(), vRing = new THREE.Vector3();
   const at = (m, bone, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return out.setFromMatrixPosition(b.matrixWorld).applyMatrix4(mStage); };
   const D = [0, 0, 0], U = [0, 0, 0];
-  /** the way from a shoulder to a stage point, in that character's own space */
+  /** the way from a shoulder to a stage point, in that character's own space (and in stage units, like at()) */
+  const qS = new THREE.Quaternion();
   function toward(m, side, target) {
-    const b = m.node(`upperarm.${side}`); b.updateWorldMatrix(true, false);
-    vS.copy(target).applyMatrix4(stage.matrixWorld).sub(vA.setFromMatrixPosition(b.matrixWorld));
-    return vS.applyQuaternion(m.root.getWorldQuaternion(qW).invert()).toArray(D);
+    at(m, `upperarm.${side}`, vS); vS.subVectors(target, vS);
+    m.root.getWorldQuaternion(qW); stage.getWorldQuaternion(qS);                       // the character's turn on the stage
+    return vS.applyQuaternion(qW.premultiply(qS.invert()).invert()).toArray(D);
   }
-  function reach(m, side, target, k, drop = .25) {
+  /** an arm reaching for a stage point: in reach, the elbow bends (out, and down by `drop`; or towards `pole`, a way in the
+      character's own space) so that the hand lands on it; out of reach, the arm points at it, the upper arm a little low */
+  const LEN = new Map(), vI = new THREE.Vector3(), vN = new THREE.Vector3(), vQ = new THREE.Vector3(), vK = new THREE.Vector3();
+  function reach(m, side, target, k, drop = .25, pole = null) {
     if (k <= 0) return;
-    const d = toward(m, side, target); U[0] = d[0]; U[1] = d[1] - drop * Math.hypot(d[0], d[2]); U[2] = d[2];
-    m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k);
+    const key = m.root.name + side;
+    if (!LEN.has(key)) { at(m, `lowerarm.${side}`, vK); LEN.set(key, [at(m, `upperarm.${side}`, vI).distanceTo(vK), vK.distanceTo(at(m, `handslot.${side}`, vI))]); }
+    const [a, b] = LEN.get(key), d = toward(m, side, target), dist = vI.fromArray(d).length();
+    if (dist >= (a + b) * .999) {
+      U[0] = d[0]; U[1] = d[1] - drop * Math.hypot(d[0], d[2]); U[2] = d[2];
+      m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k); return;
+    }
+    const A = Math.acos(clamp((a * a + dist * dist - b * b) / (2 * a * dist), -1, 1));
+    vN.copy(vI).normalize(); if (pole) vQ.fromArray(pole); else vQ.set(side === 'r' ? -1 : 1, -.3 - 2.5 * drop, -.3);
+    vQ.addScaledVector(vN, -vQ.dot(vN)).normalize();
+    vK.copy(vN).multiplyScalar(Math.cos(A)).addScaledVector(vQ, Math.sin(A));          // the upper arm, to the elbow
+    vI.addScaledVector(vK, -a);                                                        // the forearm, from the elbow to the point
+    m.aim(`upperarm.${side}`, vK.toArray(U), k); m.aim(`lowerarm.${side}`, vI.toArray(D), k);
   }
   /* bursts: sparkles flying out of a point; drops thrown up off the water */
   const FLAME = ['#ffd27a', '#fff1b8', '#ff9a5a'];
@@ -265,13 +237,12 @@
     seconds: [10, 10, 10, 10],
 
     build() {
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .29 });
-      dress();
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: H * .945 });
 
       /* the town, the river, the boat with the two of them in it */
       page = S.makePage(); quay = S.makeQuay(); river = S.makeRiver(); rings = S.makeRings(56); pads = S.makeLotusPads();
       boat = S.makeBoat(); stage.add(boat.root); boat.ride.add(boy.root, girl.root);
-      packet = new THREE.Group();                                       // the folded lantern on the floor, and his match
+      packet = new THREE.Group();                                       // the folded lantern on the gunwale, and his match
       packet.add(S.mesh(new THREE.BoxGeometry(.05, .008, .036), S.mat('#fff1d4', { roughness: .9 })), S.mesh(new THREE.BoxGeometry(.052, .0085, .006), S.mat('#d0432f'), 0, 0, .008));
       match = new THREE.Group(); match.add(S.mesh(new THREE.CylinderGeometry(.0013, .0013, .026, 4), S.mat('#e8d0a0'), 0, .013, 0));
       match.userData.flame = kit.glow({ color: 0xffb050, size: .06, opacity: 0, depthTest: false }); match.userData.flame.position.y = .028; match.add(match.userData.flame);
@@ -344,10 +315,14 @@
       const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
       boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
       const [bz, by] = BOY_KEYS.map(k => tween(g, k)), [gz, gy] = GIRL_KEYS.map(k => tween(g, k));
-      const bUp = ease.inOut(seg(g, 12.35, 12.85));                     // standing up: from the bench's height down to the floor
-      boy.root.position.set(0, lerp(BOAT.seatTop - .046, BOAT.floor, bUp), bz); boy.root.rotation.y = by;
+      const bUp = ease.inOut(seg(g, 12.35, 12.85));                     // standing up: from the thwart's height down to the floor
+      boy.root.position.set(0, lerp(BOAT.thwart - SEAT, BOAT.floor, bUp), bz); boy.root.rotation.y = by;
       girl.root.position.set(0, BOAT.floor + .004 * bump(g, 32.8, 33.4, 37, 38), gz); girl.root.rotation.y = gy;
-      if (cape) cape.scale.set(1, lerp(.6, 1, bUp), lerp(.8, 1, bUp));
+      const knees = 1 - bUp;                                            // seated: thighs up, shins down to the floor
+      if (knees > 0) for (const sd of [-1, 1]) {
+        const side = sd < 0 ? 'r' : 'l';
+        boy.aim(`upperleg.${side}`, [sd * .08, KNEE, Math.sqrt(1 - KNEE * KNEE)], knees); boy.aim(`lowerleg.${side}`, [sd * .02, -1, -.12], knees);   // (his feet tucked back, clear of hers)
+      }
 
       /* ── the oars: the sweep and the dip of a stroke; laid along the gunwales before and after ── */
       const o = oarsAt(Math.min(g, 10));
@@ -360,12 +335,12 @@
       /* ── bodies first (spines and chests), so the arms reach from where the shoulders end up ── */
       const rowing = g < 10 ? 1 - o.ship : 0, catchK = o.sweep;
       if (rowing) { boy.bend('spine', lerp(-.12, .14, catchK) * rowing, 0, 0); boy.bend('chest', lerp(-.08, .2, catchK) * rowing, 0, 0); boy.bend('head', lerp(.12, -.18, catchK) * rowing, 0, 0); }
-      const trail = bump(g, 3.3, 3.9, 6.3, 6.8);                       // she leans out over the side, a hand in the water
-      if (trail) { girl.bend('spine', .05 * trail, 0, -.42 * trail); girl.bend('chest', .15 * trail, 0, -.4 * trail); girl.bend('head', .3 * trail, -.4 * trail, .25 * trail); }
+      const trail = bump(g, 3.3, 3.9, 6.3, 6.8);                       // she leans out over the side (her right), a hand in the water
+      if (trail) { girl.bend('spine', .05 * trail, 0, .3 * trail); girl.bend('chest', .15 * trail, 0, .25 * trail); girl.bend('head', .3 * trail, -.4 * trail, -.1 * trail); }
       const wobble = bump(g, 12.1, 12.35, 13.4, 13.8);                 // standing in a rocking boat
       if (wobble) { girl.bend('spine', 0, 0, -1.6 * rock * wobble); girl.bend('chest', -.1 * wobble, 0, 0); }
-      const lean = ease.smooth(seg(g, 24, 25)) * (1 - ease.smooth(seg(g, 30.2, 30.7)));   // her head on his shoulder
-      if (lean) { girl.bend('spine', 0, 0, .1 * lean); girl.bend('head', .05 * lean, .1 * lean, .32 * lean); boy.bend('head', 0, 0, -.1 * lean); }
+      const lean = ease.smooth(seg(g, 24, 25)) * (1 - ease.smooth(seg(g, 30.2, 30.7)));   // her head on his shoulder (he is at her left)
+      if (lean) { girl.bend('spine', 0, 0, -.1 * lean); girl.bend('head', .05 * lean, .1 * lean, -.32 * lean); boy.bend('head', 0, 0, .1 * lean); }
       const sway = .025 * Math.sin(T * 1.3) * seg(g, 25, 26) * (1 - seg(g, 30, 30.5));
       if (sway) { boy.bend('spine', 0, 0, sway); girl.bend('spine', 0, 0, sway); }
       const kiss = ease.smooth(seg(g, 32.9, 33.6));
@@ -403,7 +378,7 @@
       const lookLotus = ease.smooth(seg(g, 7.7, 8.3)) * (1 - ease.smooth(seg(g, 10.2, 10.6)));
       if (lookLotus) { boy.bend('head', .1 * lookLotus, .55 * lookLotus, 0); girl.bend('head', .12 * lookLotus, -.5 * lookLotus, 0); }
       const rest = ease.smooth(seg(g, ROW_END + .9, ROW_END + 1.4)) * (1 - ease.smooth(seg(g, 12, 12.2)));   // oars in: hands on his knees
-      if (rest) for (const s of ['l', 'r']) { boy.aim(`upperarm.${s}`, [s === 'l' ? .2 : -.2, -.8, .5], rest); boy.aim(`lowerarm.${s}`, [s === 'l' ? .1 : -.1, -.3, 1], rest); }
+      if (rest) for (const s of ['l', 'r']) { at(boy, `lowerleg.${s}`, vE); vE.y += .008; reach(boy, s, vE, rest, .3); }
 
       /* flower lanterns adrift, the big one to the front: it opens and the wish card rises out of its heart */
       const hx = lerp(lerp(.62, .03, ease.out(seg(g, 4.5, 8.6))), -.3, ease.inOut(seg(g, 10.3, 14))), hz = lerp(.24, .165, ease.out(seg(g, 4.5, 8.6)));
@@ -439,13 +414,14 @@
       const watchHim = bump(g, 14.3, 14.6, 15.1, 15.4);
       if (watchHim) girl.bend('head', .25 * watchHim, .3 * watchHim, 0);
 
-      /* the folded lantern: on the floor, up in his hand, opened between them, lit, then up over their heads on two cords */
+      /* the folded lantern: on the gunwale, up in his hand, opened between them, lit, then up over their heads on two cords */
       at(boy, 'upperarm.r', vA); at(girl, 'upperarm.l', vB); vRing.lerpVectors(vA, vB, .5).add({ x: 0, y: -.075, z: .035 });   // where they hold it
       const gotIt = g > 14.85, open = ease.inOut(seg(g, 15.3, 16)), inflate = ease.inOut(seg(g, 17.45, 18.4)), lift = ease.inOut(seg(g, 16.95, 18.2));
       const letGo = g > 20.55, flyT = Math.max(0, g - 20.55);
-      if (!gotIt) inBoat(-.05, BOAT.floor + .005, -.012, packet.position); else at(boy, 'handslot.r', packet.position);
+      inBoat(...PACKET, vHand); reach(boy, 'r', vHand, bump(g, 14.5, 14.78, 14.86, 15.05), .2);   // his hand comes down to it
+      if (!gotIt) packet.position.copy(vHand); else at(boy, 'handslot.r', packet.position);
       packet.visible = g > .5 && g < 15.4; packet.scale.setScalar(Math.max(.001, pop * (1 - seg(g, 15.25, 15.4))));
-      packet.rotation.set(0, gotIt ? 0 : yaw, gotIt ? .3 : 0);
+      packet.rotation.set(0, gotIt ? 0 : yaw + R, gotIt ? .3 : 0);
       const ringX = lerp(vRing.x, vRing.x + .01, lift), ringY = lerp(vRing.y, .372, lift), ringZ = lerp(vRing.z, vRing.z - .03, lift);
       ours.root.visible = g > 15.25 && g < 27;
       if (!letGo) ours.root.position.set(ringX, ringY + .006 * Math.sin(T * 1.9) * lift, ringZ);
@@ -485,8 +461,8 @@
       if (upLook) { boy.bend('head', -.32 * upLook, -.12 * upLook, 0); girl.bend('head', -.32 * upLook, .12 * upLook, 0); }
 
       /* ── chapter 3: hundreds of lanterns; his arm round her; the photo floats up under a red lantern ── */
-      const hug = bump(g, 23, 24, 30.3, 30.8);
-      if (hug) { boy.aim('upperarm.r', [-.8, .3, -.45], hug); boy.aim('lowerarm.r', [-.95, .1, .25], hug); }
+      const hug = bump(g, 23, 24, 30.3, 30.8);                           // his arm round her shoulders, his hand on the far one
+      if (hug) reach(boy, 'r', girl.root.localToWorld(vE.set(-.022, .234, -.01)).applyMatrix4(mStage), hug, 0, [-.3, .2, -1]);
       const pRise = ease.inOut(seg(g, 25.4, 29.2)), aside = ease.inOut(seg(g, 30, 31.2));
       const lx = lerp(lerp(.36, .03, pRise), .405, aside), ly = lerp(lerp(.16, .72, pRise), .47, aside) + .007 * Math.sin(T * 1.3), lz = lerp(lerp(.2, .08, pRise), .03, aside);
       const ps = g < 25.4 ? .001 : lerp(.25, 1, ease.out(seg(g, 25.4, 28.2))) * lerp(1, .52, aside);

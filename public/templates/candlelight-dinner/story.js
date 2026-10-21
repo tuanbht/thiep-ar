@@ -1,27 +1,31 @@
 /* Bữa tối nến hồng (a candlelit dinner for two), told by the shared act _acts/lovestory.js. Three chapters, each ending at a stop:
      1 · 0–7.3 s      dusk; rose petals drift down and a little round table for two drops in piece by piece; he walks in
-                      leading her by the hand; he pulls out her chair while she (a little witch) flicks a spark at each of
+                      leading her by the hand; he pulls out her chair while she flicks a magic spark at each of
                       the three pink candles; she sits and scoots in, he goes round to his own seat and they look at each
                       other; a menu card with the card's first words (note1) comes up
      2 · 7.3–12.5 s   two mugs drop from the sky into their hands; they lean in and clink with a spark, take a sip; the
                       card's photo comes sliding along the string lights on a clothes peg and swings to rest, its
                       caption under it
      3 · 12.5–18.1 s  the plates vanish and a heart-shaped cake rises out of the table, its candles light; they stand up
-                      with their mugs and cheer; heart-shaped fireworks, a banner with the last words (note2) rises, and
-                      they end side by side behind the cake, an arm round each other, cheek to cheek
+                      with their mugs and cheer; heart-shaped fireworks, a banner with the last words (note2) rises, the
+                      mugs vanish in a sparkle and they step in side by side behind the cake, an arm round each other,
+                      cheek to cheek
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
-  const { THREE, stage, tween, ease, seg, lerp, rng, words } = kit;
-  const H = 0.32;                                  // his height, in card widths; the props take his scale (the KayKit packs share one)
+  const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
+  const H = 0.32, HER = H * .945;                  // their heights, in card widths (her 1.70 m to his 1.80 m)
+  const K = H / 2.315;                             // one KayKit unit in card widths: the props' scale (that pack's people stood 2.315 tall)
   const MID = { x: 0, z: .09 };                    // the table's middle
   const SPREAD = .66;                              // each seat turns this far from the phone, towards the other one
   const OUT = .045;                                // how far a chair is pulled out from the table
   const DAY = { hemi: new THREE.Color('#fff6f0'), ground: new THREE.Color('#c9a9c4'), sun: new THREE.Color('#ffffff') };
   const DUSK = { hemi: new THREE.Color('#ffd9c9'), ground: new THREE.Color('#5b3a57'), sun: new THREE.Color('#ffd0ad') };
   const C = { wine: '#7a1f35', pink: '#f59ab8', cream: '#fff7ee', gold: '#e2b04f', leaf: '#4f9a52', rose: '#d6234f' };
-  /* one KayKit unit in card widths, the tabletop's height and radius, how far behind the feet a seated body sits (set in build) */
-  let K = .14, TOP = .12, RT = .15, BACK = .055;
-  let boy, girl, chairs, plates, candles, vase, mugs, bulbs, lanterns, petals, cake, cakeFlames;
+  /* the tabletop's height and radius; where the chair clips sit them: the seat's top (.098 H / .4 for him, .102 H / .4 for
+     her: the chairs are made that high) and the hips .066 H / .4 behind the feet (each stands that far in front of the seat) */
+  const TOP = .86 * K, RT = 1.5 * .74 * K, SEAT = (.098 * H + .102 * HER) / .8, BACK = .066 * H / .4, BACK_HER = .066 * HER / .4;
+  const MUG = .5 * K;                              // a mug's scale: a size for grown-up hands
+  let boy, girl, chairs, plates, candles, vase, mugs, mouths, bulbs, lanterns, petals, cake, cakeFlames;
   let menu, photo, peg, halo, banner, sparks, hearts, motes, fireworks;
   const drops = [];                                // [object, its place, from g, from how high]
   const chairAt = [];                              // the chairs' places: they slide out and in
@@ -36,20 +40,19 @@
 
   /* who does what, from story time g: [from g, clip, options] */
   const BOY = [
-    [0, 'Idle'], [.1, 'Walking_A', { speed: 1.5 }], [2.15, 'Idle', { fade: .2 }], [2.25, 'Interact', { once: true }],
-    [3.05, 'Walking_A', { speed: 1.9 }], [3.8, 'Idle', { fade: .15 }], [4.02, 'Walking_A', { speed: 1.9 }], [5.55, 'Idle', { fade: .2 }],
+    [0, 'Idle'], [.1, 'Walking_A'], [2.15, 'Idle', { fade: .2 }], [2.25, 'Interact', { once: true }],
+    [3.05, 'Walking_A'], [3.8, 'Idle', { fade: .15 }], [4.02, 'Walking_A'], [5.55, 'Idle', { fade: .2 }],
     [5.85, 'Sit_Chair_Down', { once: true, fade: .2 }],
     [6.65, 'Sit_Chair_Idle', { fade: .3 }], [14.2, 'Sit_Chair_StandUp', { once: true, fade: .2 }], [15, 'Idle', { fade: .2 }],
-    [15.05, 'Cheer', { once: true }], [16.7, 'Walking_A', { fade: .3 }], [17.15, 'Idle', { fade: .3 }]
+    [15.05, 'Cheer', { once: true }], [16.7, 'Walking_A', { fade: .3 }], [17.25, 'Idle', { fade: .3 }]
   ];
   const GIRL = [
-    [0, 'Idle'], [.1, 'Walking_A', { speed: 1.6 }], [2.05, 'Idle', { fade: .25 }], [3.1, 'Walking_A', { speed: 1.6 }],
+    [0, 'Idle'], [.1, 'Walking_A'], [2.05, 'Idle', { fade: .25 }], [3.1, 'Walking_A'],
     [3.75, 'Idle', { fade: .15 }], [3.9, 'Sit_Chair_Down', { once: true, fade: .2 }], [4.7, 'Sit_Chair_Idle', { fade: .3 }],
     [14.25, 'Sit_Chair_StandUp', { once: true, fade: .2 }], [15.05, 'Idle', { fade: .2 }], [15.1, 'Cheer', { once: true }],
-    [16.75, 'Walking_A', { fade: .3 }], [17.2, 'Idle', { fade: .3 }]
+    [16.7, 'Walking_A', { fade: .3 }], [17.25, 'Idle', { fade: .3 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
-  const play = (m, list, g) => { const c = clipAt(list, g); m.play(c[1], c[2]); };
 
   /** a walk: keys [[g, x, z, ease?], …]; between keys it goes at an even pace unless an ease says otherwise */
   const walk = (g, keys) => [tween(g, keys.map(k => [k[0], k[1], k[3] || 'linear'])), tween(g, keys.map(k => [k[0], k[2], k[3] || 'linear']))];
@@ -231,16 +234,90 @@
   /** a point of a model (a hand's mug) in the stage's own space */
   const onStage = (o, out) => stage.worldToLocal(o.getWorldPosition(out));
 
+  /* where they go: her wait while her chair comes out, his step aside, the curve round his chair's corner, and where they
+     end, side by side behind the cake */
+  const WAIT = [-.26, -.02], GAP = [-.06, -.24], BEND = [.06, -.12], END = [.032, -.092];
+  /* the chairs: hers is pulled out for her and she scoots in; his waits pulled out and slides in under him; both slide
+     back when they stand */
+  const standBack = g => OUT * ease.inOut(seg(g, 14.2, 14.75));
+  const outL = g => OUT * (ease.inOut(seg(g, 2.65, 3)) - ease.inOut(seg(g, 4.7, 5))) + standBack(g);
+  const outR = g => OUT * (1 - ease.inOut(seg(g, 6.55, 6.85))) + standBack(g);
+  /** where one stands to sit on a seat: `back` in front of its middle, its chair `out` from the table */
+  const sitOf = (s, back, out) => [s.x + s.f.x * (back - out), s.z + s.f.z * (back - out)];
+  const behindHer = g => [LEFT.x - LEFT.f.x * (.1 + outL(g)), LEFT.z - LEFT.f.z * (.1 + outL(g))];   // to pull her chair out
+  const close = g => ease.smooth(seg(g, 16.7, 17.25));                // the end: they step in side by side
+  /** she: in beside him, her hand in his; waits clear of the chair (so it is seen coming out), steps in, sits, scoots in */
+  function herAt(g, o) {
+    const [sx, sz] = sitOf(LEFT, BACK_HER, outL(g));
+    if (g < 3.9) [o[0], o[1]] = walk(g, [[.1, -.62, -.085], [1.6, -.32, -.085], [2.05, ...WAIT], [3.1, ...WAIT], [3.8, sx, sz]]);
+    else { const k = close(g); o[0] = lerp(sx, -END[0], k); o[1] = lerp(sz, END[1], k); }
+    return o;
+  }
+  /** he: leads her in, goes behind her chair and pulls it out, steps aside while she comes in, on round to his own seat */
+  function hisAt(g, o) {
+    const [fx, fz] = behindHer(g), [sx, sz] = sitOf(RIGHT, BACK, outR(g));
+    if (g < 2.15) [o[0], o[1]] = walk(g, [[.1, -.6, -.155], [2.15, fx, fz]]);
+    else if (g < 3.05) [o[0], o[1]] = [fx, fz];
+    else if (g < 4.05) [o[0], o[1]] = walk(g, [[3.05, fx, fz], [3.85, ...GAP, 'smooth']]);
+    else if (g < 5.6) {                                                // along a curve at an even pace, eased only at its ends
+      const u = tween(g, [[4.05, 0], [4.35, .1, 'in'], [5.3, .9, 'linear'], [5.6, 1, 'out']]), a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
+      o[0] = a * GAP[0] + b * BEND[0] + c * sx; o[1] = a * GAP[1] + b * BEND[1] + c * sz;
+    } else { const k = close(g); o[0] = lerp(sx, END[0], k); o[1] = lerp(sz, END[1], k); }
+    return o;
+  }
+  const PG = [0, 0], PB = [0, 0], P1 = [0, 0], P2 = [0, 0];
+  /** Walking_A's speed for the ground really covered (KayKit's stride: .1 card widths a second at speed 1 for one .3 tall) */
+  const pace = (at, g, h) => { const a = at(g, P1), b = at(g - .05, P2); return clamp(Math.hypot(a[0] - b[0], a[1] - b[1]) / .05 / (.1 * h / .3), .7, 3.4); };
+
+  /* the arms, in the models' own units (metres): shoulder to elbow, elbow to the middle of the fist; the arm round the
+     other at the end (aim directions, its own space: his over her shoulders, hers round his waist) */
+  const ARMS = { boy: [.265, .328], girl: [.23, .308] }, HUG = { l: [[.83, -.4, -.4], [.58, -.8, .1]], r: [[-.88, .23, -.41], [-.3, -.19, .93]] };
+  const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vD = new THREE.Vector3(), vP = new THREE.Vector3(), vT = new THREE.Vector3();
+  const qInv = new THREE.Quaternion(), AIM = [0, 0, 0];
+  /** an arm reaching for a point on the stage: the elbow found from the two bones' lengths, bent down and out */
+  function reach(m, side, target, k) {
+    if (k <= 0) return;
+    const s = m.scene.scale.x, [ua, fa] = m === boy ? ARMS.boy : ARMS.girl, a = ua * s, b = fa * s, out = side === 'l' ? 1 : -1;
+    onStage(m.node(`upperarm.${side}`), vS);
+    vD.subVectors(target, vS); const L = clamp(vD.length(), .3 * (a + b), .995 * (a + b)); vD.normalize();
+    const cosA = clamp((a * a + L * L - b * b) / (2 * a * L), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
+    vP.set(out * .5, -1, -.2).applyQuaternion(m.root.quaternion); vP.addScaledVector(vD, -vP.dot(vD)).normalize();
+    vE.copy(vS).addScaledVector(vD, a * cosA).addScaledVector(vP, a * sinA);
+    qInv.copy(m.root.quaternion).invert();
+    m.aim(`upperarm.${side}`, vT.subVectors(vE, vS).applyQuaternion(qInv).toArray(AIM), k);
+    m.aim(`lowerarm.${side}`, vT.copy(vS).addScaledVector(vD, L).sub(vE).applyQuaternion(qInv).toArray(AIM), k);
+  }
+  /* a mug held by its handle, set from the hand each frame: upright on the stage, its cup past the knuckles (the way the
+     fingers point, level); while it sips (0..1) the cup turns in between the hand and `mouth` and tips its top to the lips */
+  const qStage = new THREE.Quaternion(), qYaw = new THREE.Quaternion(), qTip = new THREE.Quaternion(), UP = new THREE.Vector3(0, 1, 0);
+  const vF = new THREE.Vector3(), vA = new THREE.Vector3();
+  function holdMug(mug, m, side, sip, mouth) {
+    const slot = m.node(`handslot.${side}`);
+    onStage(slot, mug.position);
+    stage.getWorldQuaternion(qStage).invert();
+    vF.set(side === 'r' ? 1 : -1, 0, 0).transformDirection(slot.matrixWorld).applyQuaternion(qStage).setY(0);   // the fingers' way
+    if (vF.lengthSq() < 1e-6) vF.set(Math.sin(m.root.rotation.y), 0, Math.cos(m.root.rotation.y));
+    if (sip) {                                                         // turned the shorter way round towards the lips
+      onStage(mouth, vA).sub(mug.position);
+      const a = Math.atan2(vF.x, vF.z), d = ((Math.atan2(vA.x, vA.z) - a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+      vF.set(Math.sin(a + d * sip), 0, Math.cos(a + d * sip));
+    }
+    vF.normalize();
+    mug.position.addScaledVector(vF, .301 * MUG); mug.position.y -= .016 * MUG;
+    qYaw.setFromAxisAngle(UP, Math.atan2(vF.z, -vF.x));                // its handle back towards the fist
+    mug.quaternion.copy(qYaw);
+    if (sip) {
+      onStage(mouth, vA).sub(mug.position).setY(0).cross(UP).negate();
+      if (vA.lengthSq() > 1e-10) mug.quaternion.premultiply(qTip.setFromAxisAngle(vA.normalize(), .7 * sip));
+    }
+  }
+
   return {
     seconds: [7.3, 5.2, 5.6],
 
     build() {
-      /* the two of them, and his scale for everything else */
-      boy = kit.model('boy').fit({ height: H });
-      K = boy.scene.scale.x; TOP = .86 * K; RT = 1.5 * .74 * K; BACK = .397 * K;
-      girl = kit.model('girl'); girl.scene.scale.setScalar(K);             // her hat makes her box taller: she takes his scale
-      const hat = girl.node('Mage_Hat');                                   // a smaller hat, tipped back: her face shows
-      if (hat) { hat.scale.setScalar(.8); hat.position.y += .16; hat.rotation.x = -.12; }
+      /* the two of them */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
       LEFT = seat(-1); RIGHT = seat(1);
 
@@ -250,7 +327,7 @@
       drops.push([table, new THREE.Vector3(MID.x, 0, MID.z), .05, .55]);
 
       const chairModel = kit.model('chair');
-      chairModel.scene.scale.set(K, .93 * K, K);                            // its seat at the height the sitting clip sits at
+      chairModel.scene.scale.set(K, SEAT / .5, K);                          // its seat (.5 up) at the height the sitting clips sit at
       chairs = [chairModel.root, chairModel.root.clone(true)];
       chairs.forEach((c, i) => { stage.add(c); c.rotation.y = [LEFT, RIGHT][i].turn; chairAt[i] = new THREE.Vector3(); drops.push([c, chairAt[i], .3 + i * .14, .4]); });
 
@@ -275,12 +352,10 @@
       vase = roseVase(); stage.add(vase);
       drops.push([vase, new THREE.Vector3(MID.x - .42 * K, TOP + .002, MID.z + .55 * K), 1.15, .25]);
 
-      /* the mugs ride in their inner hands (hers left, his right) from the start, unseen until they drop in */
-      const mugModel = kit.model('mug'); mugModel.scene.scale.setScalar(K);
-      mugs = [mugModel.root, mugModel.root.clone(true)];
-      girl.hold(mugs[0], 'handslot.l'); boy.hold(mugs[1], 'handslot.r');
-      mugs[0].userData.at = new THREE.Vector3(-.301, -.016, 0); mugs[0].rotation.set(0, 0, 0);               // where KayKit's own mug sits in a fist
-      mugs[1].userData.at = new THREE.Vector3(.301, -.016, 0); mugs[1].rotation.set(0, Math.PI, 0);
+      /* the mugs ride in their inner hands (hers left, his right; holdMug), unseen until they drop in; their lips, for a sip */
+      const mugModel = kit.model('mug'); mugModel.scene.scale.setScalar(MUG);
+      mugs = [mugModel.root, mugModel.root.clone(true)]; stage.add(...mugs);
+      mouths = [[girl, [0, 6.7, 11.2]], [boy, [0, 2, 9]]].map(([m, p]) => { const o = new THREE.Object3D(); o.position.set(...p); m.node('head')?.add(o); return o; });
 
       stage.add(stringLights());
       lanterns = [[-.39, .2], [.4, .17]].map(([x, z]) => { const l = lantern(); l.position.set(x, 0, z); l.rotation.y = x * .8; stage.add(l); return l; });
@@ -320,12 +395,9 @@
       kit.lights.hemi.color.copy(DAY.hemi).lerp(DUSK.hemi, dusk); kit.lights.hemi.groundColor.copy(DAY.ground).lerp(DUSK.ground, dusk);
       kit.lights.hemi.intensity = lerp(1.1, .8, dusk); kit.lights.sun.color.copy(DAY.sun).lerp(DUSK.sun, dusk); kit.lights.sun.intensity = lerp(1.5, .95, dusk);
 
-      /* the chairs: hers is pulled out for her and she scoots in; his waits pulled out and slides in under him;
-         both slide back when they stand */
-      const standBack = OUT * ease.inOut(seg(g, 14.2, 14.75));
-      const outL = OUT * (ease.inOut(seg(g, 2.65, 3)) - ease.inOut(seg(g, 4.7, 5))) + standBack;
-      const outR = OUT * (1 - ease.inOut(seg(g, 6.55, 6.85))) + standBack;
-      chairAt[0].set(LEFT.x - LEFT.f.x * outL, 0, LEFT.z - LEFT.f.z * outL); chairAt[1].set(RIGHT.x - RIGHT.f.x * outR, 0, RIGHT.z - RIGHT.f.z * outR);
+      /* the chairs slide out and in (outL, outR) */
+      const oL = outL(g), oR = outR(g);
+      chairAt[0].set(LEFT.x - LEFT.f.x * oL, 0, LEFT.z - LEFT.f.z * oL); chairAt[1].set(RIGHT.x - RIGHT.f.x * oR, 0, RIGHT.z - RIGHT.f.z * oR);
 
       /* the set drops in, piece by piece, each with a squash and a hop */
       for (const [o, at, g0, h] of drops) {
@@ -375,44 +447,29 @@
           color: rng() < .5 ? '#ffd38a' : '#ffb3c7', size: .009 + rng() * .006, life: 2.5, shape: 'glow', twinkle: 5 });
       }
 
-      /* the end: after the cheer they step in side by side, an arm round each other, heads together */
-      const close = ease.inOut(seg(g, 16.75, 17.2)), finale = ease.inOut(seg(g, 17.05, 17.55));
+      /* the end: after the cheer they step in side by side (close), an arm round each other, heads together */
+      const finale = ease.inOut(seg(g, 17.05, 17.55));
 
-      /* she: walks in a step behind him, waits while he pulls out the chair, steps in, sits and scoots in */
-      const herSit = { x: LEFT.x + LEFT.f.x * (BACK - outL), z: LEFT.z + LEFT.f.z * (BACK - outL) };
-      if (g < 3.9) {                                                     // she waits clear of the chair, so it is seen coming out
-        const [x, z] = walk(g, [[.1, -.75, -.04], [1.6, -.45, -.04], [2.1, -.33, -.01, 'out'], [3.1, -.33, -.01], [3.8, herSit.x, herSit.z, 'inOut']]);
-        girl.root.position.set(x, 0, z);
-      } else girl.root.position.set(herSit.x + .035 * close, .004 * Math.sin(Math.PI * seg(g, 4.7, 5)), herSit.z);   // a hop as she scoots in
-      const stepIn = Math.atan2(herSit.x + .33, herSit.z + .01);
-      girl.root.rotation.y = tween(g, [[0, Math.PI / 2], [3.1, Math.PI / 2], [3.3, stepIn], [3.6, stepIn], [3.88, LEFT.turn], [16.75, LEFT.turn], [17.2, .3]]);
-      play(girl, GIRL, g);
-
-      /* he: leads her in, goes behind her chair and pulls it out, then steps aside into the gap between the chairs (clear of
-         her hat) while she comes in, and goes on round to his own seat */
-      const behind = { x: LEFT.x - LEFT.f.x * (.1 + outL), z: LEFT.z - LEFT.f.z * (.1 + outL) };
-      const hisSit = { x: RIGHT.x + RIGHT.f.x * (BACK - outR), z: RIGHT.z + RIGHT.f.z * (BACK - outR) };
-      const GAP = [0, -.27], BEND = [.06, -.12];                        // between the chairs; the curve round his chair's corner
-      let bx, bz;
-      if (g < 2.15) [bx, bz] = walk(g, [[.1, -.58, -.14], [1.6, -.28, -.16], [2.15, behind.x, behind.z, 'out']]);
-      else if (g < 3.05) [bx, bz] = [behind.x, behind.z];
-      else if (g < 4.05) [bx, bz] = walk(g, [[3.05, behind.x, behind.z], [3.85, ...GAP, 'inOut']]);
-      else if (g < 5.6) {                                                // along a curve at an even pace, eased only at its ends
-        const u = tween(g, [[4.05, 0], [4.35, .1, 'in'], [5.3, .9, 'linear'], [5.6, 1, 'out']]), a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u;
-        bx = a * GAP[0] + b * BEND[0] + c * hisSit.x; bz = a * GAP[1] + b * BEND[1] + c * hisSit.z;
-      } else [bx, bz] = [hisSit.x - .035 * close, hisSit.z];
+      /* where they are (herAt, hisAt) and which way they look; a walk's steps keep pace with the ground it covers */
+      const [gx, gz] = herAt(g, PG), [bx, bz] = hisAt(g, PB);
+      girl.root.position.set(gx, .004 * Math.sin(Math.PI * seg(g, 4.7, 5)), gz);   // a hop as she scoots in
+      const herSit = sitOf(LEFT, BACK_HER, oL), stepIn = Math.atan2(herSit[0] - WAIT[0], herSit[1] - WAIT[1]);
+      girl.root.rotation.y = tween(g, [[0, Math.PI / 2], [3.1, Math.PI / 2], [3.3, stepIn], [3.6, stepIn], [3.88, LEFT.turn], [16.7, LEFT.turn], [17.25, .3]]);
       boy.root.position.set(bx, g > 5.85 ? .004 * Math.sin(Math.PI * seg(g, 6.55, 6.85)) : 0, bz);
-      const toGap = Math.atan2(GAP[0] - behind.x, GAP[1] - behind.z);
-      const curveIn = Math.atan2(BEND[0] - GAP[0], BEND[1] - GAP[1]), curveOut = Math.atan2(hisSit.x - BEND[0], hisSit.z - BEND[1]);
+      const behind = behindHer(g), hisSit = sitOf(RIGHT, BACK, oR);
+      const toGap = Math.atan2(GAP[0] - behind[0], GAP[1] - behind[1]);
+      const curveIn = Math.atan2(BEND[0] - GAP[0], BEND[1] - GAP[1]), curveOut = Math.atan2(hisSit[0] - BEND[0], hisSit[1] - BEND[1]);
       boy.root.rotation.y = tween(g, [[0, Math.PI / 2], [1.6, Math.PI / 2], [2.15, LEFT.turn], [3.05, LEFT.turn], [3.3, toGap], [3.75, toGap],
-        [4.1, curveIn], [5.35, curveOut, 'linear'], [5.8, RIGHT.turn], [16.75, RIGHT.turn], [17.2, -.3]]);
-      play(boy, BOY, g);
+        [4.1, curveIn], [5.35, curveOut, 'linear'], [5.8, RIGHT.turn], [16.7, RIGHT.turn], [17.25, -.3]]);
+      for (const [m, list, at, h] of [[girl, GIRL, herAt, HER], [boy, BOY, hisAt, H]]) {
+        const c = clipAt(list, g); m.play(c[1], c[1] === 'Walking_A' ? { ...c[2], speed: pace(at, g, h) } : c[2]);
+      }
 
-      /* he leads her in by the hand, a step ahead: his right reaches back to her left */
+      /* he leads her in by the hand, a step ahead: his right hand and her left meet between them */
       const hand = seg(g, .3, .6) * (1 - seg(g, 1.5, 1.8));
       if (hand) {
-        boy.aim('upperarm.r', [-.45, -.55, -.7], hand); boy.aim('lowerarm.r', [-.4, -.35, -.85], hand);
-        girl.aim('upperarm.l', [.45, -.55, .7], hand); girl.aim('lowerarm.l', [.4, -.35, .85], hand);
+        onStage(boy.node('upperarm.r'), v3).add(onStage(girl.node('upperarm.l'), w3)).multiplyScalar(.5); v3.y -= .055;
+        reach(boy, 'r', v3, hand); reach(girl, 'l', v3, hand);
       }
 
       /* chapter 1: the menu card */
@@ -429,23 +486,29 @@
       const look = ease.inOut(seg(g, 10.2, 10.8)) * (1 - ease.inOut(seg(g, 12.6, 13)));
       const eyes = ease.inOut(seg(g, 6.75, 7.15)) * (1 - ease.inOut(seg(g, 7.3, 7.5)));
       const lean = ease.inOut(seg(g, 11.2, 11.9)) * (1 - ease.inOut(seg(g, 12.6, 13)));
-      for (const [m, s, mug] of [[girl, 1, mugs[0]], [boy, -1, mugs[1]]]) {     // s: the side the other one is on (+1 her left, -1 his right)
-        const up = s > 0 ? 'upperarm.l' : 'upperarm.r', low = s > 0 ? 'lowerarm.l' : 'lowerarm.r';
+      for (const [m, s, mug, side, mouth] of [[girl, 1, mugs[0], 'l', mouths[0]], [boy, -1, mugs[1], 'r', mouths[1]]]) {   // s: the side the other one is on (+1 her left, -1 his right)
+        const up = `upperarm.${side}`, low = `lowerarm.${side}`;
         if (rest) { m.aim(up, [s * .25, -.65, .7], rest); m.aim(low, [s * .05, .65, .8], rest); }             // the mug held up in front
         if (catchUp) { m.aim(up, [s * .3, .1, .95], catchUp); m.aim(low, [s * .1, .8, .6], catchUp); }       // a hand up to catch
         if (toast) {                                                       // the mug held out to the other's: arm forward, body leaning in
           m.aim(up, [s * .45, .3, .85], toast); m.aim(low, [s * .4, .5, .75], toast); m.bend('chest', .1, s * .1, -s * .14, toast);
         }
-        if (finale) { m.aim(up, [s * .55, -.55, -.35], finale); m.aim(low, [s * .25, -.25, -.95], finale); m.bend('chest', 0, 0, -s * .1, finale); }   // an arm round the other
-        if (sip) { m.aim(up, [s * .2, -.15, 1], sip); m.aim(low, [-s * .3, 1, .25], sip); m.bend('head', -.22, 0, 0, sip); }
+        if (finale) { m.aim(up, HUG[side][0], finale); m.aim(low, HUG[side][1], finale); m.bend('chest', 0, 0, -s * .25, finale); }   // an arm round the other
+        if (sip) {                                                         // the hand up in front of the face, the cup at the lips
+          const a = m.root.rotation.y;
+          reach(m, side, onStage(mouth, v3).add(w3.set(.03 * Math.sin(a), -.02, .03 * Math.cos(a))), sip); m.bend('head', .08, 0, 0, sip);
+        }
         if (eyes) m.bend('head', .04, s * .38, -s * .06 * (1 + .4 * Math.sin(T * 1.2)), eyes);          // seated at last: a look at each other
         if (look) m.bend('head', -.28 * look, s * .3 * look, -s * .1 * lean, 1);        // up at the photo; then heads lean together
-        if (finale) m.bend('head', 0, s * .25, -s * (.2 + .03 * Math.sin(T * 1.3)), finale);
+        if (finale) m.bend('head', s < 0 ? .05 : 0, s * .25, -s * (.42 + .03 * Math.sin(T * 1.3)), finale);
         const fall = 1 - seg(g, 7.5 + (s < 0) * .12, 7.85 + (s < 0) * .12);           // falls in from above, then rides the hand
-        mug.visible = g > 7.5 + (s < 0) * .12;
-        mug.parent.updateWorldMatrix(true, false);                          // "up" on the stage, in the hand's own space
-        mug.parent.worldToLocal(stage.localToWorld(v3.set(0, 0, 0))); mug.parent.worldToLocal(stage.localToWorld(w3.set(0, .3 * fall * fall, 0)));
-        mug.position.copy(mug.userData.at).add(w3.sub(v3));
+        const gone = seg(g, 16.45 + (s < 0) * .08, 16.7 + (s < 0) * .08);             // before they step in, it vanishes in a sparkle
+        mug.visible = g > 7.5 + (s < 0) * .12 && gone < 1;
+        holdMug(mug, m, side, sip, mouth);
+        mug.position.y += .3 * fall * fall;
+        mug.scale.setScalar(Math.max(.001, 1 - ease.in(gone)));
+        if (gone > 0 && kit.once(`mug-gone${side}`)) sparks.burst(12, () => ({ x: mug.position.x, y: mug.position.y + .02, z: mug.position.z, vx: (rng() - .5) * .15,
+          vy: .05 + rng() * .1, vz: (rng() - .5) * .1, drag: 2, color: '#ffe3a3', size: .014, life: .6, shape: 'sparkle' }));
       }
       if (g > 7.85 && kit.once('caught')) for (const mug of mugs) {           // a splash of foam as each lands
         onStage(mug, v3); sparks.burst(8, () => ({ x: v3.x, y: v3.y + .02, z: v3.z, vx: (rng() - .5) * .12, vy: .06 + rng() * .1, vz: (rng() - .5) * .1,

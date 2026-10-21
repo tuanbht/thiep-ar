@@ -21,36 +21,41 @@
   const HORIZON = .2;                                                // where the far sea meets the sky on it
   const SUN = { x: -.15, r: .09, y0: .36, set: .1 };                  // a big low sun; by the end it is under the sea
   const SHIP = { x: .03, z: 0, yaw: -.7, deck: .05, mid: -.02, bow: .31, stern: -.25, beam: .145, railEnd: -.15, mastZ: 0, mastH: .67,
-    lanternY: .39, wheelZ: -.075, staff: .45, cabin: { z0: -.245, z1: -.18, w: .08, h: .085 }, step: { z: .225, w: .085, d: .05, h: .03 } };
-  const D = SHIP.deck, STEP = D + SHIP.step.h;
+    lanternY: .39, wheelZ: -.075, wheelH: .135, staff: .38, rail: .13, cabin: { z0: -.245, z1: -.17, w: .08, h: .16, door: .12 }, step: { z: .225, w: .085, d: .05, h: .03 } };
+  const D = SHIP.deck, STEP = D + SHIP.step.h, RAIL = SHIP.rail;
+  /* the shared couple, a little smaller than on the other cards so that the little ship holds them: him .27 tall, her .945
+     of that; the rail is at his waist, the wheel's hub at his hips. Points on them (on()) are written for him at .3 and
+     her at .2835, and K scales them */
+  const H = .27, HER = H * .945, K = H / .3;
   const S = window.NM_SHIP.scenery(kit, { PAGE, HORIZON, SUN, SHIP });
   const C = window.NM_SHIP.crew(kit, S);
   const { V3 } = S;
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
   const GOLDEN = { hemi: new THREE.Color('#ffe3c8'), ground: new THREE.Color('#8a6a80'), sun: new THREE.Color('#ffd2a0') };
   const DUSK = { hemi: new THREE.Color('#b7a6ec'), ground: new THREE.Color('#5a4378'), sun: new THREE.Color('#ff9fb0') };
-  let page, ship, sea, boy, girl, hair, kerchief, helm, flock, dolphins, tag, log, banner, wind, lamp, glow, stars, hearts, sparks, spray, splash, all;
+  let page, ship, sea, boy, girl, frames, kerchief, helm, flock, dolphins, tag, log, banner, wind, lamp, glow, stars, hearts, sparks, spray, splash, all;
 
   /* ── who does what, from story time g: [from g, clip, options] ── */
-  const BOY = [
-    [0, 'Idle'], [4.25, 'Walking_A', { speed: 1.45, fade: .25 }], [6.3, 'Idle', { fade: .2 }], [7.5, 'Walking_A', { speed: 1.5, fade: .15 }],
+  const BOY = [   // (walking speeds as for the couple at .3 tall, / K: shorter legs take more steps)
+    [0, 'Idle'], [4.25, 'Walking_A', { speed: 1.45 / K, fade: .25 }], [6.3, 'Idle', { fade: .2 }], [7.5, 'Walking_A', { speed: 1.5 / K, fade: .15 }],
     [8.05, 'Idle', { fade: .2 }]
   ];
-  const GIRL = [
-    [0, 'Idle'], [11, 'Walking_A', { speed: .7, fade: .2 }], [11.5, 'Idle', { fade: .15 }], [11.55, 'Jump_Full_Short', { once: true, fade: .12 }],
-    [12.7, 'Idle', { fade: .3 }]
+  const GIRL = [   // (lifted onto the step, not jumping: the couple's jump crouches deep)
+    [0, 'Idle'], [11, 'Walking_A', { speed: .7 / K, fade: .2 }], [11.5, 'Idle', { fade: .15 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
   /* where each of them stands on the deck (the ship's own frame, +z the bow): [from g, x, z, turn, ease into it] */
   const KISS = 2.27, FACE = -.87;                                    // facing each other across the ship, side on to you
+  /* (they stand close: a step behind her to tie the kerchief, close at her left to whisper, right
+     behind her on the bow, face to face to kiss) */
   const BOY_WAY = [
-    [0, 0, -.128, 0], [4.25, 0, -.128, 0], [4.55, .025, -.1, .45, 'in'], [5.25, .058, -.02, .15, 'linear'], [5.8, .03, .06, -.2, 'linear'],
-    [6.3, -.047, .101, .4, 'out'], [7.4, -.047, .101, .4], [7.55, -.03, .1, 1.3], [8, .07, .1, 1.3, 'linear'], [8.2, .082, .1, .65],
-    [10.9, .082, .1, .65], [11.5, .04, .125, .3], [12.4, .014, .104, .5], [20.9, .014, .104, .5], [21.7, .056, .1, FACE]
+    [0, 0, -.14, 0], [4.25, 0, -.14, 0], [4.55, .025, -.1, .45, 'in'], [5.25, .058, -.02, .15, 'linear'], [5.8, .03, .06, -.2, 'linear'],
+    [6.3, -.047, .101, .4, 'out'], [7.4, -.047, .101, .4], [7.55, -.035, .105, 1.3], [8, .02, .128, 1.1, 'linear'], [8.2, .033, .138, .65],
+    [10.9, .033, .138, .65], [11.5, .03, .16, .3], [12.4, .005, .168, .5], [20.9, .005, .168, .5], [21.7, .035, .118, FACE]
   ];
   const GIRL_WAY = [
     [0, -.02, .165, .1], [1, -.02, .165, .1], [2, -.02, .165, .4], [10.3, -.02, .165, .4], [10.95, -.02, .165, 0], [11.5, -.005, .19, 0, 'linear'], [11.85, -.005, .19, 0], [12.3, 0, .225, .25, 'out'],
-    [13.6, 0, .225, .25], [14.4, 0, .225, .5], [20.9, 0, .225, .5], [21.4, -.04, .18, 1.2, 'out'], [21.9, -.04, .18, KISS]
+    [13.6, 0, .225, .25], [14.4, 0, .225, .5], [20.9, 0, .225, .5], [21.4, -.013, .156, 1.2, 'out'], [21.9, -.013, .156, KISS]
   ];
   const keysOf = way => [1, 2, 3].map(i => way.map(k => [k[0], k[i], k[4] || 'smooth']));
   const BOY_KEYS = keysOf(BOY_WAY), GIRL_KEYS = keysOf(GIRL_WAY);
@@ -70,16 +75,34 @@
     size: .012 + r() * .014, life: 1e6, shape: i % 3 ? 'glow' : 'star', twinkle: 1.5 + r() * 3 }; }))((s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)(4242));
 
   /* ── arms and hands: reaching for a point in the world ── */
-  const vS = new THREE.Vector3(), vT = new THREE.Vector3(), qW = new THREE.Quaternion(), D3 = [0, 0, 0], U3 = [0, 0, 0];
-  function reach(m, side, target, k, droop = .25) {
+  const vS = new THREE.Vector3(), vT = new THREE.Vector3(), vL = new THREE.Vector3(), vQ = new THREE.Vector3(), vU = new THREE.Vector3();
+  const qW = new THREE.Quaternion(), D3 = [0, 0, 0], U3 = [0, 0, 0];
+  const where = (m, bone, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return out.setFromMatrixPosition(b.matrixWorld); };
+  /** an arm reaching for a point: in reach, the elbow bends (out, and down by `droop`; or towards `pole`, a way in the
+      character's own space) so that the hand lands on it; out of reach, the arm points at it, the upper arm a little low */
+  function reach(m, side, target, k, droop = .25, pole = null) {
     if (k <= 0) return;
-    const b = m.node(`upperarm.${side}`); b.updateWorldMatrix(true, false); vS.setFromMatrixPosition(b.matrixWorld);
+    where(m, `upperarm.${side}`, vS); where(m, `lowerarm.${side}`, vL);
+    const a = vS.distanceTo(vL), b = vL.distanceTo(where(m, `handslot.${side}`, vU));
     m.root.getWorldQuaternion(qW).invert(); vT.subVectors(target, vS).applyQuaternion(qW);
-    D3[0] = vT.x; D3[1] = vT.y; D3[2] = vT.z; U3[0] = vT.x; U3[1] = vT.y - droop * Math.hypot(vT.x, vT.z); U3[2] = vT.z;
-    m.aim(`upperarm.${side}`, U3, k); m.aim(`lowerarm.${side}`, D3, k);
+    const dist = vT.length();
+    if (dist >= (a + b) * .999) {
+      D3[0] = vT.x; D3[1] = vT.y; D3[2] = vT.z; U3[0] = vT.x; U3[1] = vT.y - droop * Math.hypot(vT.x, vT.z); U3[2] = vT.z;
+      m.aim(`upperarm.${side}`, U3, k); m.aim(`lowerarm.${side}`, D3, k); return;
+    }
+    const A = Math.acos(clamp((a * a + dist * dist - b * b) / (2 * a * dist), -1, 1));
+    vU.copy(vT).normalize(); if (pole) vQ.fromArray(pole); else vQ.set(side === 'r' ? -1 : 1, -.3 - 2.5 * droop, -.3);
+    vQ.addScaledVector(vU, -vQ.dot(vU)).normalize();
+    vL.copy(vU).multiplyScalar(Math.cos(A)).addScaledVector(vQ, Math.sin(A));          // the upper arm, to the elbow
+    vT.addScaledVector(vL, -a);                                                        // the forearm, from the elbow to the point
+    m.aim(`upperarm.${side}`, vL.toArray(U3), k); m.aim(`lowerarm.${side}`, vT.toArray(D3), k);
   }
-  /** a point in a bone's own space (model units), in the world */
-  const on = (m, bone, x, y, z, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return b.localToWorld(out.set(x, y, z)); };
+  /** a point a bone carries: where it is on the model as it stands at rest (card widths from its feet, +x its left, +y up,
+      +z where it faces; written for him at .3 and her at .2835: the frames are scaled by K), wherever the bone has taken
+      it now, in the world */
+  const on = (m, bone, x, y, z, out) => { const f = frames.get(m)[bone]; f.updateWorldMatrix(true, false); return f.localToWorld(out.set(x, y, z)); };
+  /** a bone itself, in the world */
+  const joint = where;
   /** a point of the ship (its own frame), in the world */
   const aboard = (x, y, z, out) => ship.root.localToWorld(out.set(x, y, z));
   const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vC = new THREE.Vector3(), vD = new THREE.Vector3(), vE = new THREE.Vector3();
@@ -90,20 +113,22 @@
   const toStage = v => stage.worldToLocal(v);
 
   /* the gull that takes the helm: in from over the stern, down onto the wheel */
-  const HELM_SEAT = V3(0, D + .12 + .046 + .036, SHIP.wheelZ);       // on the wheel's top, its feet on the rim
+  const HELM_SEAT = V3(0, D + SHIP.wheelH + .046 + .036, SHIP.wheelZ);   // on the wheel's top, its feet on the rim
   const HELM_PATH = new THREE.CatmullRomCurve3([V3(.42, .64, -.5), V3(.22, .48, -.3), V3(.06, .32, -.14), HELM_SEAT]);
 
   return {
     seconds: [10, 10, 10.2],
 
     build() {
-      /* the two of them: him shaved, dark-haired, in a striped sailor's shirt with a red kerchief; her in a coral dress */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .28 });
+      /* the two of them (the shared couple: her 1.70 m to his 1.80), a red kerchief at his collar, a bow in her hair */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       page = S.makePage(); stage.add(page.root);
       sea = S.makeSea(); ship = S.makeShip();
       ship.root.add(boy.root, girl.root);
-      hair = C.dressBoy(boy); C.dressGirl(girl);
-      kerchief = C.makeKerchief(); boy.node('chest')?.add(kerchief.neck); girl.node('head')?.add(kerchief.band); stage.add(kerchief.ribbon);
+      C.dressGirl(girl).bow.parent.scale.multiplyScalar(K);
+      frames = new Map([boy, girl].map(m => [m, Object.fromEntries(['chest', 'head', 'hips'].map(b => [b, C.onBone(m, b)]))]));
+      frames.forEach(f => Object.values(f).forEach(x => x.scale.multiplyScalar(K)));   // what is built on them shrinks with them
+      kerchief = C.makeKerchief(); frames.get(boy).chest.add(kerchief.neck); frames.get(girl).head.add(kerchief.band); stage.add(kerchief.ribbon);
 
       /* the lantern's light, the gulls, the dolphins */
       lamp = new THREE.PointLight(0xffb45a, 0, .7, 2); lamp.position.set(0, -.025, 0); ship.lantern.root.add(lamp);
@@ -197,13 +222,15 @@
       if (whisper) { boy.bend('chest', .06 * whisper, 0, 0); boy.bend('head', .08 * whisper, -.2 * whisper, .24 * whisper); }
       if (nod) girl.bend('head', .16 * Math.abs(Math.sin((g - 8.55) * 7)) * nod, 0, 0);
       if (g > 6.6 && g < 11) { boy.bend('spine', 0, 0, sway * .5); girl.bend('spine', 0, 0, sway * .5); }
+      const tuck = Math.sin(Math.PI * seg(g, 11.8, 12.35));            // lifted onto the step, her knees come up
+      if (tuck > 0) for (const s of ['l', 'r']) { girl.bend(`upperleg.${s}`, -.55 * tuck, 0, 0); girl.bend(`lowerleg.${s}`, tuck, 0, 0); }
 
       /* chapter 1: he steers, then hands the wheel to the gull and salutes it */
       const helmK = 1 - ease.smooth(seg(g, 3.45, 3.7));
       ship.wheel.spin.rotation.z = (.35 * Math.sin(g * .9) + .1 * Math.sin(T * .7)) * (g < 3.6 ? 1 : .4);
       if (helmK > 0) {
         for (const [side, a] of [['r', 2.5], ['l', .64]]) {
-          const ang = a + ship.wheel.spin.rotation.z; aboard(Math.cos(ang) * .036, D + .12 + Math.sin(ang) * .036, SHIP.wheelZ - .006, vA);
+          const ang = a + ship.wheel.spin.rotation.z; aboard(Math.cos(ang) * .036, D + SHIP.wheelH + Math.sin(ang) * .036, SHIP.wheelZ - .006, vA);
           reach(boy, side, vA, helmK, .3);
         }
         boy.bend('head', -.05, .25 * Math.sin(g * .7), 0);
@@ -218,41 +245,41 @@
 
       /* she leans on the rail, a hand shading her eyes as she looks out */
       if (lean1 && g < 7) {
-        reach(girl, 'r', aboard(-.105, D + .072, .2, vA), lean1, .2);
-        girl.aim('upperarm.l', [.45, .55, .7], lean1 * (1 - spray1)); girl.aim('lowerarm.l', [-.75, .5, .45], lean1 * (1 - spray1));
+        reach(girl, 'r', aboard(-.105, D + RAIL, .2, vA), lean1, .2);
+        reach(girl, 'l', on(girl, 'head', .004, .277, .034, vB), lean1 * (1 - spray1), 0, [.8, .4, -.1]);   // a hand over her brow, shading her eyes
       }
 
       /* he unknots his kerchief and ties it over her eyes from behind; she jumps, her hands fly up to it; he steps to her side */
       const untie = bump(g, 6.25, 6.4, 6.55, 6.7), tie = bump(g, 6.55, 6.75, 7.1, 7.35);
-      if (untie) { reach(boy, 'r', on(boy, 'chest', -.12, .32, .55, vA), untie, .1); reach(boy, 'l', on(boy, 'chest', .12, .32, .55, vB), untie, .1); }
-      if (tie) { reach(boy, 'r', on(girl, 'head', -.32, .4, -.5, vA), tie, .15); reach(boy, 'l', on(girl, 'head', .32, .4, -.5, vB), tie, .15); boy.bend('head', .12 * tie, 0, 0); }
+      if (untie) { reach(boy, 'r', on(boy, 'chest', -.006, .2395, .02, vA), untie, .1); reach(boy, 'l', on(boy, 'chest', .006, .2395, .02, vB), untie, .1); }
+      if (tie) { reach(boy, 'r', on(girl, 'head', -.012, .2625, -.036, vA), tie, .15); reach(boy, 'l', on(girl, 'head', .012, .2625, -.036, vB), tie, .15); boy.bend('head', .12 * tie, 0, 0); }
       const touchL = bump(g, 7.05, 7.25, 10.25, 10.5), touchR = bump(g, 7.05, 7.25, 10.9, 11.3);
-      if (touchL) reach(girl, 'l', on(girl, 'head', .55, .36, .25, vA), touchL, .1);
-      if (touchR) reach(girl, 'r', on(girl, 'head', -.55, .36, .25, vA), touchR, .1);
+      if (touchL) reach(girl, 'l', on(girl, 'head', .026, .262, .006, vA), touchL, .1);
+      if (touchR) reach(girl, 'r', on(girl, 'head', -.029, .262, .006, vA), touchR, .1);
       const shoulder = bump(g, 8.1, 8.4, 10.3, 10.6);                 // at her side: his hand on her shoulder
-      if (shoulder) reach(boy, 'r', on(girl, 'upperarm.l', 0, 0, 0, vA), shoulder, .3);
-      if (g > 7.4 && g < 9 && kit.once('giggle')) { on(girl, 'head', 0, .9, 0, vA); toStage(vA);
+      if (shoulder) reach(boy, 'r', joint(girl, 'upperarm.l', vA), shoulder, .3);
+      if (g > 7.4 && g < 9 && kit.once('giggle')) { on(girl, 'head', 0, .295, 0, vA); toStage(vA);
         hearts.burst(8, () => ({ x: vA.x, y: vA.y, z: vA.z, vx: (rng() - .5) * .14, vy: .1 + rng() * .08, gravity: -.06, drag: .7,
           color: ['#ff4f7b', '#ff8fab', '#ffc2d1'][(rng() * 3) | 0], size: .02 + rng() * .012, life: 1.8, shape: 'heart', spin: (rng() - .5) * 3 })); }
-      if (g > 8.3 && g < 9.2 && kit.once('whisper')) { on(boy, 'head', -.4, .3, .4, vA); toStage(vA);
+      if (g > 8.3 && g < 9.2 && kit.once('whisper')) { on(boy, 'head', -.008, .265, .022, vA); toStage(vA);
         hearts.burst(3, i => ({ x: vA.x, y: vA.y, z: vA.z, vx: -.03 + i * .03, vy: .08, drag: .5, color: '#ff8fab', size: .016, life: 1.4, shape: 'heart' })); }
 
       /* chapter 2: he takes her hand and leads her to the bow, eyes shut under her own hand; up onto the step */
       const lead = bump(g, 10.3, 10.6, 11.4, 11.7), pull = bump(g, 13.65, 13.85, 13.95, 14.15);
       if (lead) {
-        on(boy, 'upperarm.r', 0, 0, 0, vA); on(girl, 'upperarm.l', 0, 0, 0, vB); vC.addVectors(vA, vB).multiplyScalar(.5);
-        aboard(0, D + .1, 0, vD); vC.y = vD.y + .002;
+        joint(boy, 'upperarm.r', vA); joint(girl, 'upperarm.l', vB); vC.addVectors(vA, vB).multiplyScalar(.5);
+        aboard(0, D + .14 * K, 0, vD); vC.y = vD.y + .002;
         reach(boy, 'r', vC, lead, .3); reach(girl, 'l', vC, lead, .3);
       }
-      if (pull) reach(girl, 'r', on(girl, 'head', -.15, .4, .7, vA), pull, .1);
+      if (pull) reach(girl, 'r', on(girl, 'head', -.008, .262, .03, vA), pull, .1);
       const waist = bump(g, 11.35, 11.6, 20.3, 20.7);                  // his hands at her waist: lifting her, then holding her
-      if (waist) { reach(boy, 'l', on(girl, 'hips', .3, .25, .05, vA), waist, .35); reach(boy, 'r', on(girl, 'hips', -.3, .25, .05, vB), waist, .35); }
+      if (waist) { reach(boy, 'l', on(girl, 'hips', .024, .172, 0, vA), waist, .35); reach(boy, 'r', on(girl, 'hips', -.024, .172, 0, vB), waist, .35); }
       if (g > 12.2 && g < 12.6 && kit.once('step-up')) { aboard(0, STEP, SHIP.step.z, vA); toStage(vA);
         sparks.burst(10, () => ({ x: vA.x, y: vA.y + .01, z: vA.z, vx: (rng() - .5) * .2, vy: .05 + rng() * .1, vz: (rng() - .5) * .2, drag: 2, color: '#fff1b8', size: .016, life: .7, shape: 'sparkle', spin: 4 })); }
 
       /* she holds the rail, opens her eyes, and spreads her arms into the wind */
       const rail = bump(g, 12.6, 12.9, 13.65, 14.3), wings = ease.inOut(seg(g, 14, 15.2)) * (1 - ease.inOut(seg(g, 20.05, 20.9)));
-      if (rail) { reach(girl, 'r', aboard(-.07, D + .074, .262, vA), rail * (1 - pull), .1); reach(girl, 'l', aboard(.07, D + .074, .262, vB), rail, .1); }
+      if (rail) { reach(girl, 'r', aboard(-.07, D + RAIL, .262, vA), rail * (1 - pull), .1); reach(girl, 'l', aboard(.07, D + RAIL, .262, vB), rail, .1); }
       if (wings) {
         const flap = .07 * Math.sin(T * 2.2);
         girl.aim('upperarm.l', [1, .14 + flap, .12], wings); girl.aim('lowerarm.l', [1, .22 + flap * 1.4, .16], wings);
@@ -265,14 +292,14 @@
       const cheek = bump(g, 14.6, 15.2, 20.2, 20.7);
       if (cheek) { boy.bend('spine', .06 * cheek, 0, 0); boy.bend('chest', .1 * cheek, 0, 0); boy.bend('head', -.06 * cheek, -.25 * cheek, .22 * cheek); }
       if (wings > .5 && dt && rng() < dt * 10) {                         // the wind full of light round her
-        on(girl, 'chest', (rng() - .5) * 2.4, .2 + rng() * .5, .4, vA); toStage(vA);
+        on(girl, 'chest', (rng() - .5) * .26, .225 + rng() * .05, .02, vA); toStage(vA);
         sparks.emit({ x: vA.x, y: vA.y, z: vA.z, vx: .1 * Math.sin(-SHIP.yaw), vy: .02, vz: -.12, drag: .4, color: rng() < .6 ? '#fff1b8' : '#ffd1dc', size: .012 + rng() * .008, life: 1, shape: 'sparkle', spin: 3 });
       }
 
       /* chapter 3: she steps down and turns to him; they hold hands; they kiss as the sun goes */
       const hands = bump(g, 21.6, 21.95, 23.05, 23.4), kiss = ease.inOut(seg(g, 23, 23.7));
       if (hands) {
-        on(boy, 'hips', 0, .3, 0, vA); on(girl, 'hips', 0, .3, 0, vB); vC.addVectors(vA, vB).multiplyScalar(.5);
+        on(boy, 'hips', 0, .17, .02, vA); on(girl, 'hips', 0, .16, .02, vB); vC.addVectors(vA, vB).multiplyScalar(.5);
         vD.subVectors(vB, vA).cross(vE.set(0, 1, 0)).normalize().multiplyScalar(.012);
         reach(boy, 'r', vE.copy(vC).add(vD), hands, .3); reach(girl, 'l', vE.copy(vC).add(vD), hands, .3);
         reach(boy, 'l', vE.copy(vC).sub(vD), hands, .3); reach(girl, 'r', vE.copy(vC).sub(vD), hands, .3);
@@ -281,15 +308,15 @@
       if (kiss) {                                                      // heads level: she on tiptoe, her face up to his
         girl.bend('chest', .06 * kiss, 0, 0); girl.bend('head', -.06 * kiss, 0, 0);
         boy.bend('chest', .07 * kiss, 0, 0); boy.bend('head', .05 * kiss, 0, 0);
-        reach(girl, 'l', on(boy, 'upperarm.r', 0, 0, 0, vA), kiss, .15); reach(girl, 'r', on(boy, 'upperarm.l', 0, 0, 0, vB), kiss, .15);
-        reach(boy, 'l', on(girl, 'hips', .35, .3, -.1, vA), kiss, .25); reach(boy, 'r', on(girl, 'hips', -.35, .3, -.1, vB), kiss, .25);
+        reach(girl, 'l', joint(boy, 'upperarm.r', vA), kiss, .15); reach(girl, 'r', joint(boy, 'upperarm.l', vB), kiss, .15);
+        reach(boy, 'l', on(girl, 'hips', .02, .175, -.012, vA), kiss, .25); reach(boy, 'r', on(girl, 'hips', -.02, .175, -.012, vB), kiss, .25);
         girl.bend('lowerleg.r', .9 * ease.smooth(seg(g, 23.5, 24)), 0, 0);   // one foot up, behind her
         if (g > 23.6) { boy.bend('spine', 0, 0, sway * .3); girl.bend('spine', 0, 0, sway * .3); }
       }
-      if (g > 23.65 && g < 24.2 && kit.once('kiss')) { on(girl, 'head', .5, .6, .5, vA); toStage(vA);
+      if (g > 23.65 && g < 24.2 && kit.once('kiss')) { on(girl, 'head', .02, .275, .025, vA); toStage(vA);
         hearts.burst(16, () => ({ x: vA.x, y: vA.y, z: vA.z, vx: (rng() - .5) * .2, vy: .12 + rng() * .12, vz: (rng() - .5) * .06, gravity: -.06, drag: .6,
           color: ['#ff4f7b', '#ff8fab', '#ffc2d1', '#e8436d'][(rng() * 4) | 0], size: .022 + rng() * .016, life: 2.4, shape: 'heart', spin: (rng() - .5) * 3 })); }
-      if (held && g > 29 && dt && rng() < dt * 1.4) { on(girl, 'head', .5, .7, .4, vA); toStage(vA);
+      if (held && g > 29 && dt && rng() < dt * 1.4) { on(girl, 'head', .02, .285, .02, vA); toStage(vA);
         hearts.emit({ x: vA.x, y: vA.y, z: vA.z, vy: .05, sway: .03, color: '#ff8fab', size: .018, life: 2.4, shape: 'heart' }); }
 
       /* the kerchief: at his collar, then round her eyes (its tails flutter), then flying from her hand, then off to the sunset */
@@ -299,13 +326,12 @@
       kerchief.tails.forEach((t, i) => t.rotation.set(-.35 - .25 * blow - .2 * Math.sin(T * 9 + i * 2), 0, (i ? .45 : -.45) + .1 * Math.sin(T * 7 + i)));
       kerchief.ribbon.visible = g >= 13.95 && g < 22.6;
       if (kerchief.ribbon.visible) {
-        if (g < 20.1) { on(girl, 'handslot.r', 0, 0, 0, vA); toStage(vA); release.copy(vA); }
+        if (g < 20.1) { joint(girl, 'handslot.r', vA); toStage(vA); release.copy(vA); }
         const away = ease.out(seg(g, 20.1, 22.4));
         vA.copy(release).addScaledVector(AWAY, .55 * away); vA.x += .03 * Math.sin(g * 4) * away;
         kerchief.set(vA, away ? vB.copy(STREAM).lerp(vC.set(.3, -.2, .9), .5 * Math.sin(g * 3) * away).normalize() : STREAM, clamp(blow), T, ease.out(seg(g, 13.95, 14.4)));
         kerchief.ribbon.material.opacity = 1 - seg(g, 21.8, 22.5); kerchief.ribbon.material.transparent = away > 0;
       }
-      hair.tufts.forEach((t, i) => { t.rotation.z = (i ? .5 : .2) + .12 * Math.sin(T * 9 + i * 2) * (.5 + blow); });
 
       /* the gull that takes the helm: it lands on the wheel, nods to his salute, and keeps watch */
       const hk = seg(g, 2.4, 3.35);

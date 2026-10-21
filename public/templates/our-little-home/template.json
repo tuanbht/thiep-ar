@@ -11,10 +11,10 @@
     2
   ],
   "reveal": null,
-  "notes": "A little home builds itself on the card (KayKit Furniture Bits and KayKit Adventurers, CC0: the Barbarian in his bear hat and the Rogue, weapons dropped by scripts/pack-models.mjs). Stop 1: a papered wall folds up like a pop-up page, the rug unrolls, the couch drops with a bounce and the lamp, the plant and the table pop in; she walks in, he follows carrying a moving box, sets it down and they cheer; a note with the card's first words (slot note1) pops up. Stop 2: dusk; they back up onto the couch and sit, she points at the lamp and it glows warm, the box shakes and opens and the card's photo rises out of it with its caption (slot caption). Stop 3: they stand and dance, hands held, she twirls under his arm, the photo goes up on the wall, fairy lights come on and a banner with the last words (slot note2) rises among hearts. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A little home builds itself on the card (KayKit Furniture Bits, CC0) for the shared grown-up couple (templates/_models: Grab3D's Casual Man and Woman with Quaternius's animations, CC0; she is fitted at .945 of his height and the couch seat is a chair's for them). Stop 1: a papered wall folds up like a pop-up page, the rug unrolls, the couch drops with a bounce and the lamp, the plant and the table pop in; she walks in, he follows carrying a moving box, sets it down and they cheer; a note with the card's first words (slot note1) pops up. Stop 2: dusk; they back up onto the couch and sit, she points at the lamp and it glows warm, the box shakes and opens and the card's photo rises out of it with its caption (slot caption). Stop 3: they stand and dance, hands held, she twirls under his arm, the photo goes up on the wall, fairy lights come on and a banner with the last words (slot note2) rises among hearts. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb",
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb",
     "couch": "models/couch.glb",
     "rug": "models/rug.glb",
     "lamp": "models/lamp.glb",
@@ -25,10 +25,16 @@
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     },
     {
       "model": "KayKit Furniture Bits",
@@ -37,7 +43,16 @@
       "url": "https://kaylousberg.itch.io/furniture-bits"
     }
   ],
-  "categories": ["couple", "love"],
-  "tags": ["tổ ấm", "về chung nhà", "dọn nhà", "căn phòng", "kỷ niệm"],
+  "categories": [
+    "couple",
+    "love"
+  ],
+  "tags": [
+    "tổ ấm",
+    "về chung nhà",
+    "dọn nhà",
+    "căn phòng",
+    "kỷ niệm"
+  ],
   "photos": 1
 }

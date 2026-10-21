@@ -20,6 +20,9 @@
                                while the act waits at the stop), g the story's own clock (the chapters end to end, holding
                                still at a stop), T seconds since the act began (idle motion), held: waiting at the stop
      })
+   The couple most cards share is templates/_models (boy.glb, girl.glb; docs/models/README.md). A model may carry, in its
+   glTF scene's extras, "aliases" (KayKit's bone names to its own, so node('upperarm.r'), aim and bend work on it) and
+   "pace" (per clip, how much to slow it so a speed written for KayKit's stride below moves its feet as far).
    Feet that do not slide: KayKit's Walking_A covers about .1 card widths a second at speed 1 for a .3-tall character
    (Walking_C about .07, Running_A about .6, Running_Strafe_Right about .47), so speed = distance / seconds / .1 for an
    even pace (/ .6 for Running_A); an eased
@@ -558,8 +561,12 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     const mixer = g.animations.length ? new THREE.AnimationMixer(inner) : null;
     if (mixer) mixers.add(mixer);
     let current = null, currentKey;
-    /** a part by its name in the file: the loader drops the dots ("upperarm.r" is upperarmr), so either works */
-    const part = q => inner.getObjectByName(q) || inner.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(q)) || null;
+    /** a part by its name in the file: the loader drops the dots ("upperarm.r" is upperarmr), so either works; else by
+        the name the model says it goes by (its "aliases": KayKit's names for its own bones) */
+    const aliases = inner.userData.aliases || {}, paces = inner.userData.pace || {};
+    const part = q => inner.getObjectByName(q) || inner.getObjectByName(THREE.PropertyBinding.sanitizeNodeName(q))
+      || (typeof q === 'string' && (aliases[q] || aliases[q.toLowerCase()]) ? inner.getObjectByName(aliases[q] || aliases[q.toLowerCase()]) : null) || null;
+    const paced = (clip, speed = 1) => speed * (paces[clip.name] ?? 1);   // a KayKit pace, on this model's stride
     const find = q => typeof q === 'number' ? g.animations[q]
       : g.animations.find(c => c.name === q) || g.animations.find(c => c.name.toLowerCase().includes(String(q).toLowerCase()));
     const api = {
@@ -568,11 +575,11 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
         const clip = mixer && find(q); if (!clip) return null;
         const a = mixer.clipAction(clip);
         if (current === a && a.isScheduled() && !o.restart && (o.key === undefined || o.key === currentKey)) {   // a played-once clip stays on its last frame
-          if (!a.paused) a.setEffectiveTimeScale(o.speed ?? 1); return a;
+          if (!a.paused) a.setEffectiveTimeScale(paced(clip, o.speed)); return a;
         }
         const prev = current; current = a; currentKey = o.key;            // a new key plays the same clip again from its start
         a.reset(); a.setLoop(o.once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!o.once;
-        a.setEffectiveTimeScale(o.speed ?? 1); a.setEffectiveWeight(1); a.play();
+        a.setEffectiveTimeScale(paced(clip, o.speed)); a.setEffectiveWeight(1); a.play();
         if (prev && prev !== a) prev.crossFadeTo(a, o.fade ?? .35, false);
         return a;
       },
@@ -590,7 +597,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       },
       /** after the animation: points a bone (the way it runs to its child, its +y) at [x, y, z] in the character's own
           space (+y up, +z where it faces, +x its left hand's side), k (0..1) of the way. Aim a parent before its child:
-          upper arm, then lower arm. A wave: aim('upperarm.r', [-.45, .85, .2]); aim('lowerarm.r', [-.15 + .3 * sin, 1, .2]). */
+          upper arm, then lower arm; and bend the back before aiming the arms (a bend after an aim swings the aimed arm). A wave: aim('upperarm.r', [-.45, .85, .2]); aim('lowerarm.r', [-.15 + .3 * sin, 1, .2]). */
       aim(bone, dir, k = 1) {
         const b = typeof bone === 'string' ? part(bone) : bone; if (!b || !k || !b.parent) return;
         touch(b); b.updateWorldMatrix(true, false);

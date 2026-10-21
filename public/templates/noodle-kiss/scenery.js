@@ -3,11 +3,11 @@
    window with shutters and geraniums, rooftops and stars), a lit copy of it that comes up with the string lights, the
    doorway cut through both to a warm room behind and a door that swings open, cobbles on the card, the string lights,
    a bistro table under a red-and-white checked cloth, a candle in a bottle, a big plate of spaghetti with meatballs, two
-   forks, a chalkboard menu on an easel, a picture frame and the lights the last banner hangs from; and the pair's new
-   clothes. The story places and times them; nothing here moves by itself.
+   forks, a chalkboard menu on an easel, a picture frame and the lights the last banner hangs from. The story places
+   and times them; nothing here moves by itself.
      NM_NOODLE.scenery(kit, layout) → the builders; layout: { WALL, DOOR, WIN, TABLE } */
 (window.NM_NOODLE = window.NM_NOODLE || {}).scenery = (kit, { WALL, DOOR, WIN, TABLE }) => {
-  const { THREE, stage, clamp } = kit;
+  const { THREE, stage } = kit;
   const TAU = Math.PI * 2;
   const seeded = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
   const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
@@ -32,23 +32,6 @@
     for (let j = 0; j < WALL.perSwag; j++) { const x = a[0] + (b[0] - a[0]) * (j + .5) / WALL.perSwag; BULBS.push([x, swagY(x, a, b) - .012]); }
   }
 
-  /* ── new clothes: the palette textures' swatches recoloured, some parts moved onto other swatches ── */
-  const cell = (cx, cy) => ({ cx, cy });
-  /** moves the UV islands of `mesh` in swatch `from` onto swatch `to`; keep(x, y, z) picks triangles by their middle
-      (model units), so a strap stays where a belt goes */
-  function remap(mesh, from, to, keep = () => true) {
-    const g = mesh?.geometry, uv = g?.attributes.uv, pos = g?.attributes.position; if (!uv) return;
-    const idx = g.index, n = idx ? idx.count : uv.count, move = new Set(), v = [0, 0, 0];
-    for (let i = 0; i < n; i += 3) {                                   // which corners first: moving them as we go would move
-      for (let k = 0; k < 3; k++) v[k] = idx ? idx.getX(i + k) : i + k;   // the next triangle's middle out of the swatch
-      const u0 = (uv.getX(v[0]) + uv.getX(v[1]) + uv.getX(v[2])) / 3, v0 = (uv.getY(v[0]) + uv.getY(v[1]) + uv.getY(v[2])) / 3;
-      if (Math.floor(u0 * 8) !== from.cx || Math.floor(v0 * 4) !== from.cy) continue;
-      const mid = k => (pos[k](v[0]) + pos[k](v[1]) + pos[k](v[2])) / 3;
-      if (keep(mid('getX'), mid('getY'), mid('getZ'))) v.forEach(j => move.add(j));
-    }
-    move.forEach(j => uv.setXY(j, uv.getX(j) + (to.cx - from.cx) / 8, uv.getY(j) + (to.cy - from.cy) / 4));
-    uv.needsUpdate = true;
-  }
   /** a material's palette with swatches recoloured ({ 'cx,cy': '#rrggbb' } on an 8 x 4 grid): each keeps its shading */
   function repaint(material, colours) {
     const img = material?.map?.image; if (!img || !img.width) return;
@@ -67,31 +50,6 @@
     t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT;
     t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
     material.map = t; material.needsUpdate = true; old.dispose();
-  }
-  /* he: dark hair (his bald scalp moved onto the beard's swatch), a dark beard, a white shirt, a red strap, dark trousers */
-  function dressBoy(m) {
-    const skin = cell(0, 0), white = cell(2, 1), trousers = cell(7, 1);
-    remap(m.node('Barbarian_Head'), skin, cell(1, 0), (x, y, z) => {
-      const side = clamp((Math.abs(x) - .28) / .18), back = clamp((.05 - z) / .3), ear = Math.abs(x) > .45 && y < 1.86 && z > -.22 && z < .2;
-      return !ear && y > 1.93 - .2 * side - .5 * back;               // the hairline: high over the brow, low at the nape
-    });
-    for (const arm of ['Barbarian_ArmLeft', 'Barbarian_ArmRight']) {
-      remap(m.node(arm), cell(7, 2), skin); remap(m.node(arm), cell(6, 0), white); remap(m.node(arm), cell(3, 0), white);   // bare hands, shirt cuffs
-    }
-    for (const leg of ['Barbarian_LegLeft', 'Barbarian_LegRight']) { remap(m.node(leg), white, trousers); remap(m.node(leg), cell(6, 0), trousers); }
-    remap(m.node('Barbarian_Body'), cell(6, 0), trousers, (x, y) => y < .78);   // the leather belt: trousers; the strap stays
-    remap(m.node('Barbarian_Body'), cell(7, 0), white);
-    repaint(m.node('Barbarian_Body')?.material, { '1,0': '#4a2a1c', '0,1': '#f3efe6', '1,1': '#ebe6dc', '2,1': '#ffffff', '6,0': '#d02a3a',
-      '7,1': '#3b3a48', '3,2': '#4a2d1f', '3,0': '#e6b54a' });
-  }
-  /* she: chestnut hair, a wine-red dress with a white collar, dark tights, red shoes */
-  function dressGirl(m) {
-    const skin = cell(0, 0);
-    for (const arm of ['Rogue_ArmLeft', 'Rogue_ArmRight']) { remap(m.node(arm), cell(5, 2), skin); remap(m.node(arm), cell(5, 0), cell(1, 1)); }
-    for (const leg of ['Rogue_LegLeft', 'Rogue_LegRight']) remap(m.node(leg), skin, cell(7, 1));
-    remap(m.node('Rogue_Body'), cell(7, 1), cell(0, 1));                 // her shorts: the dress
-    repaint(m.node('Rogue_Body')?.material, { '1,0': '#4f2a1c', '0,1': '#7c1632', '1,1': '#fff1e4', '6,0': '#5a1424', '5,0': '#5a1424',
-      '7,1': '#2c2632', '3,2': '#7a1a30', '3,0': '#e9b949' });
   }
   /* the chairs: walnut seats on black iron legs (the kitchen pack's orange and grey) */
   const dressChair = m => m.scene && m.scene.traverse(o => { if (o.isMesh) repaint(o.material, { '6,3': '#8a5634', '3,0': '#34303a' }); });
@@ -572,17 +530,18 @@
     return { root: g, bulbs, sag, bow };
   }
 
-  /* ── pink cheeks: two soft glows on a head bone (model units), hidden until the story shows them ── */
-  function makeBlush(m, at, size) {
+  /* ── pink cheeks: two soft glows on a head bone (its own units), tipped by tilt to face out of the face; hidden until the
+        story shows them ── */
+  function makeBlush(m, at, size, tilt = 0) {
     const tex = kit.canvasTexture(64, 64, (c, w) => { const gr = c.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); gr.addColorStop(0, 'rgba(255,105,140,.95)'); gr.addColorStop(.55, 'rgba(255,120,150,.5)'); gr.addColorStop(1, 'rgba(255,130,160,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, w); });
     const material = kit.keep(new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
     const head = m.node('head'); if (!head) return material;
     for (const s of [-1, 1]) {
-      const p = new THREE.Mesh(geo(new THREE.PlaneGeometry(size, size * .62)), material); p.position.set(s * at[0], at[1], at[2]); p.rotation.y = s * .42; p.renderOrder = 2; head.add(p);
+      const p = new THREE.Mesh(geo(new THREE.PlaneGeometry(size, size * .62)), material); p.position.set(s * at[0], at[1], at[2]); p.rotation.set(tilt, s * .42, 0); p.renderOrder = 2; head.add(p);
     }
     return material;
   }
 
-  return { V3, seeded, wallZ, wallTurn, mat, mesh, dressBoy, dressGirl, dressChair, makeWall, makeDoorway, makeFloor, makeLights,
+  return { V3, seeded, wallZ, wallTurn, mat, mesh, dressChair, makeWall, makeDoorway, makeFloor, makeLights,
     makeTable, makeCandle, makeSpaghetti, makeFork, makeCoil, makeNoodle, makeEasel, makeFrame, makeGarland, makeBlush, BULBS };
 };

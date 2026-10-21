@@ -11,20 +11,35 @@
     2
   ],
   "reveal": null,
-  "notes": "A love letter delivered by broom over a little harbour town at golden hour (KayKit Adventurers, CC0: the Mage with her hat and cape, recoloured in sea green with a coral cape, and the Knight without his helmet, recoloured in sailor blue with a mustard cape, in story.js; weapons and books dropped by scripts/pack-models.mjs; the town, the lighthouse, the broom, the envelope and the painted sky are built in story.js). Stop 1: the town pops up out of the card, a young witch hops onto her broom by the night post office, rises in a swirl of sparkles and banks round over the rooftops while a boy waves from his roof terrace; an airmail label with the card's first words (slot note1) comes up and gets its postmark. Stop 2: she swoops low past the viewer, lands on his terrace, steps off and hands him the letter; he opens it, the heart seal pops and the card's photo rises out of the envelope with its caption (slot caption). Stop 3: dusk falls and the photo is pegged on his washing line; they hop onto the broom one after the other and draw a heart of sparkles in the sky while the lighthouse sweeps; they hover over the town, his arms round her, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A love letter delivered by broom over a little harbour town at golden hour (the shared couple of templates/_models, Grab3D's Casual Man and Casual Woman, CC0, in their own clothes, she fitted at .945 of his height; her witch's hat with its two ribbons, the town, the lighthouse, the broom, the envelope and the painted sky are built in story.js). Stop 1: the town pops up out of the card, a young witch hops onto her broom by the night post office, rises in a swirl of sparkles and banks round over the rooftops while her sweetheart waves from his roof terrace; an airmail label with the card's first words (slot note1) comes up and gets its postmark. Stop 2: she swoops low past the viewer, lands on his terrace, steps off and hands him the letter; he opens it, the heart seal pops and the card's photo rises out of the envelope with its caption (slot caption). Stop 3: dusk falls and the photo is pegged on his washing line; they hop onto the broom one after the other and draw a heart of sparkles in the sky while the lighthouse sweeps; they hover over the town, his arms round her, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "girl": "models/girl.glb",
-    "boy": "models/boy.glb"
+    "girl": "../_models/girl.glb",
+    "boy": "../_models/boy.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
-  "categories": ["love", "viral-scenes"],
-  "tags": ["phù thủy", "chổi bay", "thư tình", "phố biển", "giao thư"],
+  "categories": [
+    "love",
+    "viral-scenes"
+  ],
+  "tags": [
+    "phù thủy",
+    "chổi bay",
+    "thư tình",
+    "phố biển",
+    "giao thư"
+  ],
   "photos": 1
 }

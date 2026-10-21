@@ -19,14 +19,14 @@
   "reveal": null,
   "notes": "A sitcom of their love story in six episodes on a revolving set of three rooms (docs/cards/our-sitcom/concept.md). 1 Lần đầu gặp nhau: the coffee and the door. 2 Vào bếp: the egg, the smoke alarm, a new print on the fridge. 3 Đêm xem phim: on the sofa, backs to us, the TV showing their photos. 4 Tranh cái remote: it flies, he hands it over, a kiss. 5 Lời tỏ tình: string lights with four photos, he holds up the card's words (confess), a hug. 6 Hậu trường: the studio lights up, they bow, the film wheel rises with every photo and the first one in the middle. Photos on twelve surfaces (TV, three wall frames, two fridge prints, a calendar, four on the string lights, the camera's monitor), the clapperboard and the film wheel. The set and the studio are set.js; the moves story.js; the act is templates/_acts/lovestory.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb",
-    "boy2": "models/boy.glb",
-    "girl2": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb",
+    "boy2": "../_models/boy.glb",
+    "girl2": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "Casual Man and Casual Woman",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
       "author": "Grab3D",
       "license": "CC0 1.0",
       "url": "https://grab3d.com/models/characters/"

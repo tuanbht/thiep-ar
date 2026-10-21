@@ -1,11 +1,14 @@
 /* Đạp xe đón bình minh: the old blue bicycle and the small things the story hands about, built in code for story.js
-   (template.json "story" loads this file before it). The bicycle is sized to KayKit riders .3 tall: their legs are short,
-   so the saddle sits at .052 (a chair's height for the sitting clip) and the wheels are small.
-     NM_DAWN.bike(kit) → { root, frame, steer, set(o), SADDLE, RACK, GRIPS, pedal(i, out), ... }
-       its own space: on the ground between the wheels, +z where it goes, +x the rider's left (as a character's).
+   (template.json "story" loads this file before it). The bicycle is drawn below in small numbers and shown K times as big,
+   sized to the shared couple (1.80 m at .3): the saddle on a long post and the bars on a tall stem, so his knees bend
+   about a right angle at the bottom of a stroke, his hands reach the grips with the elbows bent and a foot reaches the
+   ground at a stop.
+     NM_DAWN.bike(kit) → { root, frame, steer, set(o), K, SADDLE, RACK, GRIPS, BELL, BASKET, AXLE, R, pedal(i, out), ... }
+       its own space (frame's: true size, the K inside it): on the ground between the wheels, +z where it goes, +x the
+       rider's left (as a character's). SADDLE … AXLE and R are in that space.
        set({ dist, crank, steer, bell, stand, lamp }): wheels turned by the distance ridden, the cranks, the bars, the bell's
        lever, the kickstand (0 up, 1 down) and the front lamp (0 off, 1 on)
-     NM_DAWN.props(kit) → { ringBox(), camera(), scarf(), folded() } */
+     NM_DAWN.props(kit) → { ringBox(), camera(), folded() } */
 (window.NM_DAWN = window.NM_DAWN || {}).bike = kit => {
   const { THREE } = kit;
   const TAU = Math.PI * 2;
@@ -16,11 +19,13 @@
   /** a round tube along points (a frame tube, a stay, a bar) */
   const tube = (pts, r, m, parent, n = 12) => mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => V3(...p))), n, r, 8), m, parent);
 
+  const K = 1.45, POST = .03, STEM = .02;                            // shown K times as drawn; the saddle's post and the bars' stem lengthened
   const R = .03, RIM = .0255, AXLE = .08;                            // wheel radius with its tyre; the axles either side of the middle
   const BB = V3(0, .028, -.004), CRANK = .012;                       // the bottom bracket, the crank's length
-  const SADDLE = V3(0, .052, -.032), RACK = V3(0, .072, -.104);      // where a rider sits: the saddle's top, the rack's cushion
+  const SADDLE = V3(0, .052 + POST, -.032), RACK = V3(0, .072, -.104);   // where a rider sits: the saddle's top, the rack's cushion
   const HEAD = V3(0, .088, .05);                                     // the head tube's top: the bars turn about it
-  const GRIPS = [V3(.028, .103, .021), V3(-.028, .103, .021)];       // left, right (the right one rings the bell)
+  const GRIPS = [V3(.028, .103 + STEM, .021), V3(-.028, .103 + STEM, .021)];   // left, right (the right one rings the bell)
+  const BELL = V3(-.022, .108 + STEM, .03), BASKET = V3(0, .088, .098);
 
   const blue = mat('#4a80c4', { roughness: .4, metalness: .25, envMap: kit.env, envMapIntensity: .6 });
   const chrome = mat('#dde2ea', { roughness: .22, metalness: .85, envMap: kit.env, envMapIntensity: 1.2 });
@@ -28,7 +33,7 @@
   const rubber = mat('#2b2830', { roughness: .8 });
   const leather = mat('#7a4a2c', { roughness: .5 });
 
-  const root = new THREE.Group(), frame = new THREE.Group(); root.add(frame);
+  const root = new THREE.Group(), frame = new THREE.Group(), body = new THREE.Group(); root.add(frame); frame.add(body); body.scale.setScalar(K);
 
   /* ── wheels: a tyre, a rim, a disc of spokes and a hub; they turn about the axle (local x) ── */
   const spokes = kit.canvasTexture(256, 256, (c, w) => {
@@ -54,27 +59,27 @@
     guard.rotation.set(0, Math.PI / 2, z > 0 ? .25 : .5); guard.scale.set(1, 1, 3.2);
     return { hub, spin };
   }
-  const rear = wheel(-AXLE, frame);
+  const rear = wheel(-AXLE, body);
 
   /* ── the frame: a step-through loop, stays to the back wheel, the rack, the saddle ── */
-  tube([[0, .074, .052], [0, .062, .035], [0, .045, .016], [0, .033, .002], [0, .028, -.004]], .0042, blue, frame);   // the swooping down tube
-  tube([[0, .081, .051], [0, .07, .03], [0, .056, .008], [0, .047, -.006]], .003, blue, frame);                      // and its twin above it
-  tube([[0, .028, -.004], [0, .038, -.016], [0, .047, -.028]], .0042, blue, frame);                                  // the seat tube
+  tube([[0, .074, .052], [0, .062, .035], [0, .045, .016], [0, .033, .002], [0, .028, -.004]], .0042, blue, body);   // the swooping down tube
+  tube([[0, .081, .051], [0, .07, .03], [0, .056, .008], [0, .047, -.006]], .003, blue, body);                      // and its twin above it
+  tube([[0, .028, -.004], [0, .038, -.016], [0, .047, -.028]], .0042, blue, body);                                  // the seat tube
   for (const s of [-1, 1]) {
-    tube([[0, .028, -.004], [s * .006, .029, -.04], [s * .007, R, -AXLE]], .0022, blue, frame);                   // chain stays
-    tube([[0, .046, -.027], [s * .005, .04, -.05], [s * .007, R, -AXLE]], .002, blue, frame);                     // seat stays
+    tube([[0, .028, -.004], [s * .006, .029, -.04], [s * .007, R, -AXLE]], .0022, blue, body);                   // chain stays
+    tube([[0, .046, -.027], [s * .005, .04, -.05], [s * .007, R, -AXLE]], .002, blue, body);                     // seat stays
   }
-  mesh(new THREE.CylinderGeometry(.006, .006, .006, 12).rotateZ(Math.PI / 2), blue, frame, BB.x, BB.y, BB.z);       // the bottom bracket shell
-  mesh(new THREE.CylinderGeometry(.0018, .0018, .01, 6), chrome, frame, 0, .049, -.031);                             // the seat post
-  const saddle = mesh(new THREE.SphereGeometry(.011, 14, 8).scale(1, .4, 1.45), leather, frame, 0, SADDLE.y - .002, SADDLE.z);
+  mesh(new THREE.CylinderGeometry(.006, .006, .006, 12).rotateZ(Math.PI / 2), blue, body, BB.x, BB.y, BB.z);       // the bottom bracket shell
+  mesh(new THREE.CylinderGeometry(.0018, .0018, SADDLE.y - .042, 6), chrome, body, 0, (SADDLE.y + .042) / 2, -.031);   // the seat post, out of the tube to the saddle
+  const saddle = mesh(new THREE.SphereGeometry(.011, 14, 8).scale(1, .4, 1.45), leather, body, 0, SADDLE.y - .002, SADDLE.z);
   saddle.rotation.x = .08;
-  for (const s of [-1, 1]) mesh(new THREE.TorusGeometry(.0024, .0007, 4, 10), chrome, frame, s * .006, .046, -.04);   // its springs
+  for (const s of [-1, 1]) mesh(new THREE.TorusGeometry(.0024, .0007, 4, 10), chrome, body, s * .006, SADDLE.y - .006, -.04);   // its springs
   /* the rack over the back wheel and a little checked cushion on it: her seat */
-  const rack = new THREE.Group(); rack.position.set(0, RACK.y - .006, RACK.z); frame.add(rack);
+  const rack = new THREE.Group(); rack.position.set(0, RACK.y - .006, RACK.z); body.add(rack);
   for (const s of [-1, 1]) {
     mesh(new THREE.BoxGeometry(.0024, .0024, .076), chrome, rack, s * .012, 0, 0);
-    tube([[s * .012, RACK.y - .006, -.138], [s * .01, .05, -.11], [s * .008, R, -AXLE]], .0014, chrome, frame, 6);   // struts to the axle
-    tube([[s * .012, RACK.y - .006, -.068], [s * .008, .052, -.05], [s * .005, .046, -.03]], .0013, chrome, frame, 6);   // and to the seat stays
+    tube([[s * .012, RACK.y - .006, -.138], [s * .01, .05, -.11], [s * .008, R, -AXLE]], .0014, chrome, body, 6);   // struts to the axle
+    tube([[s * .012, RACK.y - .006, -.068], [s * .008, .052, -.05], [s * .005, .046, -.03]], .0013, chrome, body, 6);   // and to the seat stays
   }
   for (const z of [-.032, -.012, .008, .028]) mesh(new THREE.BoxGeometry(.026, .0016, .0018), chrome, rack, 0, 0, z);
   const plaid = kit.canvasTexture(64, 64, (c, w) => {
@@ -85,7 +90,7 @@
   mesh(new THREE.BoxGeometry(.03, .006, .056), mat('#ffffff', { map: plaid, roughness: .9 }), rack, 0, .0045, -.002);
 
   /* ── the drive on the right side (the side you see when it goes your right): chainring, cranks, pedals, a chain guard ── */
-  const crank = new THREE.Group(); crank.position.copy(BB); frame.add(crank);
+  const crank = new THREE.Group(); crank.position.copy(BB); body.add(crank);
   const ring = mesh(new THREE.CylinderGeometry(.0105, .0105, .0016, 24).rotateZ(Math.PI / 2), chrome, crank, -.008, 0, 0);
   for (let i = 0; i < 5; i++) {                                      // a five-armed spider inside the ring
     const a = i / 5 * TAU, s = mesh(new THREE.BoxGeometry(.0018, .0016, .009), chrome, crank, -.0088, Math.sin(a) * .005, Math.cos(a) * .005); s.rotation.x = -a;
@@ -102,27 +107,27 @@
   pedals[1].arm.rotation.x = Math.PI;
   const guardShape = new THREE.Shape(); guardShape.moveTo(.013, -.014); guardShape.lineTo(-.078, -.006); guardShape.quadraticCurveTo(-.084, 0, -.078, .006);
   guardShape.lineTo(.013, .014); guardShape.quadraticCurveTo(.02, 0, .013, -.014);
-  const chainGuard = mesh(new THREE.ShapeGeometry(guardShape), mat('#3e6eaf', { side: THREE.DoubleSide, roughness: .4, metalness: .2 }), frame, -.0125, BB.y + .002, BB.z);
+  const chainGuard = mesh(new THREE.ShapeGeometry(guardShape), mat('#3e6eaf', { side: THREE.DoubleSide, roughness: .4, metalness: .2 }), body, -.0125, BB.y + .002, BB.z);
   chainGuard.rotation.y = -Math.PI / 2;
 
   /* ── the kickstand on the left: up along the chain stay, down to the ground ── */
-  const stand = new THREE.Group(); stand.position.set(.009, .028, -.03); frame.add(stand);
+  const stand = new THREE.Group(); stand.position.set(.009, .028, -.03); body.add(stand);
   mesh(new THREE.CylinderGeometry(.0013, .0011, .03, 6), chrome, stand, 0, -.015, 0);
   mesh(new THREE.BoxGeometry(.004, .0012, .004), chrome, stand, 0, -.03, 0);
 
   /* ── the front: it turns about the head tube: fork, wheel, bars, grips, the bell, the basket and the lamp ── */
-  mesh(new THREE.CylinderGeometry(.0048, .0048, .03, 12), blue, frame, 0, .072, .052).rotation.x = -.25;   // the head tube
-  const steer = new THREE.Group(); steer.position.copy(HEAD); steer.rotation.x = -.25; frame.add(steer);
+  mesh(new THREE.CylinderGeometry(.0048, .0048, .03, 12), blue, body, 0, .072, .052).rotation.x = -.25;   // the head tube
+  const steer = new THREE.Group(); steer.position.copy(HEAD); steer.rotation.x = -.25; body.add(steer);
   const front = new THREE.Group(); front.rotation.x = .25; steer.add(front);   // back upright inside: parts are placed as the bike stands
   const at = (x, y, z) => [x - HEAD.x, y - HEAD.y, z - HEAD.z];      // the frame's numbers, in the turning part's own place
   for (const s of [-1, 1]) tube([at(s * .0055, .066, .056), at(s * .0065, .048, .061), at(s * .007, R, AXLE)], .002, blue, front, 6);   // fork blades
   const fw = wheel(AXLE, front); fw.hub.position.set(...at(0, R, AXLE));
-  tube([at(0, .086, .05), at(0, .1, .053)], .0026, chrome, front, 4);                                                       // the stem
-  tube([at(.028, .103, .021), at(.03, .103, .036), at(.018, .101, .055), at(0, .1, .056),
-    at(-.018, .101, .055), at(-.03, .103, .036), at(-.028, .103, .021)], .0018, chrome, front, 24);                          // swept-back bars
+  tube([at(0, .086, .05), at(0, .1 + STEM, .053)], .0026, chrome, front, 4);                                                // the stem
+  tube([[.028, .103, .021], [.03, .103, .036], [.018, .101, .055], [0, .1, .056], [-.018, .101, .055], [-.03, .103, .036], [-.028, .103, .021]]
+    .map(([x, y, z]) => at(x, y + STEM, z)), .0018, chrome, front, 24);                                                     // swept-back bars
   for (const g of GRIPS) { const m = mesh(new THREE.CylinderGeometry(.0028, .0028, .011, 8), cream, front, ...at(g.x, g.y, g.z)); m.rotation.x = Math.PI / 2; }
   /* the bell: a domed cup on the right bar, a thumb lever that flicks */
-  const bell = new THREE.Group(); bell.position.set(...at(-.022, .108, .03)); front.add(bell);
+  const bell = new THREE.Group(); bell.position.set(...at(BELL.x, BELL.y, BELL.z)); front.add(bell);
   mesh(new THREE.SphereGeometry(.0052, 14, 8, 0, TAU, 0, Math.PI / 2).scale(1, .75, 1), chrome, bell, 0, 0, 0);
   mesh(new THREE.CylinderGeometry(.0054, .0054, .0012, 14), chrome, bell, 0, -.0006, 0);
   const lever = new THREE.Group(); lever.position.set(-.004, -.001, -.003); bell.add(lever);
@@ -138,7 +143,7 @@
     c.fillStyle = '#8a5a2e'; c.fillRect(0, 0, w, 7); c.fillRect(0, h - 6, w, 6);
   });
   const basketM = mat('#ffffff', { map: wicker, roughness: .85 });
-  const basket = new THREE.Group(); basket.position.set(...at(0, .088, .098)); front.add(basket);
+  const basket = new THREE.Group(); basket.position.set(...at(BASKET.x, BASKET.y, BASKET.z)); front.add(basket);
   const BW = .044, BH = .03, BD = .034;
   for (const [w, d, x, z, ry] of [[BW, .002, 0, BD / 2, 0], [BW, .002, 0, -BD / 2, 0], [BD, .002, BW / 2, 0, Math.PI / 2], [BD, .002, -BW / 2, 0, Math.PI / 2]])
     mesh(new THREE.BoxGeometry(w, BH, d), basketM, basket, x, 0, z).rotation.y = ry;
@@ -157,20 +162,22 @@
   });
   const beam = new THREE.Mesh(geo(new THREE.PlaneGeometry(.11, .2).rotateX(-Math.PI / 2)), kit.keep(new THREE.MeshBasicMaterial({ map: pool, transparent: true, opacity: 0,
     depthWrite: false, blending: THREE.AdditiveBlending })));
-  beam.position.set(0, .0025, .21); beam.renderOrder = 2; root.add(beam);   // on the ground, not turning with the bars (it would swing past the card)
+  beam.position.set(0, .0025, .21 * K); beam.scale.setScalar(K); beam.renderOrder = 2; root.add(beam);   // on the ground, not turning with the bars (it would swing past the card)
 
   /* the back: a red reflector on the mudguard */
-  mesh(new THREE.BoxGeometry(.008, .005, .0016), mat('#d8343f', { emissive: 0xd8343f, emissiveIntensity: .25 }), frame, 0, .052, -AXLE - .032).rotation.x = .5;
+  mesh(new THREE.BoxGeometry(.008, .005, .0016), mat('#d8343f', { emissive: 0xd8343f, emissiveIntensity: .25 }), body, 0, .052, -AXLE - .032).rotation.x = .5;
 
   const eHead = new THREE.Euler(-.25, 0, 0), qTurn = new THREE.Quaternion(), UP = V3(0, 1, 0);
   return {
-    root, frame, steer, front, basket, bell, R, SADDLE, RACK, GRIPS, BB, CRANK,
+    root, frame, steer, front, basket, bell, K, R: R * K, AXLE: AXLE * K, CRANK: CRANK * K, BB: BB.clone().multiplyScalar(K),
+    SADDLE: SADDLE.clone().multiplyScalar(K), RACK: RACK.clone().multiplyScalar(K), GRIPS: GRIPS.map(g => g.clone().multiplyScalar(K)),
+    BELL: BELL.clone().multiplyScalar(K), BASKET: BASKET.clone().multiplyScalar(K),
     /** a pedal's middle in the frame's own space (i: 0 right, 1 left) at the present crank */
     pedal(i, out = V3()) { pedals[i].pedal.updateWorldMatrix(true, false); return frame.worldToLocal(out.setFromMatrixPosition(pedals[i].pedal.matrixWorld)); },
     /** a grip in the frame's own space (i: 0 left, 1 right), where the bars are turned */
     grip(i, out = V3()) { front.updateWorldMatrix(true, false); return frame.worldToLocal(front.localToWorld(out.set(...at(GRIPS[i].x, GRIPS[i].y, GRIPS[i].z)))); },
     set(o = {}) {
-      const roll = (o.dist ?? 0) / R;
+      const roll = (o.dist ?? 0) / (R * K);
       rear.spin.rotation.x = roll; fw.spin.rotation.x = roll;
       crank.rotation.x = o.crank ?? 0;
       for (const p of pedals) p.pedal.rotation.x = -crank.rotation.x - p.arm.rotation.x;   // pedals stay level under the feet
@@ -184,10 +191,9 @@
   };
 };
 
-/* ── the little things: a ring box, an instant camera, her scarf, a folded note ── */
+/* ── the little things: a ring box, an instant camera, a folded note ── */
 (window.NM_DAWN = window.NM_DAWN || {}).props = kit => {
   const { THREE } = kit;
-  const TAU = Math.PI * 2;
   const mat = (color, o = {}) => kit.keep(new THREE.MeshStandardMaterial({ color, roughness: .55, ...o }));
   const mesh = (g, m, parent, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(kit.keep(g), m); o.position.set(x, y, z); o.castShadow = true; parent.add(o); return o; };
 
@@ -220,29 +226,6 @@
     return { root, flash, slot };
   }
 
-  /** her scarf's knot and two knitted ends (the roll round her neck is her cowl, recoloured), in her own units: added to her
-      chest bone */
-  function scarf(color, stripe) {
-    const knit = kit.canvasTexture(64, 64, (c, w) => {
-      c.fillStyle = color; c.fillRect(0, 0, w, w);
-      c.fillStyle = stripe; for (let y = 6; y < w; y += 22) c.fillRect(0, y, w, 7);
-      c.strokeStyle = 'rgba(0,0,0,.12)'; c.lineWidth = 2;
-      for (let x = 0; x < w; x += 6) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 3, w); c.stroke(); }
-    });
-    knit.wrapS = knit.wrapT = THREE.RepeatWrapping;
-    const m = mat('#ffffff', { map: knit, roughness: .95 });
-    const root = new THREE.Group();
-    mesh(new THREE.SphereGeometry(.07, 10, 8).scale(1.2, 1, .8), m, root, .05, .01, .3);   // the knot
-    const ends = [];
-    for (const [x, len, tilt] of [[.13, .42, -.12], [-.03, .34, .08]]) {   // two tails down the front, one longer
-      const pin = new THREE.Group(); pin.position.set(x, -.02, .3); root.add(pin);
-      const tail = mesh(new THREE.BoxGeometry(.15, len, .05), m, pin, 0, -len / 2, 0); tail.rotation.z = tilt;
-      for (let i = 0; i < 4; i++) mesh(new THREE.BoxGeometry(.018, .06, .02), m, tail, -.055 + i * .037, -len / 2 - .03, 0);   // fringe
-      ends.push(pin);
-    }
-    return { root, ends };
-  }
-
   /** a note folded in four, to sit in the basket and pass from hand to hand */
   function folded() {
     const paper = kit.canvasTexture(64, 64, (c, w) => {
@@ -254,5 +237,5 @@
     mesh(new THREE.BoxGeometry(.022, .016, .0016), mat('#ffffff', { map: paper, roughness: .9, emissive: 0xffffff, emissiveMap: paper, emissiveIntensity: .25 }), g);
     return g;
   }
-  return { ringBox, camera, scarf, folded };
+  return { ringBox, camera, folded };
 };

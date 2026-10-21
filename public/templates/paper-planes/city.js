@@ -120,8 +120,9 @@
   }
   function block(o) {
     const g = new THREE.Group(), w = o.x1 - o.x0, d = o.d, z = L.FRONT;
-    const side = mat(GREY.wall2), top = mat('#c9c6bf');
-    g.add(mesh(new THREE.BoxGeometry(w, o.h, d - .002), [side, side, top, side, side, side], null, (o.x0 + o.x1) / 2, o.h / 2, z - d / 2 - .001));
+    const side = mat(GREY.wall2), top = mat('#c9c6bf'), open = kit.keep(new THREE.MeshBasicMaterial({ visible: false }));
+    /* the body has no front of its own: the painted front is the wall, so her window and door look into the rooms behind */
+    g.add(mesh(new THREE.BoxGeometry(w, o.h, d - .002), [side, side, top, side, open, side], null, (o.x0 + o.x1) / 2, o.h / 2, z - d / 2 - .001));
     const px = 512, pyx = Math.round(px * o.h / w);
     const fronts = [false, true].map(warm => {
       const tex = kit.canvasTexture(px, pyx, blockFront(o, warm));
@@ -154,7 +155,7 @@
       for (const x of [-.47, -.12]) pane(c, r, X(x), Y(.13), X(x + .07) - X(x), Y(.03) - Y(.13), P, warm, 0);   // shop windows
     } };
   /* her block, on the right: her door and the café below, her window above */
-  const B = { ...L.B, d: .085, seed: 23, warmWall: '#f7dcc0', warmSide: '#e3a283', tank: .38, ledges: [.31],
+  const B = { ...L.B, d: .085, seed: 23, warmWall: '#f7dcc0', warmSide: '#e3a283', tank: .38, ledges: [.37],   // the ledge over her door
     paint(c, r, X, Y, P, warm) {
       const { WIN, DOOR } = L;
       c.strokeStyle = P.ink;
@@ -236,16 +237,16 @@
     return { g, glass, glow };
   }
   function makePostBox([x, z]) {
-    const g = new THREE.Group(); g.position.set(x, 0, z); stage.add(g);
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(1.35); stage.add(g);   // as high as a grown-up's waist
     const paint = mat('#5f646c', { roughness: .5 }), dark = mat('#2c3038');
     g.add(mesh(new THREE.BoxGeometry(.05, .085, .04), paint, null, 0, .0425 + .02, 0), mesh(new THREE.CylinderGeometry(.025, .025, .04, 16, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), paint, null, 0, .105, 0));
     g.add(mesh(new THREE.BoxGeometry(.03, .004, .002), dark, null, 0, .09, .021));
     for (const sx of [-.018, .018]) g.add(mesh(new THREE.BoxGeometry(.006, .02, .006), dark, null, sx, .01, 0));
-    return { g, paint, top: .13 };
+    return { g, paint, top: .13 * 1.35 };
   }
   function makeSignal([x, z]) {
     const g = new THREE.Group(); g.position.set(x, 0, z); stage.add(g);
-    g.add(mesh(new THREE.CylinderGeometry(.004, .006, .3, 8), iron, null, 0, .15, 0));
+    g.add(mesh(new THREE.CylinderGeometry(.004, .006, .42, 8), iron, null, 0, .21, 0));   // the light above a grown-up's head
     const face = (walk, on) => kit.canvasTexture(64, 96, (c, W, H) => {   // the little man standing, or walking
       c.fillStyle = '#1d2026'; c.fillRect(0, 0, W, H);
       c.fillStyle = on ? '#fbfaf5' : '#3d424b'; c.strokeStyle = c.fillStyle; c.lineWidth = 7; c.lineCap = 'round';
@@ -256,7 +257,7 @@
     });
     const stand = face(false, true), walk = face(true, true);
     const shade = mat('#ffffff', { map: stand, emissive: 0xffffff, emissiveMap: stand, emissiveIntensity: .7 });
-    mesh(new THREE.BoxGeometry(.03, .045, .02), [iron, iron, iron, iron, shade, iron], g, 0, .29, .006);
+    mesh(new THREE.BoxGeometry(.03, .045, .02), [iron, iron, iron, iron, shade, iron], g, 0, .4, .006);
     return { g, set(go) { const t = go ? walk : stand; if (shade.map !== t) { shade.map = shade.emissiveMap = t; shade.needsUpdate = true; } } };
   }
 
@@ -275,7 +276,7 @@
       const l = c.createRadialGradient(64, H * .55, 0, 64, H * .55, 60); l.addColorStop(0, 'rgba(230,230,220,.55)'); l.addColorStop(1, 'rgba(230,230,220,0)'); c.fillStyle = l; c.fillRect(0, 0, W, H);
     }) })));
   alleyBack.position.set((L.A.x1 + L.B.x0) / 2, .25, L.FRONT - .085); stage.add(alleyBack);
-  const herRoom = room(L.WIN.x0 - .01, L.WIN.x1 + .07, L.WIN.floor, L.WIN.floor + .32, L.FRONT - .106, L.FRONT - .001, '#c7c5bf');
+  const herRoom = room(L.WIN.x0 - .01, L.WIN.x1 + .07, L.WIN.floor, Math.max(L.WIN.floor + .32, L.WIN.y1 + .04), L.FRONT - .106, L.FRONT - .001, '#c7c5bf');
   room(L.DOOR.x0 - .005, L.DOOR.x1 + .005, 0, L.DOOR.h + .01, L.FRONT - .07, L.FRONT - .001, '#55595f');   // the dark hall behind her door
   const leafM = mat('#6c7078'), door = new THREE.Group(); door.position.set(L.DOOR.x0, 0, L.FRONT + .002); stage.add(door);   // hinged on its left
   mesh(new THREE.BoxGeometry(L.DOOR.x1 - L.DOOR.x0, L.DOOR.h, .006), leafM, door, (L.DOOR.x1 - L.DOOR.x0) / 2, L.DOOR.h / 2, .003);

@@ -1,5 +1,5 @@
 /* Điệu valse đêm hội (a waltz at the ball), told by the shared act _acts/lovestory.js; the ballroom is built by ballroom.js,
-   the couple's ball clothes by wardrobe.js and what the stops show by keepsakes.js, all loaded first. Four chapters, each
+   her ball gown by wardrobe.js and what the stops show by keepsakes.js, all loaded first. Four chapters, each
    ending at a stop:
      1 · 0–10.2 s     the ballroom builds itself round him: marble tiles flip in, the wall folds up, columns grow and bloom
                       with roses, a chandelier comes down and its candles light one by one, warming the room; she comes in,
@@ -18,6 +18,7 @@
   const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
   const TAU = Math.PI * 2, R = Math.PI / 2;                          // R: facing +x, towards her
   const FLOOR = .005;                                                // the top of the marble floor
+  const H = .3, HER = H * .945;                                      // their heights (her 1.70 m to his 1.80)
   const WALL = { width: 1.1, height: .8, curve: .12, z: -.3 };       // the painted wall at the card's back edge
   const CHAN = { x: 0, z: -.07, top: 1.4, rest: .7, high: 1.5 };   // the chandelier: out of sight, lowered, raised away at night
   const COLUMNS = [[-.43, -.2], [.43, -.2]], URNS = [[-.41, .21], [.41, .21]];   // columns at the back, urns of roses at the front
@@ -30,11 +31,11 @@
   const LIGHT = Object.fromEntries(Object.entries({                   // before the candles, lit, and moonlight
     dark: ['#7f86c0', '#30243f', '#aab4ff', .55, .45], warm: ['#ffe9cc', '#8c5b5e', '#ffe0b0', 1.05, 1.25], moon: ['#9fb0ff', '#262246', '#c4d0ff', .62, .8]
   }).map(([k, [h, gr, s, hi, si]]) => [k, { hemi: new THREE.Color(h), ground: new THREE.Color(gr), sun: new THREE.Color(s), hi, si }]));
-  let boy, girl, prince, princess, floor, wall, columns, urns, chan, beams, twins;
+  let boy, girl, princess, floor, wall, columns, urns, chan, beams, twins;
   let card, gold, frame, framed, photo, banner, trail, swirl, heartPic, sparks, hearts, petals, notes, smoke, particles, TR, tinted = 0;
 
   /* ── the waltz: round the floor on an oval while the two of them turn, two turns in all, five bars of three ── */
-  const WZ = { g0: 12.6, g1: 19.8, bar: 1.44, O: [0, -.06], RX: .17, RZ: .1, d: .135, o: .07, turns: 2 };
+  const WZ = { g0: 12.6, g1: 19.8, bar: 1.44, O: [0, -.06], RX: .17, RZ: .1, d: .095, o: .025, turns: 2 };   // d: his toes clear of her hem
   const along = u => lerp(u, ease.smooth(u), .5);                    // a gentle start and finish
   const wz = { cx: 0, cz: 0, th: R, rise: 0, beat: 0, nb: 0, ph: 0 };
   /** the couple's middle, his facing, the rise (down on one, up on two and three) and the beat, at story time g */
@@ -56,16 +57,16 @@
   /* where each of them is when not waltzing: [from g, x, z, facing, ease into it] */
   const BOY_WAY = [
     [0, -.08, .04, 0], [1.3, -.08, .04, 0], [1.8, -.08, .04, .75], [2.4, -.08, .04, -.6], [2.9, -.08, .04, 0], [5.9, -.08, .04, 0], [6.5, -.08, .04, R * .85],
-    [11.3, -.08, .04, R * .85], [12.1, -.0675, .005, R],
-    [20.6, -.0675, .005, R], [21.2, -.085, .01, R], [24, -.085, .01, R], [24.6, -.06, .012, R], [26.7, -.06, .012, R],
-    [27.5, -.125, .03, R * .38], [30.8, -.125, .03, R * .38], [31.8, -.065, .01, R], [34, -.065, .01, R], [34.4, -.13, .01, R],
-    [36.3, -.13, .01, R], [37.2, -.08, .035, R * .3]
+    [11.3, -.08, .04, R * .85], [12.1, -.0475, .0275, R],
+    [20.6, -.0475, .0275, R], [21.2, -.055, .02, R], [24, -.055, .02, R], [24.6, -.045, .02, R], [26.7, -.045, .02, R],
+    [27.5, -.084, .056, R * .25], [30.8, -.084, .056, R * .25], [31.8, -.05, .025, R], [34, -.05, .025, R], [34.4, -.065, .02, R],
+    [36.3, -.065, .02, R], [37.2, -.045, .04, R * .15]
   ];
-  const GIRL_WAY = [
-    [0, .58, .06, -R], [5.6, .58, .06, -R], [7.8, .2, .05, -R, 'linear'], [8.2, .2, .05, -R * .9], [11.7, .2, .05, -R * .9], [12.5, .0675, .075, -R],
-    [20.6, .0675, .075, -R], [21.2, .085, .07, -R], [24, .085, .07, -R], [24.6, .064, .056, -R], [26.7, .064, .056, -R],
-    [27.5, .015, .05, R * .38], [30.8, .015, .05, R * .38], [31.8, .065, .07, -R], [34, .065, .07, -R], [34.4, .13, .07, -R],
-    [36.3, .13, .07, -R], [37.2, .055, .055, -R * .3]
+  const GIRL_WAY = [   // (side by side, she stands .085 from him: her gown's hem is .06 round her)
+    [0, .58, .06, -R], [5.6, .58, .06, -R], [7.8, .2, .05, -R, 'linear'], [8.2, .2, .05, -R * .9], [11.7, .2, .05, -R * .9], [12.5, .0475, .0525, -R],
+    [20.6, .0475, .0525, -R], [21.2, .045, .05, -R], [24, .045, .05, -R], [24.6, .045, .045, -R], [26.7, .045, .045, -R],
+    [27.5, -.006, .024, R * .25], [30.8, -.006, .024, R * .25], [31.8, .05, .055, -R], [34, .05, .055, -R], [34.4, .065, .06, -R],
+    [36.3, .065, .06, -R], [37.2, .04, .05, -R * .15]
   ];
   const keysOf = way => [1, 2, 3].map(i => way.map(k => [k[0], k[i], k[4] || 'smooth']));
   const BOY_KEYS = keysOf(BOY_WAY), GIRL_KEYS = keysOf(GIRL_WAY);
@@ -82,11 +83,26 @@
   const at = (m, bone, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return out.setFromMatrixPosition(b.matrixWorld).applyMatrix4(mStage); };
   const D = [0, 0, 0], U = [0, 0, 0];
   const toward = (m, side, target) => { at(m, `upperarm.${side}`, vS); vS.subVectors(target, vS).applyQuaternion(qInv.copy(m.root.quaternion).invert()); return vS.toArray(D); };
-  /** an arm reaching for a point: the upper arm a little below the line (drop), the forearm along it */
-  function reach(m, side, target, k, drop = .25) {
+  /** an arm reaching for a point: in reach, the elbow bends (out, and down by `drop`: up when it is less than 0; or towards
+      `pole`, a way in the character's own space) so the hand lands on it; out of reach, the arm points at it, the upper arm
+      a little below the line */
+  const LEN = new Map(), vI = new THREE.Vector3(), vN = new THREE.Vector3(), vQ = new THREE.Vector3(), vE = new THREE.Vector3(), vL = new THREE.Vector3();
+  function reach(m, side, target, k, drop = .25, pole = null) {
     if (k <= 0) return;
-    const d = toward(m, side, target); U[0] = d[0]; U[1] = d[1] - drop * Math.hypot(d[0], d[2]); U[2] = d[2];
-    m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k);
+    const key = m.root.name + side;
+    if (!LEN.has(key)) { at(m, `lowerarm.${side}`, vL); LEN.set(key, [at(m, `upperarm.${side}`, vI).distanceTo(vL), vL.distanceTo(at(m, `handslot.${side}`, vI))]); }
+    const [a, b] = LEN.get(key), d = toward(m, side, target), dist = vI.fromArray(d).length();
+    if (dist >= (a + b) * .999) {
+      const s = drop * Math.min(1, (dist - a - b) / (.3 * (a + b)));
+      U[0] = d[0]; U[1] = d[1] - s * Math.hypot(d[0], d[2]); U[2] = d[2];
+      m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k); return;
+    }
+    const A = Math.acos(Math.min(1, Math.max(-1, (a * a + dist * dist - b * b) / (2 * a * dist))));
+    vN.copy(vI).normalize(); if (pole) vQ.fromArray(pole); else vQ.set(side === 'r' ? -1 : 1, -.3 - 2.5 * drop, -.3);
+    vQ.addScaledVector(vN, -vQ.dot(vN)).normalize();
+    vE.copy(vN).multiplyScalar(Math.cos(A)).addScaledVector(vQ, Math.sin(A));          // the upper arm, to the elbow
+    vI.addScaledVector(vE, -a);                                                        // the forearm, from the elbow to the point
+    m.aim(`upperarm.${side}`, vE.toArray(U), k); m.aim(`lowerarm.${side}`, vI.toArray(D), k);
   }
 
   /* ── gestures the clips do not have (directions in the character's own space: +x its left, +y up, +z ahead) ── */
@@ -94,7 +110,7 @@
   function bow(m, k) {                                                // a gallant bow: right hand on his heart, left arm swept back
     if (k <= 0) return;
     m.bend('spine', .2 * k, 0, 0); m.bend('chest', .22 * k, 0, 0); m.bend('head', .2 * k, 0, 0);
-    arms(m, k, [.65, -.6, -.45], [.5, -.7, -.5], [-.15, -.4, .9], [.9, .15, .3]);
+    arms(m, k, [.65, -.6, -.45], [.5, -.7, -.5], [-.2, -.85, .45], [.95, .25, .05]);
   }
   function curtsy(m, k) {                                             // head bowed, her skirt held out at both sides
     if (k <= 0) return;
@@ -106,21 +122,22 @@
   const behindBack = (m, k) => arms(m, k, [.35, -.75, -.5], [-.55, -.2, -.8]);
   const lapels = (m, k, T) => arms(m, k, [.25, -.5, .8], [-.6, .6 + .12 * Math.sin(T * 9), .5], [-.25, -.5, .8], [.6, .6 - .12 * Math.sin(T * 9), .5]);
   const offer = (m, side, k) => (side === 'l' ? arms(m, k, [.2, -.25, 1], [-.05, .15, 1]) : arms(m, k, null, null, [-.2, -.25, 1], [.05, .15, 1]));
-  const hug = (m, k) => arms(m, k, [.42, .05, .9], [-.8, .1, .6], [-.42, .05, .9], [.8, .1, .6]);
   const steps = (m, k, beat, nb, lift = 1) => {                       // a step on every beat, one leg then the other
     if (k <= 0) return;
     const side = nb % 2 ? 'l' : 'r', sw = Math.sin(Math.PI * beat) * k * lift;
     m.bend(`upperleg.${side}`, -.45 * sw, 0, 0); m.bend(`lowerleg.${side}`, .7 * sw, 0, 0);
   };
+  /** her legs straight down under the gown: a stride, or the wide hems of her trousers, would come out through it */
+  const underGown = m => { for (const [s, x] of [['l', .05], ['r', -.05]]) { m.aim(`upperleg.${s}`, [x, -1, .02]); m.aim(`lowerleg.${s}`, [x * .4, -1, -.02]); } };
 
   return {
     seconds: [10.2, 10.4, 10.2, 10],
 
     build() {
-      /* the couple: the Knight bare-headed in an ivory coat and a wine cape, the Mage in a rose ball gown */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .29 });
+      /* the couple, her in a rose ball gown */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
-      prince = W.dressPrince(boy); princess = W.dressPrincess(girl);
+      princess = W.dressPrincess(girl);
 
       /* the ballroom */
       floor = S.makeFloor(); wall = S.makeWall(); columns = S.makeColumns(); urns = S.makeUrns(); chan = S.makeChandelier(); beams = S.makeBeams();
@@ -199,14 +216,14 @@
       if (dancing) placePair(w.cx, w.cz, w.th, WZ.d, WZ.o, B, G);
       const slow = bump(g, 31.6, 32, 33.7, 34.1), rock = .4 * Math.sin((g - 31.8) * 2.6) * slow;
       if (slow > 0) {                                                 // the slow dance: close, rocking a little each way
-        placePair(0, .04, R + rock, lerp(.15, .13, slow), lerp(.03, .05, slow), SB, SG);
+        placePair(0, .04, R + rock, lerp(.1, .095, slow), .03, SB, SG);
         for (let i = 0; i < 3; i++) { B[i] = lerp(B[i], SB[i], slow); G[i] = lerp(G[i], SG[i], slow); }
       }
       const twirl = ease.inOut(seg(g, 21.8, 24)), dipping = bump(g, 24.6, 25.2, 26.4, 27.1);
       G[2] -= 2 * TAU * twirl;
       boy.root.position.set(B[0], FLOOR + (dancing ? w.rise : 0), B[1]); boy.root.rotation.y = B[2];
       const curt = bump(g, 8.7, 9.05, 9.35, 9.75), sink = .01 * curt + .006 * dipping;   // she sinks in her curtsy and in the dip
-      girl.root.position.set(G[0] + .016 * dipping, FLOOR + (dancing ? w.rise : 0) - sink, G[1]); girl.root.rotation.y = G[2];
+      girl.root.position.set(G[0] + .008 * dipping, FLOOR + (dancing ? w.rise : 0) - sink, G[1]); girl.root.rotation.y = G[2];
       girl.root.visible = g > 5.5;
       boy.play('Idle');
       if (walkIn) girl.play('Walking_A', { speed: walkIn[1] }); else girl.play('Idle', { fade: .3 });
@@ -215,9 +232,9 @@
       const bowing = bump(g, 7.9, 8.25, 8.6, 9), kissing = bump(g, 34.5, 34.95, 35.6, 36.1);
       bow(boy, bowing);
       curtsy(girl, curt);
-      if (dipping) { girl.bend('spine', -.32 * dipping, 0, 0); girl.bend('chest', -.3 * dipping, 0, 0); girl.bend('head', -.3 * dipping, 0, 0);
-        boy.bend('spine', .16 * dipping, 0, 0); boy.bend('chest', .22 * dipping, 0, 0); boy.bend('head', .2 * dipping, 0, 0); }
-      if (kissing) { boy.bend('spine', .3 * kissing, 0, 0); boy.bend('chest', .36 * kissing, 0, 0); boy.bend('head', .3 * kissing, 0, 0); }
+      if (dipping) { girl.bend('spine', -.38 * dipping, 0, 0); girl.bend('chest', -.34 * dipping, 0, 0); girl.bend('head', -.35 * dipping, 0, 0);
+        boy.bend('spine', .22 * dipping, 0, 0); boy.bend('chest', .28 * dipping, 0, 0); boy.bend('head', .22 * dipping, 0, 0); }
+      if (kissing) { boy.bend('spine', .42 * kissing, 0, 0); boy.bend('chest', .5 * kissing, 0, 0); boy.bend('head', .3 * kissing, 0, 0); }
       const look = (m, x, y, k) => { if (k > 0) m.bend('head', x * k, y * k, 0); };
       look(boy, .28, .2 * Math.sin(g * 2.4), bump(g, .2, .5, 1.1, 1.4));            // the floor appearing at his feet
       look(boy, -.25, .3 * Math.sin((g - 1.4) * 2.6), bump(g, 1.4, 1.7, 2.6, 2.9)); // the columns growing, one side then the other
@@ -228,16 +245,25 @@
       const hold = bump(g, 12.1, 12.6, 26.9, 27.3), endUp = bump(g, 19.85, 20.2, 20.8, 21.2);
       if (hold) for (const m of [boy, girl]) { m.bend('spine', -.05 * hold, 0, .05 * Math.sin(w.ph * TAU) * (dancing ? 1 : 0)); m.bend('head', -.08 * hold, .3 * hold * (1 - endUp), 0); }
       look(boy, -.3, 0, endUp); look(girl, -.32, 0, endUp);                          // up at the gold words
-      if (dancing) { const k = Math.min(seg(g, WZ.g0, WZ.g0 + .3), 1 - seg(g, WZ.g1 - .3, WZ.g1)); steps(boy, k, w.beat, w.nb); steps(girl, k, w.beat, w.nb + 1, .6); }
+      if (dancing) { const k = Math.min(seg(g, WZ.g0, WZ.g0 + .3), 1 - seg(g, WZ.g1 - .3, WZ.g1)); steps(boy, k, w.beat, w.nb); }
       look(boy, -.15, .25 * Math.sin((g - 21.8) * 3), bump(g, 21.8, 22.1, 23.7, 24));   // watching her twirl
       look(girl, -.25, 0, bump(g, 22, 22.3, 23.6, 24));
       const admire = bump(g, 28, 28.5, 30.9, 31.5); look(boy, -.22, .15, admire); look(girl, -.22, -.1, admire);   // up at the photo
-      if (slow > 0) { hug(boy, slow); hug(girl, slow); look(boy, .05, -.45, slow); look(girl, .05, -.45, slow); }
+      if (slow > 0) {                                                 // the slow dance: his hands at her waist, hers on his shoulders
+        const lx = Math.cos(G[2]), lz = -Math.sin(G[2]);              // her left, on the stage
+        at(girl, 'spine', vT); reach(boy, 'r', vC.set(vT.x + lx * .022, vT.y, vT.z + lz * .022), slow, .3);
+        reach(boy, 'l', vC.set(vT.x - lx * .022, vT.y, vT.z - lz * .022), slow, .3);
+        at(boy, 'upperarm.l', vT); vT.y += .008; reach(girl, 'r', vT, slow, .2);
+        at(boy, 'upperarm.r', vT); vT.y += .008; reach(girl, 'l', vT, slow, .2);
+        look(boy, .05, -.45, slow); look(girl, .05, -.45, slow);
+      }
       const close = ease.smooth(seg(g, 36.6, 37.4)), sway = held ? .03 * Math.sin(T * 1.3) : 0;
-      if (close) { girl.bend('head', 0, 0, -.3 * close); boy.bend('head', 0, 0, .14 * close); boy.bend('spine', 0, 0, sway); girl.bend('spine', 0, 0, sway); }
+      if (close) {                                                    // her head on his shoulder (he is at her right, she at his left)
+        girl.bend('spine', 0, 0, .06 * close + sway); girl.bend('head', 0, 0, .28 * close); boy.bend('head', 0, 0, -.12 * close); boy.bend('spine', 0, 0, sway);
+      }
       const step3 = (m, a, b) => steps(m, bump(g, a, a + .1, b - .1, b), (g - a) * 3.2 % 1, Math.floor((g - a) * 3.2), .7);   // small steps to a new place
-      step3(boy, 11.3, 12.1); step3(girl, 11.7, 12.5); step3(boy, 20.6, 21.2); step3(boy, 24, 24.6); step3(girl, 24, 24.6);
-      step3(boy, 27, 27.6); step3(girl, 27, 27.6); step3(boy, 30.9, 31.8); step3(girl, 30.9, 31.8); step3(boy, 36.3, 37.2); step3(girl, 36.3, 37.2);
+      step3(boy, 11.3, 12.1); step3(boy, 20.6, 21.2); step3(boy, 24, 24.6); step3(boy, 27, 27.6); step3(boy, 30.9, 31.8); step3(boy, 36.3, 37.2);
+      underGown(girl);                                                // she glides: under the gown her steps do not show
 
       /* ── chapter 1: he waits, straightens his coat, bows; she curtsies; the invitation flies up and turns over ── */
       lapels(boy, bump(g, 5.05, 5.3, 5.75, 5.95), T);
@@ -272,21 +298,21 @@
         vT.addVectors(vA, vB).multiplyScalar(.5).add(vC.set(Math.cos(B[2]), 0, -Math.sin(B[2])).multiplyScalar(.05)); vT.y += .03;
         reach(boy, 'l', vT, hold * (1 - .8 * raise), .1); reach(girl, 'r', vT, hold * (1 - raise), .1);
         at(girl, 'upperarm.l', vT); vT.y -= .03;
-        if (raise > 0) { at(girl, 'head', vC); vC.y += .09; vC.x -= .015; vT.lerp(vC, raise); }
+        if (raise > 0) {                                              // the joined hands just over her head, a little towards him
+          at(girl, 'head', vC); at(boy, 'head', vD); vC.addScaledVector(vD.sub(vC).setY(0).normalize(), .025); vC.y += .045; vT.lerp(vC, raise);
+        }
         reach(boy, 'r', vT, hold, lerp(.2, -.35, raise));
         at(boy, 'upperarm.r', vD); vD.y += .01; vD.lerp(vT, raise);
         reach(girl, 'l', vD, hold * (1 - dipping), lerp(-.1, -.35, raise));
       }
       if (dipping) arms(girl, dipping, [.55, .75, -.35], [.35, .92, -.2]);   // her free arm swept up and back in the dip
 
-      /* the gown and the capes: they swirl with the turn, flare in the twirl, sway as she walks */
+      /* the gown: it swirls with the turn, flares in the twirl, sways as she walks */
       const spinRate = dancing ? WZ.turns * TAU / (WZ.g1 - WZ.g0) : 0, twirlRate = 2 * TAU / 2.2 * Math.sin(Math.PI * seg(g, 21.8, 24)) * 1.5;
       const walkSway = walkIn ? Math.sin((g - 5.6) * walkIn[1] * Math.PI / .55) : 0;
       princess.pose({ flare: (dancing ? .28 + .12 * Math.sin(w.ph * TAU) : 0) + .9 * Math.sin(Math.PI * seg(g, 21.8, 24)) + .15 * slow,
         twist: -.22 * (spinRate + twirlRate) + .06 * walkSway, sway: .25 * walkSway + (dancing ? .2 * Math.sin(w.ph * TAU) : 0) + .1 * Math.sin(T * 1.2) * (held ? 1 : 0),
-        drop: sink / girl.scene.scale.x, lift: .2 + .5 * (dancing ? 1 : 0) + .7 * Math.sin(Math.PI * seg(g, 21.8, 24)), side: .35 * Math.sin(T * 2.1) * (dancing ? 1 : .3),
-        ripple: walkIn || dancing ? .8 : .25, lean: .16 * curt - .62 * dipping }, T);
-      prince.pose(.15 + (dancing ? .35 : 0), .25 * Math.sin(T * 1.9) * (dancing ? 1 : .3), dancing ? .6 : .2, T, .42 * bowing + .38 * dipping + .66 * kissing);
+        drop: sink / girl.scene.scale.x }, T);
 
       /* the trail: sparkles left on the floor where they danced, that lift and write the gold words */
       const pts = gold.points(trail.n), wordsIn = ease.smooth(seg(g, 20, 20.5)), burst = seg(g, 20.6, 21.6);
@@ -336,15 +362,18 @@
       photo.halo.material.opacity = .65 * seg(g, 28.6, 29.2) * (1 - .5 * aside) * (1 + .08 * Math.sin(T * 3));
       if (g > 28.4 && g < 28.8 && kit.once('frame')) sparks.burst(30, i => { const a = i / 30 * TAU; return { x: FRAME_AT[0], y: FRAME_AT[1], z: FRAME_AT[2] + .02, vx: Math.cos(a) * .3, vy: Math.sin(a) * .3,
         drag: 2, color: ['#fff1b8', '#ffd27a', '#ffd1dc'][i % 3], size: .02, life: 1, shape: 'sparkle', spin: 3 }; });
-      const armInArm = bump(g, 27.3, 27.6, 30.9, 31.4);                 // arm in arm, looking at the photo
-      if (armInArm > 0) { reach(boy, 'l', at(girl, 'chest', vT).add(vC.set(0, -.02, 0)), armInArm, .3); reach(girl, 'r', at(boy, 'chest', vT), armInArm, .2); }
+      const armInArm = bump(g, 27.3, 27.6, 30.9, 31.4);                 // arm in arm, looking at the photo: her hand on his offered arm
+      if (armInArm > 0) {
+        arms(boy, armInArm, [.12, -.9, .25], [-.15, -.1, 1]);
+        at(boy, 'lowerarm.l', vT).lerp(at(boy, 'handslot.l', vC), .45); vT.y += .006; reach(girl, 'r', vT, armInArm, .3);
+      }
 
       /* ── chapter 4: night; the slow dance; the kiss on her hand; close; the banner ── */
       if (dt) chan.candles.forEach((cd, i) => {                       // a wisp of smoke from each candle as it goes out
         const t0 = 31.2 + (13 - i) * .09; if (g > t0 + .2 && g < t0 + .5 && kit.once(`smoke${i}`)) { chan.body.localToWorld(vA.copy(cd.p)).applyMatrix4(mStage);
           smoke.emit({ x: vA.x, y: vA.y + .01, z: vA.z, vy: .05, sway: .01, color: '#cfc8d8', size: .03, grow: 1.5, life: 1.6, shape: 'glow' }); } });
       const offerHand = bump(g, 34.1, 34.5, 35.9, 36.3);
-      if (g > 34 && g < 37) { at(girl, 'chest', vA); at(boy, 'chest', vB); vK.lerpVectors(vB, vA, .62); vK.y += .045; }   // where his lips come down to
+      if (g > 34 && g < 37) { at(girl, 'chest', vA); at(boy, 'chest', vB); vK.lerpVectors(vB, vA, .4); vK.y += .005; }   // where his lips come down to
       if (offerHand > 0) { reach(girl, 'r', vK, offerHand, -.05); reach(boy, 'l', vK, offerHand * (1 - .3 * kissing), .25); }   // she gives him her hand; he kisses it
       const shy = bump(g, 35.2, 35.5, 36.6, 37); arms(girl, shy, [.3, -.3, .9], [-.35, .9, .25]); if (shy) girl.bend('head', .08 * shy, 0, .2 * shy);
       if (g > 35.05 && g < 35.4 && kit.once('kiss')) hearts.burst(12, () => ({ x: vK.x, y: vK.y + .03, z: vK.z, vx: (rng() - .5) * .2, vy: .12 + rng() * .15, gravity: -.1, drag: .7,
@@ -352,8 +381,11 @@
       const hp = ease.back(seg(g, 35.05, 35.5)) * (1 - ease.in(seg(g, 36.4, 36.9)));
       heartPic.visible = hp > .01; heartPic.scale.setScalar(Math.max(.001, .07 * hp * (1 + .1 * Math.sin(T * 6))));
       heartPic.position.set(vK.x, vK.y + .05 + .05 * seg(g, 35.05, 36.9), vK.z + .02);
-      arms(boy, close, [.85, .25, -.2], [.4, .1, -.9]);                // his arm round her; her hand on his chest
-      arms(girl, close, null, null, [-.45, -.35, .8], [-.85, .35, .4]);
+      if (close > 0) {                                                // his arm round her shoulders, his hand on the far one; hers on his chest
+        at(girl, 'upperarm.l', vT); vT.x -= Math.sin(G[2]) * .012; vT.z -= Math.cos(G[2]) * .012; vT.y += .004; reach(boy, 'l', vT, close, 0, [.3, .2, -1]);
+        at(boy, 'neck', vT); vT.x += Math.sin(B[2]) * .024 + Math.cos(B[2]) * .012; vT.z += Math.cos(B[2]) * .024 - Math.sin(B[2]) * .012; vT.y -= .055;
+        reach(girl, 'r', vT, close, .3);
+      }
       const b = ease.elastic(seg(g, 37.4, 38.4));
       banner.root.visible = b > .002; banner.root.scale.setScalar(Math.max(.001, b)); banner.root.position.set(0, .6 + .006 * Math.sin(T * 1.5), .06); banner.root.rotation.set(-.1, 0, .02 * Math.sin(T * 1.1));
       if (g > 37.9 && g < 38.3 && kit.once('love')) hearts.burst(20, () => ({ x: (rng() - .5) * .3, y: .5, z: .06, vx: (rng() - .5) * .3, vy: .1 + rng() * .15, gravity: -.1, drag: .7,

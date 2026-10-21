@@ -1,9 +1,9 @@
 /* Đạp xe đón bình minh (riding out to meet the sunrise), told by the shared act _acts/lovestory.js; the world is built by
-   scenery.js, the bicycle and the small props by bike.js, their clothes, reaches and paper by cast.js (all loaded first).
+   scenery.js, the bicycle and the small props by bike.js, their reaches and paper by cast.js (all loaded first).
    Four chapters of about ten seconds, each ending at a stop:
      1 · 0–10 s    deep blue before dawn: he rides in on an old blue bicycle and rings the bell under her window; her
-                   window lights, the door opens and she comes out in her hood and scarf, hops onto the back rack
-                   sideways; the note tucked in the basket flutters up into her hands and opens: the first words (note1)
+                   window lights, the door opens and she comes out, walks round the back of the bike and hops onto the
+                   rack sideways; the note tucked in the basket flutters up into her hands and opens: the first words (note1)
      2 · 10–20 s   the street folds away and a terraced hill pops up out of the card; they set off up the winding road,
                    he stands on the pedals and slows to a wobble, she hops off and pushes, laughing, while the stars fade
                    and the sky pales; at the bend she hops back on and the road sign flips round to the second words (note2)
@@ -19,8 +19,11 @@
   const TAU = Math.PI * 2, R = Math.PI / 2;
   const S = window.NM_DAWN.scenery(kit), C = window.NM_DAWN.cast(kit), P = window.NM_DAWN.props(kit);
   const { LAYOUT, ground } = S;
-  const HB = .3, HG = .29, SB = HB / .3, SG = HG / .3;               // their heights; the sitting clip's numbers are for .3
-  const SIT = { up: .0624, back: .0545, seat: .047 };                 // sitting: the hips this high over the root and this far behind it; the seat
+  const HB = .3, HG = HB * .945, SB = HB / .3;                     // their heights (her 1.70 m to his 1.80); SB scales numbers measured at .3
+  /* sitting (the chair clips, docs/models/README.md): the seat's top over the root and the hips settled behind it; his hips
+     over his feet standing (Idle); how far a walk carries her each second at speed 1 (KayKit's stride, the model's pace) */
+  const SIT = { boy: { seat: .098 * HB / .4, back: .066 * HB / .4 }, girl: { seat: .102 * HB / .4, back: .066 * HG / .4 } };
+  const HIPS = .156 * SB, STRIDE_G = .1 * HG / .3;
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
   const keysOf = (way, n) => Array.from({ length: n }, (_, i) => way.map(k => [k[0], k[i + 1], k[n + 1] || 'smooth']));
@@ -32,16 +35,16 @@
   };
 
   /* ── the bicycle's way: [from g, x, z, heading, ease into it] (heading R: towards your right) ── */
-  const UT = { x: .37, z: .065, r: .085 };                            // the U-turn at the bend
+  const UT = { x: .27, z: .065, r: .085 };                            // the U-turn at the bend (early enough that the rack, trailing round its outside, stays on the card)
   const SPIN = { x: -.005, z: -.135 };                                // the middle of their hug at the top
   const turnAt = a => [UT.x - UT.r * Math.cos(a), UT.z + UT.r * Math.sin(a)];
   const BIKE_WAY = [
     [0, -.68, .15, R], [.8, -.68, .15, R], [2.55, -.215, .15, R, 'linear'], [3, -.16, .15, R, 'out'],   // rides in, brakes under her window
     [10.2, -.16, .15, R], [11.6, -.08, .15, R, 'in'], [12.8, .08, .15, R, 'linear'],  // sets off along the street to ramp A
     [14.6, .175, .15, R, 'out'], [15.3, .178, .15, R],                                // the climb: slower and slower, a stall
-    [17.4, .37, .15, R, 'inOut'], [20.1, .37, .15, R],                                // pushed up onto the bend: stop 2
+    [17.4, .27, .15, R, 'inOut'], [20.1, .27, .15, R],                                // pushed up to the bend: stop 2
     ...[1, 2, 3, 4].map(i => { const a = R + i * R / 2, [x, z] = turnAt(a); return [20.1 + i * .25, x, z, a, i === 1 ? 'in' : 'linear']; }),   // round the bend
-    [21.4, .29, -.02, 3 * R, 'linear'], [22.7, -.17, -.02, 3 * R, 'linear'], [23.3, -.25, -.02, 3 * R, 'out'], [40, -.25, -.02, 3 * R]   // up ramp B to the top
+    [21.4, .19, -.02, 3 * R, 'linear'], [22.7, -.24, -.02, 3 * R, 'linear'], [23.3, -.32, -.02, 3 * R, 'out'], [40, -.32, -.02, 3 * R]   // up ramp B to the top
   ];
   const BIKE_KEYS = keysOf(BIKE_WAY, 3), bikeAt = g => BIKE_KEYS.map(k => tween(g, k));
   /** when his feet turn the pedals, and in what gear (wheel turns to a crank turn) */
@@ -50,31 +53,32 @@
   const BOY_MODE = [[0, 'ride'], [3, 'foot'], [10.25, 'ride'], [13.1, 'stand'], [17.3, 'foot'], [20.15, 'ride'], [23.1, 'foot'], [23.8, 'off']];
   const GIRL_MODE = [[0, 'in'], [5.3, 'walk'], [7.55, 'sit'], [14.65, 'walk'], [15.35, 'push'], [17.3, 'walk'], [18.25, 'sit'], [23.45, 'walk']];
   const BOY_CLIPS = [
-    [0, 'Sit_Chair_Pose'], [13.1, 'Idle', { fade: .25 }], [17.3, 'Sit_Chair_Pose', { fade: .25 }], [23.8, 'Idle', { fade: .2 }],
-    [24.3, 'Walking_A', { speed: 2.1, fade: .2 }], [26, 'Idle', { fade: .25 }], [27.1, 'Walking_A', { speed: 1.2, fade: .15 }], [27.75, 'Idle', { fade: .2 }],
-    [30.3, 'Walking_A', { speed: .7, fade: .2 }], [30.75, 'Idle', { fade: .2 }], [36.1, 'Jump_Full_Short', { once: true, fade: .1, speed: 1.3 }],
-    [36.9, 'Idle', { fade: .25 }]
+    [0, 'Sit_Chair_Idle'], [13.1, 'Idle', { fade: .25 }], [17.3, 'Sit_Chair_Idle', { fade: .25 }], [23.8, 'Idle', { fade: .2 }],
+    [24.3, 'Walking_A', { speed: 2.7, fade: .2 }], [26, 'Idle', { fade: .25 }], [27.1, 'Walking_A', { speed: 1.3, fade: .15 }], [27.75, 'Idle', { fade: .2 }],
+    [30.3, 'Walking_A', { speed: .6, fade: .2 }], [30.75, 'Idle', { fade: .2 }], [30.9, 'Kneel', { once: true, fade: .25 }], [32.1, 'Kneel_Idle', { fade: .3 }],
+    [36.1, 'Jump_Full_Short', { once: true, fade: .1, speed: 1.3 }], [36.9, 'Walking_A', { speed: 1, fade: .15 }], [37.2, 'Idle', { fade: .2 }]
   ];
   const GIRL_CLIPS = [
-    [0, 'Idle'], [5.3, 'Walking_A', { speed: 1.6, fade: .2 }], [7.35, 'Idle', { fade: .15 }], [7.55, 'Sit_Chair_Down', { once: true, fade: .15 }],
+    [0, 'Idle'], [5.3, 'Walking_A', { speed: 1.9, fade: .2 }], [7.35, 'Idle', { fade: .15 }], [7.55, 'Sit_Chair_Down', { once: true, fade: .15 }],
     [8.35, 'Sit_Chair_Idle', { fade: .3 }], [14.65, 'Sit_Chair_StandUp', { once: true, fade: .15 }], [15.3, 'Walking_A', { speed: .85, fade: .2 }],
-    [17.3, 'Walking_A', { speed: 1.1, fade: .2 }], [17.95, 'Idle', { fade: .15 }], [18.25, 'Sit_Chair_Down', { once: true, fade: .15 }],
+    [17.3, 'Walking_A', { speed: .6, fade: .2 }], [17.95, 'Idle', { fade: .15 }], [18.25, 'Sit_Chair_Down', { once: true, fade: .15 }],
     [19.05, 'Sit_Chair_Idle', { fade: .3 }], [23.45, 'Sit_Chair_StandUp', { once: true, fade: .15 }], [24.2, 'Walking_A', { speed: 1.2, fade: .2 }],
-    [26, 'Idle', { fade: .25 }], [27.1, 'Walking_A', { speed: 1.2, fade: .15 }], [27.75, 'Idle', { fade: .2 }],
+    [26, 'Idle', { fade: .25 }], [27.1, 'Walking_A', { speed: 1.4, fade: .15 }], [27.75, 'Idle', { fade: .2 }],
     [34.7, 'Cheer', { once: true, fade: .15 }], [36.4, 'Idle', { fade: .3 }]
   ];
   /* on foot: [from g, x, z, facing, ease] (what the stage holds when nobody rides) */
-  const BOY_WAY = [[23.8, -.27, .048, 3 * R + .4], [24.3, -.25, .05, R], [24.95, -.1, .04, R - .5, 'linear'], [26, -.075, -.2, Math.PI, 'linear'], [27.05, -.075, -.2, Math.PI],
-    [27.3, -.075, -.2, .3], [27.75, -.07, -.14, 0, 'linear'], [30.3, -.07, -.14, 0], [30.75, -.06, -.135, R - .25], [40, -.06, -.135, R - .25]];
-  const GIRL_WAY = [[0, -.37, -.085, 0], [5.3, -.37, -.085, 0], [6, -.37, .03, 0, 'linear'], [6.75, -.36, .14, .5, 'linear'], [7.35, -.264, .205, 0],   // out of the door and round the back wheel
-    [8.2, -.264, .205, 0], [14.65, .071, .203, 0, 'linear'], [15.3, -.025, .15, R],                                                                        // (on the rack, pushing: placed by the bike)
-    [17.3, .17, .15, R], [17.95, .266, .205, 0, 'smooth'], [18.9, .266, .205, 0], [23.45, -.146, -.073, Math.PI, 'linear'], [24.2, -.13, -.085, Math.PI - .4],
-    [26, .045, -.2, Math.PI, 'linear'], [27.05, .045, -.2, Math.PI], [27.3, .045, -.2, -.3], [27.75, .045, -.14, 0, 'linear'], [30.75, .045, -.14, 0],
-    [31.2, .05, -.135, -R + .35], [40, .05, -.135, -R + .35]];
+  const BOY_WAY = [[23.8, -.33, .05, 3 * R + .4], [24.3, -.3, .052, R], [25.09, -.085, .045, R - .5, 'linear'], [26, -.04, -.2, Math.PI, 'linear'], [27.05, -.04, -.2, Math.PI],
+    [27.3, -.04, -.2, .3], [27.75, -.038, -.14, 0, 'linear'], [30.3, -.038, -.14, 0], [30.75, -.065, -.135, R - .25], [36.9, -.065, -.135, R - .25],
+    [37.2, -.035, -.135, R - .25], [40, -.035, -.135, R - .25]];
+  const GIRL_WAY = [[0, -.37, -.085, 0], [5.3, -.37, -.085, 0], [6.1, -.405, .06, 0, 'linear'], [6.9, -.41, .21, .5, 'linear'], [7.35, -.311, .197, 0],   // out of the door and round the back of the rack
+    [8.2, -.311, .197, 0], [14.65, .024, .197, 0, 'linear'], [15.3, .06, .212, R],                                                                         // (on the rack, pushing: placed by the bike)
+    [17.3, .152, .212, R], [17.95, .119, .197, 0, 'smooth'], [18.9, .119, .197, 0], [23.45, -.169, -.067, Math.PI, 'linear'], [24.2, -.13, -.085, Math.PI - .4],
+    [26, .025, -.2, Math.PI, 'linear'], [27.05, .025, -.2, Math.PI], [27.3, .025, -.2, -.3], [27.75, .025, -.14, 0, 'linear'], [30.75, .025, -.14, 0],
+    [31.2, .035, -.135, -R + .35], [36.9, .035, -.135, -R + .35], [37.2, .025, -.135, -R + .35], [40, .025, -.135, -R + .35]];
   const BOY_KEYS = keysOf(BOY_WAY, 3), GIRL_KEYS = keysOf(GIRL_WAY, 3);
   const wayAt = (keys, g) => keys.map(k => tween(g, k));
 
-  let boy, girl, bike, scarf, page, house, street, hill, sign, signTex, note, folded, photo, banner, camera, box, birds = [];
+  let boy, girl, bike, page, house, street, hill, sign, signTex, note, folded, photo, banner, camera, box, birds = [];
   let stars, hearts, sparks, petals, dust, notes, drops, starBase = null, distTable = [];
   const rings = [];
 
@@ -101,11 +105,8 @@
 
     build() {
       /* the two of them */
-      boy = kit.model('boy').fit({ height: HB }); girl = kit.model('girl').fit({ height: HG });
+      boy = kit.model('boy').fit({ height: HB }); girl = kit.model('girl').fit({ height: HG });   // the shared couple, templates/_models
       stage.add(boy.root, girl.root);
-      C.dressBoy(boy); C.dressGirl(girl, '#c8443f', '#b06676');   // a red scarf, a dusty rose hood
-      scarf = P.scarf('#c8443f', '#f6ead2'); girl.node('chest')?.add(scarf.root);
-      scarf.root.position.set(0, .02, .04); scarf.root.scale.setScalar(.8);    // its ends hang from the cowl's front edge
 
       /* the world */
       page = S.buildPage(); stage.add(page.root);
@@ -219,14 +220,14 @@
 
       /* ── the bicycle on the road ── */
       const [bx, bz, bpsi] = bikeAt(g), fx = Math.sin(bpsi), fz = Math.cos(bpsi);
-      const yr = ground(bx - fx * .08, bz - fz * .08), yf = ground(bx + fx * .08, bz + fz * .08);
+      const yr = ground(bx - fx * bike.AXLE, bz - fz * bike.AXLE), yf = ground(bx + fx * bike.AXLE, bz + fz * bike.AXLE);
       const [dist, crank] = rolled(g), bm = clipAt(BOY_MODE, g)[1], speed = clamp((dist - rolled(g - .05)[0]) / .05 / .2);
       const wobble = (bm === 'stand' ? .06 * Math.sin(crank) : 0) + .015 * Math.sin(dist * 40) * speed;
       const leanFoot = bump(g, 2.85, 3.15, 10.1, 10.35) * .1 + bump(g, 17.25, 17.5, 20, 20.25) * .1 - bump(g, 23, 23.3, 24.05, 24.3) * .1 - ease.smooth(seg(g, 24.05, 24.4)) * .13;
       bike.root.position.set(bx, (yr + yf) / 2, bz); bike.root.rotation.set(0, bpsi, 0);
       bike.root.visible = boy.root.visible = g > .75;
       const turning = bump(g, 20.1, 20.25, 21, 21.2);
-      bike.frame.rotation.set(-Math.atan2(yf - yr, .16), 0, leanFoot + wobble - .12 * turning);
+      bike.frame.rotation.set(-Math.atan2(yf - yr, 2 * bike.AXLE), 0, leanFoot + wobble - .12 * turning);
       const bells = bump(g, 3.3, 3.36, 3.45, 3.5) + bump(g, 3.8, 3.86, 3.95, 4);
       bike.set({ dist, crank, steer: .35 * turning + .12 * Math.sin(crank) * (bm === 'stand' ? 1 : 0), bell: bells, stand: ease.smooth(seg(g, 24.05, 24.4)),
         lamp: ease.out(seg(g, .8, 1.1)) * (1 - ease.smooth(seg(g, 14, 15))) });
@@ -235,7 +236,7 @@
       if (g > 3.3 && kit.once('ring1')) ring(0);
       if (g > 3.8 && kit.once('ring2')) ring(1);
       rings.forEach((r, i) => { const k = seg(g, i ? 3.8 : 3.3, i ? 4.6 : 4.1); r.material.opacity = .9 * (1 - k) * (k > 0 ? 1 : 0); r.scale.setScalar(.03 + .12 * k);
-        onBike(vA.set(-.022, .108, .03), r.position).y += .02 * k; });
+        onBike(vA.copy(bike.BELL), r.position).y += .02 * k; });
 
       /* ── him: on the bike (sitting or standing on the pedals, a foot down) or on foot ── */
       const bc = clipAt(BOY_CLIPS, g); boy.play(bc[1], bc[2]);
@@ -254,7 +255,7 @@
         gravity: -1.2, color: '#bfe6ff', size: .02, life: .6, shape: 'drop', rot: (rng() - .5) * 2 }); }
       if (g > 15.5 && g < 17.2 && dt && rng() < dt * 2.5) { at(girl, 'head', vA); notes.emit({ x: vA.x, y: vA.y + .05, z: vA.z + .02, vx: (rng() - .5) * .05, vy: .1, sway: .03,
         color: ['#ff8fab', '#ffd166'][(rng() * 2) | 0], size: .03, life: 1.4, shape: 'note' }); }
-      if (g > 19.3 && kit.once('laugh')) love(.3, .36, .17, 10);
+      if (g > 19.3 && kit.once('laugh')) love(.18, .36, .17, 10);
 
       /* ── chapter 3: the sunrise, the photo ── */
       birds.forEach((b, i) => {
@@ -308,7 +309,7 @@
       color: ['#ff4f7b', '#ff8fab', '#ffc2d1', '#e8436d'][(rng() * 4) | 0], size: .022 + rng() * .016, life: 2.2, shape: 'heart', spin: (rng() - .5) * 3 }));
   }
   function ring(i) {
-    onBike(vA.set(-.022, .11, .03), vB);
+    onBike(vA.copy(bike.BELL).setY(bike.BELL.y + .003), vB);
     notes.burst(3, k => ({ x: vB.x, y: vB.y + .01, z: vB.z + .01, vx: (k - 1) * .06, vy: .14, sway: .02, color: ['#fff1b8', '#ffd166', '#ffffff'][k], size: .028, life: 1.2, shape: 'note' }));
     sparks.burst(6, () => ({ x: vB.x, y: vB.y, z: vB.z + .01, vx: (rng() - .5) * .2, vy: rng() * .2, drag: 2, color: '#fff3c4', size: .014, life: .5, shape: 'sparkle', spin: 4 }));
   }
@@ -320,7 +321,8 @@
     const off = mode === 'off';
     if (!off) {
       /* on the bike: the root from the saddle (sitting, or the hips up and forward standing on the pedals) */
-      vA.set(0, lerp(bike.SADDLE.y - SIT.seat * SB, bike.SADDLE.y + .016 - SIT.up * SB, stand), lerp(bike.SADDLE.z + SIT.back * SB, bike.SADDLE.z + .022, stand));
+      vA.set(0, lerp(bike.SADDLE.y - SIT.boy.seat, bike.SADDLE.y + .025 - HIPS, stand), lerp(bike.SADDLE.z + SIT.boy.back, bike.SADDLE.z + .022, stand));
+      vA.y -= .012 * foot * (1 - stand); vA.z += .016 * foot * (1 - stand);   // a foot down: forward off the saddle, so it reaches the ground
       onBike(vA, boy.root.position); boy.root.quaternion.copy(qBike);
       const pitch = bike.frame.rotation.x, effort = stand * (.8 + .2 * Math.sin(crank * 2));
       boy.bend('hips', -pitch * .9, 0, 0);                             // the body stays upright on a slope; it leans into the effort
@@ -354,7 +356,7 @@
     const [x, z, f] = wayAt(BOY_KEYS, g), dis = ease.smooth(seg(g, 23.8, 24.25));
     boy.root.position.set(x, ground(x, z), z); boy.root.quaternion.copy(faceQ(f, qA));
     if (dis < 1) {                                                   // stepping off the saddle onto the ground beside it
-      onBike(vA.set(0, bike.SADDLE.y - SIT.seat * SB, bike.SADDLE.z + SIT.back * SB), vB);
+      onBike(vA.set(0, bike.SADDLE.y - SIT.boy.seat, bike.SADDLE.z + SIT.boy.back), vB);
       boy.root.position.lerpVectors(vB, boy.root.position, dis); boy.root.position.y += .015 * Math.sin(Math.PI * dis);
       boy.root.quaternion.slerpQuaternions(qBike, qA, dis);
     }
@@ -368,16 +370,18 @@
     girl.root.visible = g > 5.32;
     const [wx, wz, wf] = wayAt(GIRL_KEYS, g);
     /* her place sitting on the rack, and how far into sitting she is (the hop up onto it, the hop down off it) */
-    vA.set(-SIT.back * SG, bike.RACK.y - SIT.seat * SG, bike.RACK.z); onBike(vA, vB);
+    vA.set(-SIT.girl.back, bike.RACK.y - SIT.girl.seat, bike.RACK.z); onBike(vA, vB);
     qA.copy(qBike).multiply(faceQ(-R, qB));
     const on = Math.min(ease.smooth(seg(g, 7.55, 8.1)) * (1 - ease.smooth(seg(g, 14.65, 15.05))) + ease.smooth(seg(g, 18.25, 18.8)), 1) * (1 - ease.smooth(seg(g, 23.45, 23.9)));
     const hop = Math.sin(Math.PI * seg(g, 7.55, 8.1)) + Math.sin(Math.PI * seg(g, 14.65, 15.05)) + Math.sin(Math.PI * seg(g, 18.25, 18.8)) + Math.sin(Math.PI * seg(g, 23.45, 23.9));
-    if (mode === 'push') {                                            // behind the bike, walking with it, hands on the rack
-      onBike(vC.set(0, 0, -.2), vD); vD.y = ground(vD.x, vD.z);
+    if (mode === 'push') {                                            // beside the back wheel on your side, walking with it, her hands on his back
+      onBike(vC.set(-.062, 0, -.118), vD); vD.y = ground(vD.x, vD.z);
       girl.root.position.copy(vD); girl.root.quaternion.copy(faceQ(bikeAt(g)[2], qB));
-      girl.bend('spine', .28, 0, 0); girl.bend('chest', .12, 0, 0);
+      girl.play('Walking_A', { speed: Math.max(.25, (rolled(g)[0] - rolled(g - .05)[0]) / .05 / STRIDE_G), fade: .2 });   // her feet keep the bike's pace
+      girl.bend('spine', .14, 0, 0); girl.bend('chest', .08, 0, 0);
+      at(boy, 'spine', vD);
       for (const side of ['l', 'r']) {
-        onBike(vC.set(side === 'l' ? .012 : -.012, bike.RACK.y - .004, bike.RACK.z - .03), vE);
+        vE.copy(vD).add(dirOn(side === 'l' ? .012 : -.012, -.012, -.03, vC));
         dirOn(side === 'l' ? 1 : -1, -.8, 0, vPole); C.ik(girl, `upperarm.${side}`, `lowerarm.${side}`, `handslot.${side}`, vE, vPole);
       }
       const giggle = .06 * Math.sin(T * 13) * bump(g, 15.6, 15.9, 16.9, 17.2);
@@ -395,10 +399,9 @@
       C.ik(girl, 'upperarm.l', 'lowerarm.l', 'handslot.l', vD, vPole, hold);
       for (const [side, ph] of [['l', 0], ['r', 1.7]]) girl.bend(`lowerleg.${side}`, .25 * Math.sin(T * 2.4 + ph), 0, 0);
     }
-    /* scarf: hands at her neck as she comes out, snugging it; its ends swing as she moves */
+    /* the dawn is cold: her hands at her collar as she comes out, pulling it close */
     const wrap = bump(g, 5.7, 5.9, 6.25, 6.45);
     if (wrap) for (const s of ['l', 'r']) { girl.aim(`upperarm.${s}`, [s === 'l' ? .3 : -.3, .2, .9], wrap); girl.aim(`lowerarm.${s}`, [s === 'l' ? -.6 : .6, .7, .3], wrap); }
-    scarf.ends.forEach((e, i) => { e.rotation.x = .12 + .08 * Math.sin(T * 2.6 + i * 1.3); e.rotation.z = .06 * Math.sin(T * 2 + i); });
     /* catching the note, reading it */
     const reach = bump(g, 8.7, 8.95, 9.5, 9.8);
     if (reach) for (const s of ['l', 'r']) { girl.aim(`upperarm.${s}`, [s === 'l' ? .25 : -.25, .35, .9], reach); girl.aim(`lowerarm.${s}`, [s === 'l' ? -.2 : .2, .6, .8], reach); }
@@ -411,7 +414,7 @@
 
   /** the note: in the basket, a hop out, a fluttering loop over his head into her hands; it opens into the page of words */
   function poseNote(g, T) {
-    onBike(vA.set(0, .1, .098), vB);                                  // in the basket
+    onBike(vA.copy(bike.BASKET).setY(bike.BASKET.y + .017), vB);       // in the basket
     const fly = seg(g, 8.4, 9.05), caught = g >= 9.05;
     at(girl, 'handslot.l', vC); at(girl, 'handslot.r', vD); vC.add(vD).multiplyScalar(.5);
     if (g < 8.4) folded.position.copy(vB);
@@ -439,21 +442,13 @@
     if (arm) { boy.aim('upperarm.r', [-.6, .15, -.55], arm); boy.aim('lowerarm.r', [-.95, 0, .25], arm); }   // round her back (she is on his right)
     const selfie = bump(g, 27.6, 27.9, 30.15, 30.5);
     if (selfie) boy.bend('head', 0, 0, -.18 * selfie);
-    /* the kneel: his right knee on the ground towards you, his left foot planted ahead, the box held out in both hands */
+    /* the kneel is the clip's (Kneel: down on his left knee, the box held up in both hands); he looks up at her */
     const kneel = bump(g, 30.9, 31.7, 36.05, 36.3);
-    if (kneel > 0) {
-      boy.root.position.y -= .036 * kneel * SB;
-      const f = boy.root.rotation.y, fwd = vA.set(Math.sin(f), 0, Math.cos(f)), right = vB.set(-Math.cos(f), 0, Math.sin(f));   // his right: towards you
-      at(boy, 'upperleg.l', vC); vD.copy(vC).addScaledVector(fwd, .034).addScaledVector(right, -.008); vD.y = ground(vD.x, vD.z) + .021 * SB;
-      vE.copy(fwd).multiplyScalar(1).add(UP); C.ik(boy, 'upperleg.l', 'lowerleg.l', 'foot.l', vD, vE, kneel);
-      at(boy, 'upperleg.r', vC); vD.copy(vC).addScaledVector(fwd, -.03).addScaledVector(right, .006); vD.y = ground(vD.x, vD.z) + .012 * SB;
-      vE.copy(fwd); C.ik(boy, 'upperleg.r', 'lowerleg.r', 'foot.r', vD, vE, kneel);
-      boy.bend('spine', -.05 * kneel, 0, 0); boy.bend('head', -.18 * kneel, 0, 0);
-    }
+    if (kneel) boy.bend('head', -.18 * kneel, 0, 0);
     const offer = bump(g, 31.6, 32, 35.9, 36.2);
     if (offer) for (const s of ['l', 'r']) { boy.aim(`upperarm.${s}`, [s === 'l' ? .12 : -.12, -.15, 1], offer); boy.aim(`lowerarm.${s}`, [s === 'l' ? -.15 : .15, .25, 1], offer); }
     const hug = bump(g, 36.9, 37.3, 40.5, 41), kiss = ease.smooth(seg(g, 38.7, 39.3));
-    if (hug) { hugArms(boy, hug); boy.bend('chest', (.12 + .07 * kiss) * hug, 0, 0); boy.bend('head', (.1 + .06 * kiss) * hug, 0, .04 * Math.sin(T * 1.2) * kiss); }
+    if (hug) { boy.bend('chest', (.12 + .07 * kiss) * hug, 0, 0); boy.bend('head', (.1 + .06 * kiss) * hug, 0, .04 * Math.sin(T * 1.2) * kiss); hugArms(boy, hug); }
   }
   /** the two of them swing once round between them while they hug */
   function spin(m, g) {
@@ -472,11 +467,13 @@
     const nod = bump(g, 34.2, 34.35, 34.6, 34.75);
     if (nod) girl.bend('head', .25 * nod * Math.sin((g - 34.2) * 30), 0, 0);
     const hug = bump(g, 36.9, 37.3, 40.5, 41), kiss = ease.smooth(seg(g, 38.7, 39.3));
-    if (hug) { hugArms(girl, hug); girl.bend('chest', (.12 + .07 * kiss) * hug, 0, 0); girl.bend('head', (.14 + .06 * kiss) * hug, 0, -.04 * Math.sin(T * 1.2) * kiss); }
+    if (hug) { girl.bend('chest', (.12 + .07 * kiss) * hug, 0, 0); girl.bend('head', (.14 + .06 * kiss) * hug, 0, -.04 * Math.sin(T * 1.2) * kiss); hugArms(girl, hug); }
   }
+  /** the hug, after the backs have bent: his arms round her waist, elbows out; hers up round his neck */
   function hugArms(m, k) {
-    m.aim('upperarm.r', [-.42, .05, .9], k); m.aim('lowerarm.r', [.8, .1, .6], k);
-    m.aim('upperarm.l', [.42, .05, .9], k); m.aim('lowerarm.l', [-.8, .1, .6], k);
+    const [up, fore] = m === boy ? [[.55, -.45, .7], [-.65, -.05, .75]] : [[.45, .5, .75], [-.75, .35, .55]];
+    m.aim('upperarm.r', [-up[0], up[1], up[2]], k); m.aim('lowerarm.r', [-fore[0], fore[1], fore[2]], k);
+    m.aim('upperarm.l', up, k); m.aim('lowerarm.l', fore, k);
   }
 
   /** her camera: out of her pocket, held up in front of the two of them, a flash, the print flies up into the photo */

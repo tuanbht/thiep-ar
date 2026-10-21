@@ -265,7 +265,7 @@
   }
   /** the rail round the fore part: white posts, a top rail and a middle one meeting at the bow */
   function makeRail(root) {
-    const white = mat('#fbfbf6', { roughness: .35, metalness: .2 }), H = .072, side = [];
+    const white = mat('#fbfbf6', { roughness: .35, metalness: .2 }), H = SHIP.rail ?? .072, side = [];   // the story raises it to the grown-ups' waists
     for (let z = SHIP.railEnd; z < SHIP.bow - .05; z += .042) side.push([halfWidth(z) - .006, z]);
     const posts = [...side.map(([x, z]) => [-x, z]), [0, SHIP.bow - .018], ...side.slice().reverse()];   // right side forward, the tip, left side aft
     const post = geo(new THREE.CylinderGeometry(.0028, .0032, H, 6));
@@ -310,8 +310,8 @@
     }
     p.needsUpdate = true; cloth.geometry.computeVertexNormals();
   }
-  /** the ship's wheel: a rim, eight spokes that end in handles, a hub, on a post */
-  function makeWheel() {
+  /** the ship's wheel: a rim, eight spokes that end in handles, a hub, on a post from the deck (its hub `high` over it) */
+  function makeWheel(high) {
     const g = new THREE.Group(), wood = mat('#a5622f', { roughness: .55 }), dark = mat('#6b3b1c', { roughness: .6 }), brass = mat('#d9a441', { roughness: .3, metalness: .7 });
     const spin = new THREE.Group(); g.add(spin);
     spin.add(mesh(new THREE.TorusGeometry(.036, .0035, 6, 28), wood));
@@ -320,7 +320,7 @@
       const k = mesh(new THREE.SphereGeometry(.0035, 6, 5), dark, Math.cos(a + Math.PI / 2) * .046, Math.sin(a + Math.PI / 2) * .046, 0); spin.add(k);
     }
     spin.add(mesh(new THREE.CylinderGeometry(.008, .008, .012, 10).rotateX(Math.PI / 2), brass));
-    const post = mesh(new THREE.CylinderGeometry(.006, .009, .12, 8), dark, 0, -.06, -.008); g.add(post);
+    const post = mesh(new THREE.CylinderGeometry(.006, .009, high, 8), dark, 0, -high / 2, -.008); g.add(post);
     return { root: g, spin };
   }
   /** a lifebuoy: red and white quarters, a grab line round it */
@@ -347,8 +347,8 @@
     const walls = mesh(new THREE.BoxGeometry(w, h, d), mat('#fbf3e3', { roughness: .6 }), 0, h / 2, 0); walls.receiveShadow = true; g.add(walls);
     const roof = mesh(new THREE.BoxGeometry(w + .016, .012, d + .016), mat('#1f8a8f', { roughness: .5 }), 0, h + .006, 0); g.add(roof);
     g.add(mesh(new THREE.BoxGeometry(w + .02, .004, d + .02), mat('#a8683a'), 0, h + .0005, 0));
-    const door = mesh(new THREE.BoxGeometry(.034, .062, .004), mat('#2b6f8f', { roughness: .5 }), .02, .031, d / 2 + .002); g.add(door);
-    g.add(mesh(new THREE.SphereGeometry(.003, 6, 5), mat('#e9b949', { metalness: .7, roughness: .3 }), .03, .03, d / 2 + .005));
+    const dh = C.door ?? .062, door = mesh(new THREE.BoxGeometry(.034, dh, .004), mat('#2b6f8f', { roughness: .5 }), .02, dh / 2, d / 2 + .002); g.add(door);
+    g.add(mesh(new THREE.SphereGeometry(.003, 6, 5), mat('#e9b949', { metalness: .7, roughness: .3 }), .03, dh * .48, d / 2 + .005));
     const glow = kit.keep(new THREE.MeshStandardMaterial({ color: 0x2a4a7a, roughness: .15, emissive: 0xffc067, emissiveIntensity: 0 }));
     const brass = mat('#d9a441', { metalness: .7, roughness: .3 }), windows = [];
     for (const [x, z, ry] of [[w / 2 + .002, -d * .22, Math.PI / 2], [w / 2 + .002, d * .22, Math.PI / 2], [-w / 2 - .002, 0, -Math.PI / 2], [-.022, d / 2 + .002, 0]]) {
@@ -393,7 +393,7 @@
     const arm = mesh(new THREE.BoxGeometry(.003, .003, .03), mat('#6b3b1c'), 0, SHIP.lanternY, .016); mast.add(arm);
     const lantern = makeLantern(); lantern.root.position.set(0, SHIP.lanternY - .002, .03); mast.add(lantern.root);
     const cabin = makeCabin(root);
-    const wheel = makeWheel(); wheel.root.position.set(0, D + .12, SHIP.wheelZ); root.add(wheel.root);
+    const wheel = makeWheel(SHIP.wheelH ?? .12); wheel.root.position.set(0, D + (SHIP.wheelH ?? .12), SHIP.wheelZ); root.add(wheel.root);
     const buoy = makeBuoy(); buoy.position.set(halfWidth(.07) + .004, D + .035, .07); buoy.rotation.y = Math.PI / 2 + .12; root.add(buoy);
     const anchor = makeAnchor(); anchor.position.set(halfWidth(.2) + .002, D - .006, .2); anchor.rotation.y = Math.PI / 2 - .5; root.add(anchor);
     const coil = makeCoil(); coil.position.set(-.07, D, -.03); root.add(coil);

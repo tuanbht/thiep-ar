@@ -11,20 +11,36 @@
     2
   ],
   "reveal": null,
-  "notes": "Two chibi sweethearts on a grassy hilltop at twilight (KayKit Adventurers, CC0: the Knight with his cape, recoloured night blue, and no helmet; the Mage without her hat or cape, her dress recoloured rose; weapons dropped by scripts/pack-models.mjs). The hill, its swaying grass and wildflowers, a lone tree, a stone lantern, the magic-hour sky with far hills and a town, the moon and the comet are built in story.js. Stop 1: the sky unfolds and the hill swells out of the card; she leads him up the hill by the hand while a huge moon rises behind the far hills, points at it, and they lie down side by side to watch as the stars come out; a note with the card's first words (slot note1) comes up. Stop 2: a great comet glides down the sky, they sit up to watch, and its tail parts into a cyan strand and a pink one that curl round into a heart; the card's photo lights up inside it with its caption (slot caption). Stop 3: the heart drifts aside and a meteor shower falls, some meteors bursting into tiny hearts; they scoot close, hold hands and make a wish; a last bright meteor flashes and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A couple on a grassy hilltop at twilight (the shared grown-up couple in templates/_models: Grab3D's Casual Man and Casual Woman with Quaternius's animations, CC0, in their own clothes; she is fitted at .945 of his height). The hill, its swaying grass and wildflowers, a lone tree, a stone lantern, the magic-hour sky with far hills and a town, the moon and the comet are built in story.js. Stop 1: the sky unfolds and the hill swells out of the card; she leads him up the hill by the hand while a huge moon rises behind the far hills, points at it, and they lie down side by side to watch as the stars come out; a note with the card's first words (slot note1) comes up. Stop 2: a great comet glides down the sky, they sit up to watch, and its tail parts into a cyan strand and a pink one that curl round into a heart; the card's photo lights up inside it with its caption (slot caption). Stop 3: the heart drifts aside and a meteor shower falls, some meteors bursting into tiny hearts; they scoot close, hold hands and make a wish; a last bright meteor flashes and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
-  "categories": ["love", "couple", "viral-scenes"],
-  "tags": ["ngắm trăng", "sao băng", "ước nguyện", "ngọn đồi", "bầu trời đêm"],
+  "categories": [
+    "love",
+    "couple",
+    "viral-scenes"
+  ],
+  "tags": [
+    "ngắm trăng",
+    "sao băng",
+    "ước nguyện",
+    "ngọn đồi",
+    "bầu trời đêm"
+  ],
   "photos": 1
 }

@@ -14,7 +14,7 @@
     2
   ],
   "reveal": null,
-  "notes": "A spaghetti dinner for two in a little alley at night (KayKit Adventurers, CC0: the Barbarian bare-headed and recoloured with dark hair and beard, a white shirt, a red strap and dark trousers; the Rogue without her cape, recoloured with chestnut hair, a wine-red dress with a white collar, dark tights and red shoes; weapons, the bear hat and the capes dropped by scripts/pack-models.mjs; two KayKit Restaurant Bits chairs recoloured walnut and iron). The rest is built in code by scenery.js: the alley's back wall as a painted page with a lit copy that fades in, a doorway cut through it to a warm room behind and a door that swings open, cobbles, string lights, a bistro table under a red-and-white checked cloth, a candle in a bottle, a plate of spaghetti with meatballs, two forks, one noodle rebuilt every frame between two mouths, a chalkboard menu on an easel, a gilt picture frame and a string of little lights across the alley. Stop 1: the lights come on bulb by bulb, she steps out of the trattoria, he follows, pulls her chair out and pushes it in, goes round to his own; a plate of spaghetti drops onto the table with a bounce and steam, and the card's first words (slot note1) are chalked onto the menu board. Stop 2: they twirl their forks and eat, then slurp one noodle from its two ends until it pulls them into a surprise kiss; they freeze, blush, giggle and look away; a camera flash, and the card's photo hangs on the wall in a gilt frame with its caption (slot caption). Stop 3: he nudges the last meatball across the plate to her, she smiles, the candle's flame turns into a heart, they hop their chairs round to sit close and hold hands, hearts rise; the photo moves onto the menu board and a ribbon with the last words (slot note2) unrolls under little lights strung across the alley. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A spaghetti dinner for two in a little alley at night (the shared grown-up couple in templates/_models: Grab3D's Casual Man and Casual Woman with Quaternius's animations, CC0; two KayKit Restaurant Bits chairs recoloured walnut and iron, raised to the couple's seat height). The rest is built in code by scenery.js: the alley's back wall as a painted page with a lit copy that fades in, a doorway cut through it to a warm room behind and a door that swings open, cobbles, string lights, a bistro table under a red-and-white checked cloth, a candle in a bottle, a plate of spaghetti with meatballs, two forks, one noodle rebuilt every frame between two mouths, a chalkboard menu on an easel, a gilt picture frame and a string of little lights across the alley. Stop 1: the lights come on bulb by bulb, she steps out of the trattoria, he follows, pulls her chair out and pushes it in, goes round to his own; a plate of spaghetti drops onto the table with a bounce and steam, and the card's first words (slot note1) are chalked onto the menu board. Stop 2: they twirl their forks and eat, then slurp one noodle from its two ends until it pulls them, chairs and all, round the table into a surprise kiss; they freeze, hop back apart, blush, giggle and look away; a camera flash, and the card's photo hangs on the wall in a gilt frame with its caption (slot caption). Stop 3: he nudges the last meatball across the plate to her, she smiles, the candle's flame turns into a heart, they hop their chairs round to sit close and hold hands, hearts rise; the photo moves onto the menu board and a ribbon with the last words (slot note2) unrolls under little lights strung across the alley. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "categories": [
     "viral-scenes",
     "love",
@@ -30,16 +30,22 @@
     "ánh nến"
   ],
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb",
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb",
     "chair": "models/chair.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     },
     {
       "model": "KayKit Restaurant Bits",

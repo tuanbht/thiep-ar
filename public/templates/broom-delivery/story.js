@@ -1,8 +1,8 @@
 /* Thư tình bay qua phố biển (a love letter flies over the sea town), told by the shared act _acts/lovestory.js. Three
    chapters, each ending at a stop:
      1 · 0–6.2 s     a harbour town pops up out of the card at golden hour; by the night post office a young witch hops
-                     onto her broom with a letter, rises in a swirl of sparkles and banks round over the rooftops while a
-                     boy waves from his roof terrace; an airmail label with the card's first words (note1) comes up
+                     onto her broom with a letter, rises in a swirl of sparkles and banks round over the rooftops while
+                     her sweetheart waves from his roof terrace; an airmail label with the card's first words (note1) comes up
      2 · 6.2–12.4 s  she swoops low past you, lands on his terrace and steps off; she hands him the letter, he opens it,
                      the heart seal pops and the card's photo rises out of the envelope with its caption
      3 · 12.4–19 s   the photo is pegged on his washing line; they hop onto the broom one after the other and draw a heart
@@ -13,6 +13,7 @@
   const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words, fitText } = kit;   // fitText: words as big as they fit, on my canvases
   const TAU = Math.PI * 2;
   const seeded = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const H = .29, HER = H * .945;                                     // their heights (her 1.70 m to his 1.80)
   const ROOF = .12;                                                  // his terrace: the flat roof of his house
   const TER = { x: .265, z: -.035, w: .3, d: .19 };
   const PO = { x: -.33, z: -.085 }, START = { x: -.27, z: .1 };     // the night post office; where she sets out from
@@ -23,15 +24,15 @@
   const LINE = { x0: .22, x1: .41, y: ROOF + .14, z: -.1 };          // his washing line
   const DAY = { hemi: new THREE.Color('#ffe9cf'), ground: new THREE.Color('#c79a8c'), sun: new THREE.Color('#ffdcb4') };
   const DUSK = { hemi: new THREE.Color('#b9b5ff'), ground: new THREE.Color('#4d3b68'), sun: new THREE.Color('#d2bcff') };
-  let girl, boy, hat, capes = [], ribbons = [], broom, env, label, photo, banner;
+  let girl, boy, hat, ribbons = [], broom, env, label, photo, banner;
   let skyDay, skyDusk, town = [], beam, lamp, lampGlow, lamps = [], windows = [], gulls = [], washing = [], flags = [];
   let sparks, trail, hearts, dust, stars, lineGroup;
 
   /* ── who does what, from story time g: [from g, clip, options] ── */
   const GIRL = [
     [0, 'Idle'], [1.2, 'Jump_Full_Short', { once: true, fade: .15 }], [1.55, 'Sit_Chair_Idle', { fade: .18 }],
-    [7.4, 'Sit_Chair_StandUp', { once: true, fade: .15 }], [8.15, 'Idle', { fade: .25 }], [8.5, 'Use_Item', { once: true, fade: .2 }],
-    [10.1, 'Idle', { fade: .35 }], [12.95, 'Jump_Full_Short', { once: true, fade: .15 }], [13.3, 'Sit_Chair_Idle', { fade: .18 }]
+    [7.4, 'Sit_Chair_StandUp', { once: true, fade: .15 }], [8.15, 'Idle', { fade: .25 }],      // (Use_Item reaches out the hand without the letter: see give)
+    [12.95, 'Jump_Full_Short', { once: true, fade: .15 }], [13.3, 'Sit_Chair_Idle', { fade: .18 }]
   ];
   const BOY = [
     [0, 'Idle'], [4.4, 'Cheer', { once: true, fade: .2 }], [6.05, 'Idle', { fade: .3 }], [8.25, 'Walking_A', { speed: .7, fade: .2 }],
@@ -299,7 +300,7 @@
   }
 
   /* ── the letter: an airmail envelope, its flap shut with a red heart seal ── */
-  const EW = .078, EH = .052;
+  const EW = .055, EH = .037;                                        // about 34 by 23 cm in her hand
   function airmailEdge(c, W, H, k) {                                // red and blue stripes all round, slanting
     c.save(); c.beginPath(); c.rect(0, 0, W, H); c.rect(k, k, W - 2 * k, H - 2 * k); c.clip('evenodd');
     for (let x = -H, i = 0; x < W + H; x += k * 1.4, i++) {
@@ -328,7 +329,7 @@
     heart.moveTo(0, -.006); heart.bezierCurveTo(-.012, .002, -.007, .011, 0, .0045); heart.bezierCurveTo(.007, .011, .012, .002, 0, -.006);
     const seal = mesh(new THREE.ExtrudeGeometry(heart, { depth: .002, bevelEnabled: true, bevelThickness: .0008, bevelSize: .0008, bevelSegments: 2 }),
       mat('#d42a4a', { roughness: .35, emissive: 0xd42a4a, emissiveIntensity: .15 }), 0, -EH * .58, -.0005);
-    flap.rotation.y = seal.rotation.y = Math.PI; seal.scale.setScalar(1.15); hinge.add(flap, seal);   // both face out, on the back
+    flap.rotation.y = seal.rotation.y = Math.PI; seal.scale.setScalar(.82); hinge.add(flap, seal);   // both face out, on the back
     return { root, hinge, seal };
   }
 
@@ -371,24 +372,27 @@
     return { root, W, H, mark };
   }
 
-  /* ── recolouring: each character's look is one small texture of flat swatches (8 across, 4 down); paint some over
-        in new colours, keeping their light and shade ── */
-  function recolor(m, swatches) {
-    let mt = null; m.scene.traverse(o => { if (!mt && o.isMesh && o.material && o.material.map) mt = o.material; });
-    const img = mt && mt.map && mt.map.image; if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d'), cw = img.width / 8, ch = img.height / 4; c.drawImage(img, 0, 0);
-    for (const [row, col, color, lift = 0] of swatches) {             // its hue and colour; a little screen to lift a dark one
-      c.save(); c.globalCompositeOperation = 'color'; c.fillStyle = color; c.fillRect(col * cw, row * ch, cw, ch);
-      if (lift) { c.globalCompositeOperation = 'screen'; c.globalAlpha = lift; c.fillRect(col * cw, row * ch, cw, ch); } c.restore();
-    }
-    const old = mt.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.flipY = old.flipY; t.colorSpace = old.colorSpace; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter;
-    mt.map = t; mt.needsUpdate = true; old.dispose();
+  /* ── her witch's hat (the couple has none): a felt cone drooping back, a wide brim and a coral band, on her head bone,
+        standing up as she does; +z is where she looks ── */
+  function makeHat(m) {
+    const head = m.node('head'), top = m.node('head_end'); if (!head || !top) return null;
+    const felt = mat('#3b3f78', { roughness: .85 }), g = new THREE.Group();
+    g.add(mesh(new THREE.CylinderGeometry(.033, .034, .0024, 36), felt));                         // the brim
+    const crown = new THREE.ConeGeometry(.0175, .056, 24, 10), p = crown.attributes.position;
+    for (let i = 0; i < p.count; i++) { const k = (p.getY(i) + .028) / .056; p.setZ(i, p.getZ(i) - .022 * k * k * k); }   // its tip droops back
+    crown.computeVertexNormals(); g.add(mesh(crown, felt, 0, .028, 0));
+    g.add(mesh(new THREE.CylinderGeometry(.0172, .018, .0075, 24, 1, true), mat('#ff7a5c', { roughness: .6, side: THREE.DoubleSide }), 0, .005, 0));
+    m.root.updateMatrixWorld(true);
+    const at = m.root.worldToLocal(top.getWorldPosition(new THREE.Vector3())).add({ x: 0, y: -.009, z: -.003 });   // a little under the top of her hair
+    const turn = head.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(m.root.getWorldQuaternion(new THREE.Quaternion()));
+    m.hold(g, 'head');                                               // (its size; where it sits and its turn are set here)
+    g.position.copy(head.worldToLocal(m.root.localToWorld(at)));
+    g.quaternion.copy(turn).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-.16, 0, .07)));   // tipped back a little, at an angle
+    return g;
   }
 
-  /* ── capes and ribbons that stream back in the wind of the flight and ripple ── */
-  function cloth(node) {                                             // (the packed models keep their vertices interleaved)
+  /* ── ribbons that stream back in the wind of the flight and ripple ── */
+  function cloth(node) {
     if (!node || !node.geometry) return null;
     const geo = node.geometry, p = geo.attributes.position, base = new Float32Array(p.count * 3);
     let top = -Infinity, bottom = Infinity;
@@ -406,8 +410,8 @@
     }
     p.needsUpdate = true; cl.geo.computeVertexNormals();
   }
-  function makeRibbon(parent, x, y, z, color, len) {                // a ribbon's tail on her hat, on a pin at the band
-    const m = mesh(new THREE.PlaneGeometry(.12, len, 1, 6).translate(0, -len / 2, 0), mat(color, { side: THREE.DoubleSide, roughness: .5 })), pin = new THREE.Group();
+  function makeRibbon(parent, x, y, z, color, len, w) {             // a ribbon's tail on her hat, on a pin at the band
+    const m = mesh(new THREE.PlaneGeometry(w, len, 1, 6).translate(0, -len / 2, 0), mat(color, { side: THREE.DoubleSide, roughness: .5 })), pin = new THREE.Group();
     pin.position.set(x, y, z); pin.add(m); parent.add(pin);
     return { ...cloth(m), node: pin, rx: 0 };
   }
@@ -446,8 +450,16 @@
     return out.set(0, 0, .23).applyQuaternion(q).add(heartAt(heartT(u), vH));
   }
 
-  /* a rider on the broom: the root sits this far from the broom's origin, in the broom's own space */
-  const RIDE = { girl: new THREE.Vector3(0, -.042, .036), boy: new THREE.Vector3(0, -.043, .036 - .096) };
+  /* a rider on the broom: the root sits this far from the broom's origin, in the broom's own space. Sitting (the chair
+     clips) the crotch is .295 of her height above her feet (.272 of his) and .04 behind where she stood: astride, the
+     handle runs there. He sits .096 behind her, his knees just clear of her */
+  const RIDE = { girl: new THREE.Vector3(0, .0045 - .295 * HER, .04), boy: new THREE.Vector3(0, .0045 - .272 * H, .042 - .096) };
+  const PARK = { x: .226, z: .07 };                                  // where the broom waits for the two of them, by his terrace
+  const onPark = who => PARK.x - RIDE[who].z;                        // where a rider stands to sit on it there (it points to -x)
+  /* his two short walks on the terrace, [from g, to g, how far]: their steps follow ease.inOut, so their speed is set each
+     frame from how fast it moves (three times its average at the middle), in KayKit's stride on his scale */
+  const WALKS = [[8.25, 8.65, Math.hypot(HIM.x - .355, HIM.z)], [13.45, 13.85, .355 - onPark('boy')]];
+  const walkSpeed = (w, g) => { const k = seg(g, w[0], w[1]), rate = k < .5 ? 12 * k * k : 3 * (2 - 2 * k) ** 2; return Math.max(.3, w[2] / (w[1] - w[0]) * rate / (.1 * H / .3)); };
   const vR = new THREE.Vector3();
   function ride(m, who) { m.root.position.copy(vR.copy(RIDE[who]).applyQuaternion(broom.quaternion)).add(broom.position); m.root.quaternion.copy(broom.quaternion); }
   function setBroom(x, y, z, yaw, pitch = 0, roll = 0) {
@@ -455,13 +467,16 @@
   }
   /** the broom's origin when a rider stands at (x, z) facing yaw, sitting on it */
   const seatUnder = (x, y, z, yaw) => [x - RIDE.girl.z * Math.sin(yaw), y - RIDE.girl.y, z - RIDE.girl.z * Math.cos(yaw)];
+  const S0 = seatUnder(START.x, 0, START.z, Math.PI / 2);           // the broom under her by the post office: the swirl rises from it
 
-  /* arms: holding the handle; reaching to a point on the stage */
+  /* sitting forward on the broom: a lean down the whole back (the rig's "chest" is only its top) */
+  function lean(m, k) { if (k) { m.bend('Spine02', .22 * k, 0, 0); m.bend('spine', .2 * k, 0, 0); m.bend('chest', .12 * k, 0, 0); } }
+  /* arms: holding the handle in front of her (lean her first); reaching to a point on the stage */
   const mStage = new THREE.Matrix4(), vS = new THREE.Vector3(), vTo = new THREE.Vector3(), qInv = new THREE.Quaternion();
-  function grip(m, k, lean = 0) {
+  function grip(m, k, lift = 0) {
     if (!k) return;
-    m.aim('upperarm.r', [-.16, -.62 + lean, .77], k); m.aim('lowerarm.r', [.12, -.42 + lean, .9], k);
-    m.aim('upperarm.l', [.16, -.62 + lean, .77], k); m.aim('lowerarm.l', [-.12, -.42 + lean, .9], k);
+    m.aim('upperarm.r', [-.24, -.85 + lift, .48], k); m.aim('lowerarm.r', [.3, -.85 + lift, .45], k);
+    m.aim('upperarm.l', [.24, -.85 + lift, .48], k); m.aim('lowerarm.l', [-.3, -.85 + lift, .45], k);
   }
   function reach(m, side, target, k) {
     if (!k) return;
@@ -472,23 +487,18 @@
   }
   const hand = (m, slot, out) => { const n = m.node(slot); n.updateWorldMatrix(true, false); return out.setFromMatrixPosition(n.matrixWorld).applyMatrix4(mStage); };
 
-  const vH = new THREE.Vector3(), vH2 = new THREE.Vector3(), vE = new THREE.Vector3(), vX = new THREE.Vector3();
+  const vH = new THREE.Vector3(), vH2 = new THREE.Vector3(), vE = new THREE.Vector3(), vX = new THREE.Vector3(), vG = new THREE.Vector3();
   let trailU = 0;
 
   return {
     seconds: [6.2, 6.2, 6.6],
 
     build() {
-      /* the two of them: she in sea green with a coral cape and a smaller hat; he without his helmet, in sailor blue
-         with a mustard cape */
-      girl = kit.model('girl').fit({ height: .28, without: ['Mage_Hat'] }); boy = kit.model('boy').fit({ height: .29 });
+      /* the two of them, in their own clothes; she wears a witch's hat made here, its two ribbons at the back */
+      girl = kit.model('girl').fit({ height: HER }); boy = kit.model('boy').fit({ height: H });
       stage.add(girl.root, boy.root);
-      recolor(girl, [[1, 1, '#1f8f86'], [1, 0, '#27a39b', .12], [1, 2, '#ff7a5c', .1], [0, 5, '#ffc94d', .2]]);
-      recolor(boy, [[0, 3, '#3b6fb6'], [0, 7, '#f4f1ea', .5], [1, 2, '#3b6fb6'], [1, 0, '#f2b233', .15]]);
-      hat = girl.node('Mage_Hat');
-      if (hat) { hat.scale.multiplyScalar(.7); hat.position.y += .1; hat.position.z -= .09; hat.rotation.x = -.3; }
-      capes = [cloth(girl.node('Mage_Cape')), cloth(boy.node('Knight_Cape'))];
-      if (hat) ribbons = [makeRibbon(hat, -.16, .22, -.6, '#ffc94d', .7), makeRibbon(hat, .12, .2, -.62, '#ff7a5c', .62)];
+      hat = makeHat(girl);
+      if (hat) ribbons = [makeRibbon(hat, -.006, .006, -.0165, '#ffc94d', .036, .0065), makeRibbon(hat, .005, .0055, -.017, '#ff7a5c', .031, .0065)];
 
       /* the sky and the sea, standing up at the back like a pop-up page */
       skyDay = kit.backdrop(paintSky(false), SKY); skyDusk = kit.backdrop(paintSky(true), { ...SKY, z: -.298, order: -.5 });
@@ -525,15 +535,15 @@
       stage.add(photo.root, banner.root);
 
       /* the paths she flies */
-      const spiral = [];
-      for (let i = 0; i <= 8; i++) { const a = i / 8 * TAU, r = .07 + .03 * i / 8; spiral.push([-.306 + r * Math.sin(a), .042 + .2 * Math.pow(i / 8, 1.3), .1 - r + r * Math.cos(a)]); }
+      const spiral = [], land = seatUnder(.15, ROOF, .01, Math.PI / 2);
+      for (let i = 0; i <= 8; i++) { const a = i / 8 * TAU, r = .07 + .03 * i / 8; spiral.push([S0[0] + r * Math.sin(a), S0[1] + (.242 - S0[1]) * Math.pow(i / 8, 1.3), S0[2] - r + r * Math.cos(a)]); }
       PATH1 = curve([...spiral, [-.2, .3, .09], [-.1, .36, -.04], [.03, .39, -.13], [.15, .36, -.08], [.13, .31, .03], [0, .265, .07]]);
-      PATH2 = curve([[0, .265, .07], [.07, .2, .13], [.04, .1, .2], [-.07, .07, .17], [-.1, .08, .08], [-.02, .11, .03], [.06, .145, .012], [.114, .162, .01]]);
+      PATH2 = curve([[0, .265, .07], [.07, .2, .13], [.04, .1, .2], [-.07, .07, .17], [-.1, .08, .08], [-.02, .11, .03], [land[0] - .054, land[1] - .017, .012], land]);   // down to where she steps off
       heartLen = [0]; const p0 = new THREE.Vector3(), p1 = new THREE.Vector3(), qq = new THREE.Quaternion(); heartAt(Math.PI, p0);
       for (let i = 1; i <= 240; i++) { heartAt(Math.PI + i / 240 * TAU, p1); heartLen.push(heartLen[i - 1] + p1.distanceTo(p0)); p0.copy(p1); }
       const into = heartBroom(0, new THREE.Vector3(), qq).toArray(); HEART_IN.setFromQuaternion(qq, 'YXZ');   // both by the tip, which the curve leaves straight up
       const outOf = heartBroom(1, new THREE.Vector3(), qq).toArray(); HEART_OUT.setFromQuaternion(qq, 'YXZ');
-      PATH3 = curve([[.226, .162, .07], [.16, .26, .05], [.05, .34, .0], [into[0], into[1] - .1, into[2]], into]);
+      PATH3 = curve([[PARK.x, ROOF - RIDE.girl.y, PARK.z], [.16, .26, .05], [.05, .34, .0], [into[0], into[1] - .1, into[2]], into]);
       PATH4 = curve([outOf, [0, .26, .02], [0, .2, .045]]);
 
       /* particles */
@@ -588,8 +598,8 @@
       lineGroup.visible = g > .9;
 
       /* ── her: by the post office, onto the broom, up in a swirl, round over the rooftops, down to his terrace ── */
-      const gc = clipAt(GIRL, g), bc = clipAt(BOY, g);
-      girl.play(gc[1], gc[2]); boy.play(bc[1], bc[2]);
+      const gc = clipAt(GIRL, g), bc = clipAt(BOY, g), walk = WALKS.find(w => g >= w[0] && g < w[1]);
+      girl.play(gc[1], gc[2]); boy.play(bc[1], walk ? { ...bc[2], speed: walkSpeed(walk, g) } : bc[2]);
       let speed = 0, onBroom = true, gYaw = 0;
       if (g < 1.9) {                                                 // the broom waits beside her; she hops on
         gYaw = lerp(.35, Math.PI / 2, ease.inOut(seg(g, .95, 1.25)));
@@ -619,14 +629,14 @@
         gYaw = tween(g, [[7.4, Math.PI / 2], [8.15, Math.PI / 2], [8.45, 1.2], [12.4, 1.2], [12.85, -Math.PI / 2]]);
         girl.root.position.set(lerp(.15, .19, ease.inOut(seg(g, 7.75, 8.15))), ROOF + .004 * Math.sin(Math.PI * seg(g, 10.55, 10.8)), .01); girl.root.quaternion.setFromEuler(eQ.set(0, gYaw, 0, 'YXZ'));
         const park = ease.inOut(seg(g, 7.9, 8.6)), seat = seatUnder(.15, ROOF, .01, Math.PI / 2), front = ease.inOut(seg(g, 12.4, 12.9));   // then round in front of them
-        const bx = lerp(seat[0] - .13 * park, .226, front), by = seat[1] - .01 * park + .006 * Math.sin(T * 2.6) * park + .03 * Math.sin(Math.PI * front), bz = lerp(.01 + .03 * park, .12, front);
+        const bx = lerp(seat[0] - .13 * park, PARK.x, front), by = seat[1] - .01 * park + .006 * Math.sin(T * 2.6) * park + .03 * Math.sin(Math.PI * front), bz = lerp(.01 + .03 * park, .12, front);
         setBroom(bx, by, bz, lerp(Math.PI / 2, 1.5 * Math.PI, front), 0, .06 * Math.sin(T * 2.1) * park);
       } else {                                                       // the ride: she hops on, then he does
         const hopOn = ease.inOut(seg(g, 13.05, 13.3)), sag = .012 * Math.sin(Math.PI * seg(g, 14.15, 14.45)) + .006 * Math.sin(Math.PI * seg(g, 13.3, 13.5));
-        const base = [.226, ROOF + .042, lerp(.12, .07, hopOn)];
+        const base = [PARK.x, ROOF - RIDE.girl.y, lerp(.12, PARK.z, hopOn)];
         if (g < 14.75) {
           setBroom(base[0], base[1] + .02 * (1 - hopOn) - sag + .004 * Math.sin(T * 2.6), base[2], -Math.PI / 2, 0, .03 * Math.sin(T * 2) * (1 - hopOn));
-          if (g < 13.3) { onBroom = false; girl.root.position.set(.19, ROOF + .035 * Math.sin(Math.PI * seg(g, 13.0, 13.32)), lerp(.01, .07, hopOn)); girl.root.quaternion.setFromEuler(eQ.set(0, -Math.PI / 2, 0, 'YXZ')); }
+          if (g < 13.3) { onBroom = false; girl.root.position.set(onPark('girl'), ROOF + .035 * Math.sin(Math.PI * seg(g, 13.0, 13.32)), lerp(.01, PARK.z, hopOn)); girl.root.quaternion.setFromEuler(eQ.set(0, -Math.PI / 2, 0, 'YXZ')); }
           else ride(girl, 'girl');
         } else if (g < 15.35) {                                      // up off the terrace, swinging round to you, to the heart's tip
           const f = along(PATH3, ease.inOut(seg(g, 14.75, 15.35)), 1), k = ease.inOut(seg(g, 14.75, 15.3));
@@ -652,22 +662,23 @@
         let x = HIM.x, z = HIM.z, yaw = lerp(-.55, -1.05, ease.inOut(seg(g, 2.2, 2.8)));
         if (g > 8.25) { const k = ease.inOut(seg(g, 8.25, 8.65)); x = lerp(x, .355, k); z = lerp(z, .0, k); yaw = lerp(yaw, -1.3, k); }
         if (g > 12.4) yaw = lerp(-1.3, -.6, ease.inOut(seg(g, 12.4, 12.9)));
-        if (g > 13.45) { const k = ease.inOut(seg(g, 13.45, 13.85)); x = lerp(.355, .3, k); yaw = lerp(-.6, -Math.PI / 2, k); }
+        if (g > 13.45) { const k = ease.inOut(seg(g, 13.45, 13.85)); x = lerp(.355, onPark('boy'), k); yaw = lerp(-.6, -Math.PI / 2, k); }
         const rise = ease.back(seg(g, .68, 1.08)), jump = .045 * Math.sin(Math.PI * seg(g, 4.75, 5.25));   // he rides his house up as it pops out of the card
         boy.root.position.set(x, ROOF * Math.max(0, rise) + jump, z); boy.root.quaternion.setFromEuler(eQ.set(0, yaw, 0, 'YXZ'));
         boy.root.visible = g > .68;
       } else if (g < 14.2) {
         const k = ease.inOut(seg(g, 13.9, 14.15));
-        boy.root.position.set(.3, ROOF + .04 * Math.sin(Math.PI * seg(g, 13.85, 14.2)), lerp(0, .07, k)); boy.root.quaternion.setFromEuler(eQ.set(0, -Math.PI / 2, 0, 'YXZ'));
+        boy.root.position.set(onPark('boy'), ROOF + .04 * Math.sin(Math.PI * seg(g, 13.85, 14.2)), lerp(0, PARK.z, k)); boy.root.quaternion.setFromEuler(eQ.set(0, -Math.PI / 2, 0, 'YXZ'));
       } else ride(boy, 'boy');
       girl.root.visible = g > .1;
       if (g < .45) girl.root.scale.setScalar(Math.max(.001, ease.back(seg(g, .1, .45)))); else girl.root.scale.setScalar(1);
 
       /* ── gestures ── */
-      const flying = onBroom ? 1 : 0; if (onBroom && g < 7.42 || g > 13.3) grip(girl, 1, speed * .15);
+      const flying = onBroom ? 1 : 0;
+      if (onBroom) lean(girl, .5 + .5 * speed);                     // sitting forward on the broom, more as she flies
+      if (onBroom && g < 7.42 || g > 13.3) grip(girl, 1, speed * .15);
       const wave1 = bump(g, 5.3, 5.6, 6.2, 6.45);                    // the first stop: the letter held up high
       if (wave1) { girl.aim('upperarm.r', [-.35, .9, .25], wave1); girl.aim('lowerarm.r', [-.1 + .35 * Math.sin(T * 6), 1, .2], wave1); }
-      if (onBroom) girl.bend('chest', speed * .25, 0, 0);          // leaning into the flight
       if (g < 1.2) girl.bend('head', -.15 * bump(g, .5, .7, .95, 1.15), .3 * bump(g, .3, .5, .9, 1.1), 0);
       const seeHim = bump(g, 5.1, 5.4, 6.2, 6.4); if (seeHim) girl.bend('head', 0, -.3, .1 * Math.sin(T * 2), seeHim);
       // him: a wave as she flies over, a cheer, then a slow wave at the stop
@@ -675,13 +686,15 @@
       if (wave) { boy.aim('upperarm.r', [-.4, .85, .3], wave); boy.aim('lowerarm.r', [-.05 + .45 * Math.sin(T * 8), 1, .3], wave); }
       const waiting = 1 - ease.smooth(seg(g, 2.3, 2.7));              // waiting for the post: hands behind his back, rocking, looking out
       if (waiting) {
-        boy.aim('upperarm.r', [-.2, -.75, -.6], waiting); boy.aim('lowerarm.r', [.45, -.25, -.85], waiting);
-        boy.aim('upperarm.l', [.2, -.75, -.6], waiting); boy.aim('lowerarm.l', [-.45, -.25, -.85], waiting);
+        boy.aim('upperarm.r', [-.32, -.49, -.81], waiting); boy.aim('lowerarm.r', [.61, -.78, .1], waiting);
+        boy.aim('upperarm.l', [.23, -.33, -.92], waiting); boy.aim('lowerarm.l', [-.49, -.85, -.17], waiting);
         boy.bend('spine', .06 * Math.sin(g * 5.2), 0, 0, waiting); boy.bend('head', -.08, .45 * Math.sin(g * 2.1 + .6), 0, waiting);
       }
 
       /* the letter: in her right hand, then his left; he opens it and the photo comes out. His arms first: they carry it */
       const openUp = bump(g, 9.45, 9.85, 12.6, 13);                  // held up before him to open
+      const give = bump(g, 8.55, 9, 9.4, 9.8);                       // she holds it out to him, in the hand it is in
+      if (give) { vG.set(lerp(girl.root.position.x, boy.root.position.x, .45), ROOF + .17, lerp(girl.root.position.z, boy.root.position.z, .5) + .025); reach(girl, 'r', vG, give); }
       if (g > 9.0 && g < 9.75) { hand(girl, 'handslot.r', vH); reach(boy, 'l', vH, bump(g, 9.0, 9.25, 9.45, 9.75)); }
       if (openUp) {
         boy.aim('upperarm.l', [.18, -.4, .9], openUp); boy.aim('lowerarm.l', [-.25, .2, 1], openUp);
@@ -737,23 +750,24 @@
       }
       if (dt && g > 1.9 && g < 3.1) for (let i = 0; i < 3; i++) {
         const a = g * 9 + i * TAU / 3, y = broom.position.y - .03 + rng() * .08;
-        sparks.emit({ x: -.306 + Math.cos(a) * .11, y, z: .03 + Math.sin(a) * .11, vx: -Math.sin(a) * .1, vy: .06, vz: Math.cos(a) * .1, drag: 1.2,
+        sparks.emit({ x: S0[0] + Math.cos(a) * .11, y, z: S0[2] - .07 + Math.sin(a) * .11, vx: -Math.sin(a) * .1, vy: .06, vz: Math.cos(a) * .1, drag: 1.2,
           color: ['#fff1b8', '#b8f0e8', '#ffd1dc'][i], size: .02, life: .9, shape: i ? 'sparkle' : 'glow', spin: 4 });
       }
-      if (g > 1.95 && kit.once('lift')) puff(-.306, .01, .1, 16, .04, .03);
+      if (g > 1.95 && kit.once('lift')) puff(S0[0], .01, S0[2], 16, .04, .03);
       if (g > 7.4 && kit.once('land')) puff(.15, ROOF + .01, .01, 14, .04, .026);
 
-      /* the end: his arms round her, her head back against his; hearts, the banner */
-      const hug = ease.smooth(seg(g, 14.35, 14.75));
+      /* the end: he leans in behind her, his hands on her waist; hearts, the banner */
+      const hug = ease.smooth(seg(g, 14.35, 14.75)), together = ease.smooth(seg(g, 18.2, 18.6));
+      if (together) boy.bend('spine', 0, .1, -.24, together);        // (before his arms, so his hands stay on her)
       if (hug) {
-        boy.aim('upperarm.r', [-.3, -.25, .9], hug); boy.aim('lowerarm.r', [.85, -.05, .5], hug);
-        boy.aim('upperarm.l', [.3, -.25, .9], hug); boy.aim('lowerarm.l', [-.85, -.05, .5], hug);
-        boy.bend('head', .12, 0, 0, hug); boy.bend('chest', .15, 0, 0, hug);
+        lean(boy, hug);
+        boy.aim('upperarm.r', [-.38, -.45, .81], hug); boy.aim('lowerarm.r', [0, -.52, .85], hug);
+        boy.aim('upperarm.l', [.38, -.45, .81], hug); boy.aim('lowerarm.l', [0, -.52, .85], hug);
+        boy.bend('head', .12, 0, 0, hug);
       }
       const pat = bump(g, 13.45, 13.6, 13.95, 14.1);                 // a pat on the seat behind her: hop on!
       if (pat) { girl.aim('upperarm.l', [.45, -.55, -.7], pat); girl.aim('lowerarm.l', [.3, -.6 - .3 * Math.abs(Math.sin(T * 14)), -.75], pat); girl.bend('head', 0, .5, 0, pat); }
-      const together = ease.smooth(seg(g, 18.2, 18.6));
-      if (together) { girl.bend('head', 0, .42, -.06, together); boy.bend('spine', 0, .1, -.24, together); boy.bend('head', 0, .38, -.1, together); }   // both towards you, his chin past her shoulder
+      if (together) { girl.bend('head', 0, .42, -.06, together); boy.bend('head', 0, .38, -.1, together); }   // both towards you, his chin past her shoulder
       if (g > 18.4 && kit.once('end')) love(broom.position.x, broom.position.y + .25, broom.position.z - .04, 24, .45, .12);   // behind the banner: its words stay clear
       const b = ease.elastic(seg(g, 18.25, 19.1));
       banner.root.scale.setScalar(Math.max(.001, b));
@@ -761,11 +775,8 @@
       banner.root.rotation.set(-.1, 0, .02 * Math.sin(T * 1.1));
       if (held && dt && g > 18.8 && rng() < dt * 1.5) hearts.emit({ x: broom.position.x + (rng() - .5) * .2, y: broom.position.y + .25, z: broom.position.z - .04, vy: .07, sway: .03, color: '#ff8fab', size: .018, life: 2.4, shape: 'heart' });
 
-      /* capes and ribbons in the wind */
-      const wind = flying * speed, pair = ease.inOut(seg(g, 13.95, 14.35));   // with him behind her, her cape folds up to a capelet
-      if (capes[0]) capes[0].node.scale.y = lerp(1, .42, pair);
-      flutter(capes[0], lerp(.12 + wind * .9, .05, pair), T, .25 + wind * .9, 0);
-      flutter(capes[1], g > 14.3 ? .15 + wind * .85 : 0, T, g > 14.3 ? .25 + wind * .9 : .12, 1.5);
+      /* her hat's ribbons in the wind */
+      const wind = flying * speed;
       ribbons.forEach((r, i) => flutter(r, .25 + wind * 1.1, T, .45 + wind, i * 2));
 
       [sparks, trail, hearts, dust, stars].forEach(x => x.update(dt, T));

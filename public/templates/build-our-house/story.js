@@ -11,8 +11,9 @@
                      each other, and a banner with the last words (note2) rises
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
-  const { THREE, stage, tween, ease, seg, lerp, rng, words } = kit;
-  const H = .3;                                                      // his height, in card widths; she takes his scale: eye to eye
+  const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
+  const H = .27, HER = H * .945;                                     // their heights, in card widths (1.80 m and 1.70 m): the door is a grown-up's
+  const STRIDE = { boy: .1 * H / .3, girl: .1 * HER / .3 };         // a walk's stride a second at speed 1 (the models' pace makes KayKit's theirs)
   const R = Math.PI / 2;                                             // facing +x
   const HAND = '"Dancing Script", "Segoe Script", "Brush Script MT", cursive';
 
@@ -24,47 +25,52 @@
   const PITCH = Math.atan((RIDGE - EAVE.y) / EAVE.x);
   const CHIMNEY = [.105, -.205], ROUND = { y: TOP + .062, r: .034 }; // the chimney on the right slope; the attic window in the gable
   const SHEET = { x: .17, z0: -.25, z1: -.08 };                      // the blueprint on the ground, under the house
+  const SLAB_FRONT = .02;                                            // the slab's front edge: it runs .305 back from here
+  const TRAY = [.249, .129], BENCH = .057;                           // the paint tray, up on a plank and bricks in front of her, the roller's grip towards her
+  const CARRY = [.193, .062];                                        // her armful's lowest brick, in her own space (up, forward)
 
   /* when things happen, in story seconds */
-  const RELEASE = 2.24;                                              // the roll leaves his hand (Throw starts at 1.5): its hand at the top
-  const STRIKES = [3.83, 4.53, 5.23, 7.08, 7.78, 8.48], HIT = .45;   // his hammer lands HIT s into each chop
+  const RELEASE = 2.24, THROW = RELEASE - .33 / .8;                  // the roll leaves his hand a third of a second into Throw (at .8): its hand at the top
+  const STRIKES = [3.83, 4.53, 5.23, 7.08, 7.78, 8.48];              // his hammer lands on the front-left corner
+  const STRUCK = [1, 2, 3, 4, 6, 6];                                 // the course each strike lands on (the roof's strike too: his reach)
   const TOSS = STRIKES.slice(0, 3).map(s => s - .38);                // she tosses a brick; it lands as he strikes
   const COURSE_AT = [3.6, 3.83, 4.53, 5.23, 7.08, 7.2, 7.78, 7.9];   // each course starts snapping round the house
   const WAVE = .32;                                                  // s per card width round the walls, from the front-left corner
-  const ROOF_AT = STRIKES[5], GRAB = 7.15, PAINT = [9.05, 10.25];    // she takes the roller at GRAB, paints in PAINT
+  const ROOF_AT = STRIKES[5], GRAB = 7.45, PAINT = [9.05, 10.25];    // she takes the roller at GRAB (PickUp at its lowest), paints in PAINT
   const DUSK = 12.7, LIGHTS = 14, DOOR_OPEN = 14.3;
 
-  /* the pose a character holds at story time g: [from g, clip, options] */
-  const CHOP = (s, i) => [s - HIT, '1H_Melee_Attack_Chop', { once: true, speed: 1.45, fade: .12, key: i }];
+  /* the pose a character holds at story time g: [from g, clip, options]; a walk's speed is the way it covers over its stride */
   const BOY = [
-    [0, 'Idle'], [.05, 'Walking_A', { speed: 2.2 }], [1.45, 'Idle', { fade: .15 }], [1.5, 'Throw', { once: true, fade: .12 }],
-    [2.85, 'Idle', { fade: .25 }], ...STRIKES.slice(0, 3).map(CHOP), [5.5, 'Cheer', { once: true, speed: 1.4, fade: .2 }],
-    [6.3, 'Idle', { fade: .3 }], ...STRIKES.slice(3).map((s, i) => CHOP(s, i + 3)), [9.0, 'Idle', { fade: .2 }],
-    [9.15, 'Walking_A', { speed: 2.2 }], [9.85, 'Idle', { fade: .25 }], [14.55, 'Walking_A', { speed: 1.8 }], [15.4, 'Idle', { fade: .2 }],
+    [0, 'Idle'], [.05, 'Walking_A', { speed: .221 / STRIDE.boy }], [1.45, 'Idle', { fade: .15 }], [THROW, 'Throw', { once: true, speed: .8, fade: .12 }],
+    [2.85, 'Walking_A', { speed: .129 / STRIDE.boy, fade: .2 }], [3.2, 'Idle', { fade: .2 }], [5.5, 'Cheer', { once: true, speed: 1.4, fade: .2 }],
+    [6.3, 'Idle', { fade: .3 }], [9.15, 'Walking_A', { speed: .182 / STRIDE.boy }], [9.85, 'Idle', { fade: .25 }],
+    [14.55, 'Walking_A', { speed: .178 / STRIDE.boy }], [15.4, 'Idle', { fade: .2 }],
     [15.85, 'Cheer', { once: true, speed: 1.3, fade: .2 }], [17.1, 'Idle', { fade: .35 }]
   ];
   const GIRL = [
-    [0, 'Idle'], [.3, 'Walking_A', { speed: 2.1 }], [1.6, 'Idle', { fade: .2 }], [5.45, 'Cheer', { once: true, speed: 1.4, fade: .2 }],
-    [6.3, 'Idle', { fade: .3 }], [6.6, 'PickUp', { once: true, fade: .2 }], [7.85, 'Idle', { fade: .2 }], [7.95, 'Walking_A', { speed: 2.3 }],
-    [8.9, 'Idle', { fade: .2 }], [10.3, 'Walking_Backwards', { speed: 2.3 }], [10.85, 'Idle', { fade: .25 }], [14.55, 'Walking_A', { speed: 1.8 }],
-    [15.4, 'Idle', { fade: .2 }], [15.85, 'Cheer', { once: true, speed: 1.3, fade: .2 }], [17.1, 'Idle', { fade: .35 }]
+    [0, 'Idle'], [.3, 'Walking_A', { speed: .208 / STRIDE.girl }], [1.6, 'Idle', { fade: .2 }], [5.45, 'Cheer', { once: true, speed: 1.4, fade: .2 }],
+    [6.3, 'Idle', { fade: .3 }], [6.6, 'PickUp', { once: true, fade: .2 }], [7.85, 'Idle', { fade: .2 }], [7.95, 'Walking_A', { speed: .272 / STRIDE.girl }],
+    [8.9, 'Idle', { fade: .2 }], [10.3, 'Walking_Backwards', { speed: .3 / STRIDE.girl }], [10.85, 'Idle', { fade: .25 }],
+    [14.55, 'Walking_A', { speed: .178 / STRIDE.girl }], [15.4, 'Idle', { fade: .2 }], [15.85, 'Cheer', { once: true, speed: 1.3, fade: .2 }], [17.1, 'Idle', { fade: .35 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
 
   /* where each of them is: [from g, x, z, facing, ease into it (smooth by default; linear while walking, so feet keep pace)] */
   const BOY_WAY = [
     [0, -.6, -.05, R], [.05, -.6, -.05, R], [1.45, -.29, -.05, R, 'linear'], [1.62, -.29, -.05, 1.75], [2.85, -.29, -.05, 1.75],
-    [3.2, -.29, -.05, 1.7], [5.4, -.29, -.05, 1.7], [5.6, -.29, -.05, .75], [6.4, -.29, -.05, .75], [6.6, -.29, -.05, 1.7],
-    [9.0, -.29, -.05, 1.7], [9.15, -.29, -.05, .72], [9.85, -.19, .065, .72, 'linear'], [10.1, -.19, .065, .35], [14.4, -.19, .065, .35],
+    [3.2, -.245, -.05, 1.7, 'linear'], [5.4, -.245, -.05, 1.7], [5.6, -.245, -.05, .75], [6.4, -.245, -.05, .75], [6.6, -.245, -.05, 1.7],
+    [9.0, -.245, -.05, 1.7], [9.15, -.245, -.05, .45], [9.85, -.19, .065, .45, 'linear'], [10.1, -.19, .065, .35], [14.4, -.19, .065, .35],
     [14.55, -.19, .065, 2], [15.4, -.053, 0, 2, 'linear'], [15.7, -.053, 0, .15], [19, -.053, 0, .15]
   ];
   const GIRL_WAY = [
     [0, .6, .06, -R], [.3, .6, .06, -R], [1.6, .33, .06, -R, 'linear'], [1.9, .33, .06, -1], [5.4, .33, .06, -1], [5.55, .33, .06, -.6],
-    [7.85, .33, .06, -.6], [7.95, .33, .06, -1.82], [8.9, .115, .005, -1.82, 'linear'], [9.05, .115, .005, -R], [10.25, .08, .005, -R, 'linear'],
-    [10.3, .08, .005, -R], [10.85, .19, .065, -R, 'linear'], [11.1, .19, .065, -.35], [14.4, .19, .065, -.35], [14.55, .19, .065, -2],
+    [7.85, .33, .06, -.6], [7.95, .33, .06, -1.89], [8.9, .085, -.022, -1.89, 'linear'], [9.05, .085, -.022, -R], [10.25, .05, -.022, -R, 'linear'],
+    [10.3, .05, -.022, -R], [10.85, .19, .065, -R, 'linear'], [11.1, .19, .065, -.35], [14.4, .19, .065, -.35], [14.55, .19, .065, -2],
     [15.4, .053, 0, -2, 'linear'], [15.7, .053, 0, -.15], [19, .053, 0, -.15]
   ];
   const wayAt = (way, g) => [1, 2, 3].map(i => tween(g, way.map(k => [k[0], k[i], k[4] || 'smooth'])));
+  /** how high someone standing at x, z is: on the slab once it has risen (its front is the porch at the door), else the card */
+  const ground = (x, z, g) => (g < 3.47 ? 0 : SLAB * Math.min(clamp((EAVE.x - Math.abs(x)) / .01), clamp((SLAB_FRONT - z) / .01), clamp((z - SLAB_FRONT + .305) / .01)));
 
   const DAY = { hemi: new THREE.Color('#fff6f0'), ground: new THREE.Color('#c9a9c4'), sun: new THREE.Color('#ffffff') };
   const GOLD = { hemi: new THREE.Color('#fff0dc'), ground: new THREE.Color('#c9a59a'), sun: new THREE.Color('#ffe2b8') };
@@ -72,13 +78,13 @@
   const PAL = { brick: ['#f2a98f', '#ea9a80', '#f6b8a0', '#e48e76', '#f9c3ab', '#ef9f86'], mortar: '#fbefe2', roof: ['#e35d4f', '#d95045', '#ea6f5c', '#cf4a40', '#f07a62'],
     trim: '#fffaf2', door: '#4fbfa8', wood: '#c98b55', hat: '#ffc229', mail: '#49a6e9', blue: '#2f6fbe', cream: '#f7ecd8' };
 
-  let K = .125;                                                      // one model unit in card widths (set in build)
   let boy, girl, hat, hammer, roll, roller, sheet, slab, bricksMesh, mortarMesh, tilesMesh, decks, gables, ridge, chimney;
   let door, windows, roundWin, mailbox, carry, barrowBricks, tray, interior, lamp, glows, backdrops, bushes;
   let titleSign, photo, banner, sparks, chips, dust, hearts, smoke, drops;
   const bricks = [], mortar = [], tiles = [];
   let lastG = -1;                                                    // the walls and roof are placed again only when g moves
   const v3 = new THREE.Vector3(), s3 = new THREE.Vector3(), q4 = new THREE.Quaternion(), m4 = new THREE.Matrix4();
+  const LET_GO = { p: new THREE.Vector3(), q: new THREE.Quaternion() }, LAID = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0, 'YXZ'));   // the roll as it leaves his hand; lying along z
   const UP = new THREE.Vector3(0, 1, 0), HIDE = new THREE.Matrix4().makeScale(0, 0, 0), WARM = new THREE.Color('#ffd08a'), DARK = new THREE.Color('#3d2a2a');
 
   /* ── little helpers ── */
@@ -330,11 +336,13 @@
     g.userData.pad = pad;
     return g;
   }
-  function makeTray() {                                              // a paint tray the roller lies in, a tin of paint beside it
-    const g = new THREE.Group(), tin = mat('#dfe5ea', { metalness: .5, roughness: .35, envMap: kit.env }), paint = mat(PAL.door, { roughness: .4 });
-    g.add(mesh(new THREE.BoxGeometry(.05, .01, .068), tin, 0, .005, 0), turn(mesh(new THREE.PlaneGeometry(.042, .03), paint, 0, .0105, .014), -R));
-    g.add(mesh(new THREE.CylinderGeometry(.018, .018, .034, 18), tin, .05, .017, -.035), mesh(new THREE.CylinderGeometry(.0185, .0185, .014, 18), paint, .05, .016, -.035),
-      mesh(new THREE.CylinderGeometry(.0175, .0175, .002, 18), paint, .05, .0345, -.035));
+  function makeTray() {                                              // a paint tray the roller lies in, up on a plank across two piers of bricks; a tin of paint beside
+    const g = new THREE.Group(), tin = mat('#dfe5ea', { metalness: .5, roughness: .35, envMap: kit.env }), paint = mat(PAL.door, { roughness: .4 }), b = BENCH;
+    g.add(mesh(new THREE.BoxGeometry(.05, .01, .068), tin, 0, b + .005, 0), turn(mesh(new THREE.PlaneGeometry(.042, .03), paint, 0, b + .0105, .014), -R));
+    g.add(mesh(new THREE.CylinderGeometry(.018, .018, .034, 18), tin, .06, .017, -.035), mesh(new THREE.CylinderGeometry(.0185, .0185, .014, 18), paint, .06, .016, -.035),
+      mesh(new THREE.CylinderGeometry(.0175, .0175, .002, 18), paint, .06, .0345, -.035));
+    g.add(mesh(new THREE.BoxGeometry(.07, .006, .08), mat(PAL.wood, { roughness: .7 }), 0, b - .003, 0));
+    for (const x of [-.022, .022]) for (let j = 0; j < 3; j++) g.add(turn(mesh(new THREE.BoxGeometry(.046, .017, .024), mat(PAL.brick[(j + (x > 0 ? 3 : 0)) % 6], { roughness: .9 }), x, .0085 + j * .017, 0), 0, R));
     return g;
   }
   function makeBarrow() {                                            // a wheelbarrow, its wheel towards +z
@@ -435,36 +443,67 @@
 
   /** a prop into a hand or onto the stage, placed there (pos in card widths, turned by rot) */
   function put(obj, m, slot, pos, rot) {
-    if (m) { const b = m.node(slot); if (obj.parent !== b) m.hold(obj, slot); obj.position.set(pos[0] / K, pos[1] / K, pos[2] / K); }
+    if (m) {
+      const b = m.node(slot); if (obj.parent !== b) m.hold(obj, slot);
+      const k = obj.userData.stageScale.x / obj.scale.x;             // one of the bone's own units, in card widths
+      obj.position.set(pos[0] / k, pos[1] / k, pos[2] / k);
+    }
     else { if (obj.parent !== stage) { stage.add(obj); if (obj.userData.stageScale) obj.scale.copy(obj.userData.stageScale); } obj.position.set(pos[0], pos[1], pos[2]); }
     obj.rotation.set(rot[0], rot[1], rot[2]);
   }
-  /** a new look from the character's palette texture: [column, row, colour, how] per swatch (8 x 4 swatches) */
-  function repaint(m, part, swatches) {
-    const node = m.node(part), mt = node && node.material, img = mt && mt.map && mt.map.image;
-    if (!img || !img.width) return;
-    const sw = img.width / 8, sh = img.height / 4;
-    const cv = canvas(img.width, img.height, c => {
-      c.drawImage(img, 0, 0);
-      for (const [col, row, color, how] of swatches) { c.globalCompositeOperation = how || 'source-over'; c.fillStyle = color; c.fillRect(col * sw, row * sh, sw, sh); }
-    });
-    const old = mt.map, t = texture(cv);
-    t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter;
-    mt.map = t; mt.needsUpdate = true; old.dispose();
+  /* arms by hand: [upper arm, forearm] directions in a character's own space, as aim takes them */
+  const READY = [[-.3, -.6, .75], [-.12, .35, 1]], RAISED = [[-.3, .85, .3], [-.05, .65, -.75]];   // the hammer in front; up behind his head
+  const mix = (a, b, k) => a.map((v, i) => lerp(v, b[i], k));
+  const toOwn = (d, th) => [d.x * Math.cos(th) - d.z * Math.sin(th), d.y, d.x * Math.sin(th) + d.z * Math.cos(th)];   // stage to the character's own space
+  const vS = new THREE.Vector3(), vE = new THREE.Vector3(), vH = new THREE.Vector3(), vX = new THREE.Vector3(), vU = new THREE.Vector3(), vW = new THREE.Vector3(), vD = new THREE.Vector3();
+  /** his hammering at story time g (the couple has no chop clip): between strikes the hammer is ready in front; each
+      strike swings it up behind his head, then down so its head lands on the front-left corner, at the course that snaps
+      on (a bend for the low ones). Call it once the hammer is in his hand */
+  function hammering(g, br) {
+    const on = seg(g, 3.15, 3.45) * (1 - seg(g, 8.7, 8.95));
+    if (!on) return;
+    let i = STRIKES.findIndex(s => g < s + .28); if (i < 0) i = STRIKES.length - 1;
+    const s = STRIKES[i], up = ease.out(seg(g, s - .4, s - .16)), down = ease.in(seg(g, s - .16, s)), back = ease.inOut(seg(g, s + .08, s + .28));
+    const lean = clamp((.2 - SLAB - C * STRUCK[i]) / .12) * .75 * Math.min(down, 1 - back);
+    if (lean) { boy.bend('spine', lean * .5, 0, 0); boy.bend('chest', lean, 0, 0); }
+    let hit = READY;
+    if (down > 0 && back < 1) hit = reachWith(boy, 'r', hammer.head, vD.set(-WX + .004, SLAB + C * (STRUCK[i] + .5), WF + .004), br, true);
+    const pose = [0, 1].map(j => mix(mix(mix(READY[j], RAISED[j], up), hit[j], down), READY[j], back));
+    boy.aim('upperarm.r', pose[0], on); boy.aim('lowerarm.r', pose[1], on);
+  }
+  /** the arm that puts `tip` (a hand, or a point of what it holds) on T: the elbow where the two lengths meet (above
+      the line), then the forearm turned until the tip is there. [upper arm, forearm] in the model's own space, for aim.
+      The arm is put back as it was unless `keep` (a tool off the forearm's line lands only with the turn found here) */
+  const qU = new THREE.Quaternion(), qL = new THREE.Quaternion();
+  function reachWith(m, side, tip, T, th, keep) {
+    const up = `upperarm.${side}`, low = `lowerarm.${side}`;
+    qU.copy(m.node(up).quaternion); qL.copy(m.node(low).quaternion);
+    onStage(m.node(up), vS); onStage(m.node(low), vE); onStage(tip, vH);
+    const L1 = vS.distanceTo(vE), L2 = vE.distanceTo(vH), d = Math.min(vS.distanceTo(T), L1 + L2 - 1e-4);
+    vU.subVectors(T, vS).normalize(); vW.set(0, 1, 0).addScaledVector(vU, -vU.y).normalize();
+    const ca = clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1);
+    vE.copy(vS).addScaledVector(vU, L1 * ca).addScaledVector(vW, L1 * Math.sqrt(1 - ca * ca));
+    const upper = toOwn(vX.subVectors(vE, vS), th); m.aim(up, upper);
+    let lower = null; vX.copy(T);
+    for (let n = 0; n < 3; n++) {
+      onStage(m.node(low), vE); lower = toOwn(vU.subVectors(vX, vE), th); m.aim(low, lower);
+      onStage(tip, vH); vX.add(vU.subVectors(T, vH));
+    }
+    if (!keep) { m.node(up).quaternion.copy(qU); m.node(low).quaternion.copy(qL); m.node(up).updateMatrixWorld(true); }
+    return [upper, lower];
   }
 
   return {
     seconds: [6.4, 6.2, 6.4],
 
     build() {
-      /* the two of them: a young builder in denim with a hard hat, and a painter in her green hood */
-      boy = kit.model('boy').fit({ height: H }); K = boy.scene.scale.x;
-      girl = kit.model('girl'); girl.scene.scale.setScalar(K);
-      repaint(boy, 'Knight_Body', [[3, 0, '#86b4ff', 'multiply'], [1, 0, '#8a5a3c', 'multiply'], [2, 1, '#ffd27a', 'multiply'], [7, 0, '#fff1d6', 'multiply']]);
-      repaint(girl, 'Rogue_Body', [[0, 1, '#fff4e6'], [3, 2, '#c98a5a', 'multiply']]);   // a painter's white smock, warm brown boots
+      /* the two of them, the builder in a hard hat */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
-      hat = makeHat(); put(hat, boy, 'head', [0, .107, .009], [.1, 0, 0]);
-      hammer = makeHammer(); stage.add(hammer);
+      hat = makeHat(); hat.scale.setScalar(.25); stage.add(hat);       // on the crown of his head, level, then riding on it
+      stage.updateMatrixWorld(true); onStage(boy.node('head_end'), v3);
+      hat.position.set(v3.x, v3.y - .009, v3.z - .001); hat.rotation.set(-.08, 0, 0); boy.node('head').attach(hat);
+      hammer = makeHammer(); hammer.scale.setScalar(.65); stage.add(hammer);   // a grown-up's hand: a hammer of a real size
       roll = makeRoll(); roll.rotation.order = 'YXZ'; stage.add(roll);
       roller = makeRoller(); roller.rotation.order = 'YXZ'; stage.add(roller);
 
@@ -483,7 +522,7 @@
       sheet = new THREE.Mesh(kit.keep(new THREE.PlaneGeometry(2 * SHEET.x, SHEET.z1 - SHEET.z0).translate(SHEET.x, 0, 0)),
         kit.keep(new THREE.MeshStandardMaterial({ map: planTex, roughness: .9, emissive: 0xffffff, emissiveMap: planTex, emissiveIntensity: .15 })));
       sheet.rotation.x = -R; sheet.position.set(-SHEET.x, .003, (SHEET.z0 + SHEET.z1) / 2); sheet.receiveShadow = true; stage.add(sheet);
-      slab = mesh(new THREE.BoxGeometry(2 * EAVE.x, SLAB, .305).translate(0, SLAB / 2, 0), mat('#dcd3c6', { roughness: .95 }), 0, 0, -.1325); stage.add(slab);
+      slab = mesh(new THREE.BoxGeometry(2 * EAVE.x, SLAB, .305).translate(0, SLAB / 2, 0), mat('#dcd3c6', { roughness: .95 }), 0, 0, SLAB_FRONT - .305 / 2); stage.add(slab);
 
       /* the house */
       layWalls(); layRoof();
@@ -526,7 +565,7 @@
         const b = makeBrick(.04, .016, .02, i); b.position.set(...p); b.rotation.y = .3 * i; barrow.add(b); b.userData.home = p; return b;
       });
       carry = { barrow };
-      tray = makeTray(); tray.position.set(.226, 0, .1); tray.rotation.y = -1.05; stage.add(tray);
+      tray = makeTray(); tray.position.set(TRAY[0], 0, TRAY[1]); tray.rotation.y = -1.05; stage.add(tray);
       carry.stack = [0, 1, 2].map(i => { const b = makeBrick(.046, .017, .024, i + 2); stage.add(b); return b; });
       mailbox = makeMailbox(); mailbox.position.set(-.37, 0, .14); mailbox.rotation.y = .45; stage.add(mailbox);
 
@@ -580,8 +619,8 @@
       /* the two of them: where they are, which way they look, which clip */
       const [bx, bz, br] = wayAt(BOY_WAY, g), [gx, gz, gr] = wayAt(GIRL_WAY, g);
       const rock = .05 * Math.sin(T * 2) * ease.smooth(seg(g, 17.7, 18.4));   // at the last stop they sway together
-      boy.root.position.set(bx, 0, bz); boy.root.rotation.y = br + rock;
-      girl.root.position.set(gx, 0, gz); girl.root.rotation.y = gr + rock;
+      boy.root.position.set(bx, ground(bx, bz, g), bz); boy.root.rotation.y = br + rock;
+      girl.root.position.set(gx, ground(gx, gz, g), gz); girl.root.rotation.y = gr + rock;
       const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
       boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
 
@@ -591,12 +630,13 @@
       const LAND = 2.6, UNROLL = [2.72, 3.17], mid = (SHEET.z0 + SHEET.z1) / 2, unroll = ease.out(seg(g, UNROLL[0], UNROLL[1]));
       const rr = lerp(.011, .006, unroll);
       roll.userData.tube.scale.set(rr, 1, rr); roll.visible = g < 3.45;
-      if (g < RELEASE) {                                             // held like a baton, pointing the way he faces (rotation order YXZ)
-        onStage(boy.node('handslot.r'), v3);
-        put(roll, null, null, [v3.x + Math.sin(br) * .06, v3.y + .045, v3.z + Math.cos(br) * .06], [R - .6, br, 0]); roll.userData.tube.rotation.y = 0;
-      } else if (g < LAND) {                                         // over in an arc, turning to lie along the plan's left edge
-        const k = seg(g, RELEASE, LAND), [sx, sy, sz] = local(-.29, -.05, 1.75, -.07, .215, .139), ex = -SHEET.x + .011;
-        put(roll, null, null, [lerp(sx, ex, k), lerp(sy, .011, k) + .1 * 4 * k * (1 - k), lerp(sz, mid, k)], [lerp(R - .6, R, k), lerp(1.75, 0, ease.out(k)), 0]);
+      if (g < RELEASE) {                                             // in his fist by one end, like a baton
+        put(roll, boy, 'handslot.r', [0, .07, 0], [0, 0, 0]); roll.userData.tube.rotation.y = 0;
+      } else if (g < LAND) {                                         // over in an arc from where it left his hand, turning to lie along the plan's left edge
+        if (kit.once('release')) { stage.updateWorldMatrix(true, false); roll.updateWorldMatrix(true, false); m4.copy(stage.matrixWorld).invert().multiply(roll.matrixWorld).decompose(LET_GO.p, LET_GO.q, s3); }
+        const k = seg(g, RELEASE, LAND), { p } = LET_GO, ex = -SHEET.x + .011;
+        put(roll, null, null, [lerp(p.x, ex, k), lerp(p.y, .011, k) + .1 * 4 * k * (1 - k), lerp(p.z, mid, k)], [0, 0, 0]);
+        roll.quaternion.slerpQuaternions(LET_GO.q, LAID, ease.out(k));
         roll.userData.tube.rotation.y = k * 9;
       } else {
         const bounce = .014 * Math.sin(Math.PI * seg(g, LAND, UNROLL[0])), x = -SHEET.x + .011 + (2 * SHEET.x - .022) * unroll;
@@ -618,8 +658,12 @@
       /* the hammer: on his belt, in his hand from 3.05 to 9.1; a reach to the hip to take it and to put it back */
       const reach = Math.sin(Math.PI * seg(g, 2.9, 3.2)) + Math.sin(Math.PI * seg(g, 8.95, 9.25));
       if (reach > 0) { boy.aim('upperarm.r', [-.45, -.85, -.1], reach); boy.aim('lowerarm.r', [-.05, -.85, .4], reach); }
-      if (g >= 3.05 && g < 9.1) put(hammer, boy, 'handslot.r', [0, -.004, 0], [0, 0, 0]);
-      else put(hammer, boy, 'hips', [-.042, -.03, .016], [0, 0, .12]);
+      if (g >= 3.05 && g < 9.1) put(hammer, boy, 'handslot.r', [0, -.003, 0], [0, 0, -.8]);   // the head beyond the fist
+      else {                                                         // hanging at his right hip, head up
+        onStage(boy.node('hips'), v3); const p = local(v3.x, v3.z, br, -.032, 0, .006);
+        put(hammer, null, null, [p[0], v3.y - .045, p[2]], [0, br, .1]);
+      }
+      hammering(g, br);
 
       /* the walls, brick by brick; at each strike chips fly off the hammer */
       if (g !== lastG) { placeBricks(g); placeTiles(g); lastG = g; }
@@ -638,15 +682,15 @@
       if (carryK) {
         const flick = Math.max(0, ...TOSS.map(t => Math.sin(Math.PI * seg(g, t - .06, t + .2))));
         for (const [s, up, low] of [[-1, 'upperarm.r', 'lowerarm.r'], [1, 'upperarm.l', 'lowerarm.l']]) {
-          girl.aim(up, [s * .2, lerp(-.3, .15, flick), .93], carryK); girl.aim(low, [-s * .22, lerp(.15, .6, flick), 1], carryK);
+          girl.aim(up, [s * .16, lerp(-.8, -.45, flick), lerp(.55, .85, flick)], carryK); girl.aim(low, [-s * .3, lerp(.15, .6, flick), 1], carryK);
         }
       }
       carry.stack.forEach((b, i) => {
         const j = 2 - i, t0 = TOSS[j], t1 = STRIKES[j], k = seg(g, t0, t1), course = j + 1;
-        const home = local(gx, gz, gr, 0, .112 + i * .018 + kit.hop(g - .3, .55, .004) * seg(g, .3, .4) * (1 - seg(g, 1.5, 1.6)), .082);
+        const home = local(gx, gz, gr, 0, CARRY[0] + i * .018 + kit.hop(g - .3, .55, .004) * seg(g, .3, .4) * (1 - seg(g, 1.5, 1.6)), CARRY[1]);
         if (g < t0) { b.visible = g > .05; b.position.set(...home); b.rotation.set(0, gr, 0); b.scale.setScalar(1); return; }
         b.visible = k < 1;
-        arc(b, local(.33, .06, -1, 0, .112 + i * .018, .082), [-WX + .03, SLAB + C * (course + .5), WF - WT / 2 + .006], k, .14);
+        arc(b, local(.33, .06, -1, 0, CARRY[0] + i * .018, CARRY[1]), [-WX + .03, SLAB + C * (course + .5), WF - WT / 2 + .006], k, .14);
         b.rotation.set(k * 6.28, lerp(-1, 0, k), 0); b.scale.setScalar(lerp(1, 1.4, k));
       });
       /* the wheelbarrow's bricks fly to the same corner for the upper courses */
@@ -692,15 +736,18 @@
       burst('heartPane', 10.27, .0, SLAB + .19, WF + .01, 10);
 
       /* the roller: in the tray until she takes it, then in her right hand; in her left before the cheer at the end */
-      if (g < GRAB) put(roller, null, null, [.259, .014, .08], [R, -1.05, 0]);
+      if (g < GRAB) put(roller, null, null, [TRAY[0] + .033, BENCH + .014, TRAY[1] - .02], [R, -1.05, 0]);
       else if (g < 15.6) put(roller, girl, 'handslot.r', [0, -.004, 0], [0, 0, 0]);
       else put(roller, girl, 'handslot.l', [0, -.004, 0], [0, 0, 0]);
+      const grab = seg(g, GRAB - .45, GRAB - .1) * (1 - seg(g, GRAB + .1, GRAB + .4));   // her hand to the roller's grip on the tray
+      if (grab) { const [u, l] = reachWith(girl, 'r', girl.node('handslot.r'), vD.set(TRAY[0] + .033, BENCH + .014, TRAY[1] - .02), gr); girl.aim('upperarm.r', u, grab); girl.aim('lowerarm.r', l, grab); }
       const walkRoller = seg(g, GRAB + .5, GRAB + .8) * (1 - seg(g, PAINT[0] - .1, PAINT[0] + .05));
       if (walkRoller) { girl.aim('upperarm.r', [-.25, -.55, .6], walkRoller); girl.aim('lowerarm.r', [-.1, .35, 1], walkRoller); }
       const paintK = seg(g, PAINT[0] - .1, PAINT[0] + .1) * (1 - seg(g, PAINT[1] - .05, PAINT[1] + .15));
-      if (paintK) {                                                  // three strokes, each up and down the door
+      if (paintK) {                                                  // three strokes up and down the door, the roller on it, right to left
         const s = .5 - .5 * Math.cos(seg(g, PAINT[0], PAINT[1]) * Math.PI * 2 * 3);
-        girl.aim('upperarm.r', [-.45, lerp(-.15, .45, s), .85], paintK); girl.aim('lowerarm.r', [-.25, lerp(.25, .9, s), .75], paintK);
+        const [u, l] = reachWith(girl, 'r', roller.userData.pad, vD.set(lerp(.035, -.035, seg(g, PAINT[0], PAINT[1])), lerp(SLAB + .05, SLAB + .21, s), WF - .009), gr, true);
+        girl.aim('upperarm.r', u, paintK); girl.aim('lowerarm.r', l, paintK);
         girl.bend('head', .08, -.3, 0, paintK);
         const pad = roller.userData.pad;
         if (dt && g > PAINT[0] && g < PAINT[1] && rng() < dt * 14) {
@@ -774,11 +821,16 @@
         [look(11.2, 11.7, 12.6, 12.9), boy, -.32, -.25], [look(11.2, 11.7, 12.6, 12.9), girl, -.32, .25],
         [look(13.1, 13.4, 14.1, 14.4), boy, -.12, -.5], [look(13.1, 13.4, 14.1, 14.4), girl, -.12, .5]]) if (k) m.bend('head', x, y, 0, k);
       const cheek = look(11.2, 11.7, 12.6, 12.9);                     // a hand to her cheek, looking up at the photo
-      if (cheek) { girl.aim('upperarm.l', [.2, -.2, .95], cheek); girl.aim('lowerarm.l', [-.55, .75, .4], cheek); }
+      if (cheek) {                                                   // her left cheek: aside and a little back from her face's front, the fist just off it
+        const f = onStage(girl.node('headfront'), new THREE.Vector3()), th = girl.root.rotation.y;
+        f.x += Math.cos(th) * .021 - Math.sin(th) * .008; f.z += -Math.sin(th) * .021 - Math.cos(th) * .008;
+        const [u, l] = reachWith(girl, 'l', girl.node('handslot.l'), f, th); girl.aim('upperarm.l', u, cheek); girl.aim('lowerarm.l', l, cheek);
+      }
       const finale = ease.inOut(seg(g, 17.1, 17.6));
-      if (finale) for (const [m, s] of [[boy, 1], [girl, -1]]) {        // s: the side the other one is on (+1 his left, -1 her right)
-        const upA = s > 0 ? 'upperarm.l' : 'upperarm.r', lowA = s > 0 ? 'lowerarm.l' : 'lowerarm.r';
-        m.aim(upA, [s * .55, -.55, -.35], finale); m.aim(lowA, [s * .25, -.25, -.95], finale); m.bend('chest', 0, 0, -s * .08, finale);
+      if (finale) for (const [m, s, other] of [[boy, 1, girl], [girl, -1, boy]]) {   // s: the side the other one is on (+1 his left, -1 her right)
+        const side = s > 0 ? 'l' : 'r', small = onStage(other.node('hips'), new THREE.Vector3()).add({ x: -s * .006, y: .025, z: -.03 });   // a hand on the small of the other's back
+        const [u, l] = reachWith(m, side, m.node(`handslot.${side}`), small, m.root.rotation.y);
+        m.aim(`upperarm.${side}`, u, finale); m.aim(`lowerarm.${side}`, l, finale); m.bend('chest', 0, 0, -s * .08, finale);
         m.bend('head', 0, s * .2, -s * (.18 + .03 * Math.sin(T * 1.3)), finale);
       }
       if (g > 5.95 && kit.once('cheer1')) { heartsAt(10, -.29, .32, 0, .8); heartsAt(10, .33, .32, 0, .8); }

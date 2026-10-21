@@ -69,6 +69,7 @@ export async function shootCard(template, o = {}, log = console.log) {
       viewport: { width: w, height: h },
       deviceScaleFactor: 2,
     });
+    page.setDefaultTimeout(120_000); // a busy machine (several shoots at once) renders a frame slowly
     page.on("pageerror", (e) => errors.push(String(e)));
     page.on("console", (m) => {
       // a card without its shop picture yet is not an error here

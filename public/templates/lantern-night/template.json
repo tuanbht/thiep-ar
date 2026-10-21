@@ -15,7 +15,7 @@
     3
   ],
   "reveal": null,
-  "notes": "A lantern night on the river of an old town (KayKit Adventurers, CC0: the Knight bare-headed with his cape, recoloured with black hair, a deep indigo tunic piped in gold, a red sash, bare hands and a cream cape; the Rogue with her cape worn short as a golden shawl over her scarf, recoloured with black hair, a rose-red dress and bare arms; weapons and the helmet dropped by scripts/pack-models.mjs). Everything else is built in scenery.js: a sky page that stands up and turns from dusk to night (the full moon rising, then a festival sky of far lanterns), a stone quay with steps and lantern-lit shophouses, a river with the town's lights wobbling on it and rings where anything touches it, a painted rowing boat (an eye on each side of its bow, a lantern on a bamboo pole) whose floor sits below the waterline, flower lanterns, lotus pads, fireflies, and hundreds of sky lanterns with their reflections. Stop 1: he rows them out along the river with smooth strokes while she trails her hand in the water and flower lanterns drift past; a big lotus lantern comes to the front, opens and a wish card with the card's first words (slot note1) rises out of it. Stop 2: the first sky lanterns rise; she stands, the boat rocks, he stands and steadies her by both hands; side by side he picks up a folded lantern, they open it, he strikes a match and lights it, and it floats over their heads on two cords with the second words (slot note2) glowing on its side. Stop 3: they let it go, hundreds of lanterns rise over the town and the river doubles them, his arm goes round her and she leans on his shoulder; a red lantern floats up with the card's photo unrolling under it and its caption (slot caption). Stop 4: the photo drifts aside, the lanterns gather into a heart, he takes both her hands, a kiss, the river shimmers, and two lanterns bring down a long red paper banner with the last words (slot note3). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A lantern night on the river of an old town, played by the shared grown-up couple (templates/_models: Grab3D's Casual Man and Casual Woman, CC0, with Quaternius's Universal Animation Library) in their own clothes: he rows from the middle bench with his knees up, she sits on a cushion before the stern bench, leaning back on her hands. Everything else is built in scenery.js: a sky page that stands up and turns from dusk to night (the full moon rising, then a festival sky of far lanterns), a stone quay with steps and lantern-lit shophouses, a river with the town's lights wobbling on it and rings where anything touches it, a painted rowing boat (an eye on each side of its bow, a lantern on a bamboo pole) whose floor sits below the waterline, flower lanterns, lotus pads, fireflies, and hundreds of sky lanterns with their reflections. Stop 1: he rows them out along the river with smooth strokes while she trails her hand in the water and flower lanterns drift past; a big lotus lantern comes to the front, opens and a wish card with the card's first words (slot note1) rises out of it. Stop 2: the first sky lanterns rise; she stands, the boat rocks, he stands and steadies her by both hands; side by side he picks up a folded lantern from the gunwale, they open it, he strikes a match and lights it, and it floats over their heads on two cords with the second words (slot note2) glowing on its side. Stop 3: they let it go, hundreds of lanterns rise over the town and the river doubles them, his arm goes round her and she leans on his shoulder; a red lantern floats up with the card's photo unrolling under it and its caption (slot caption). Stop 4: the photo drifts aside, the lanterns gather into a heart, he takes both her hands, a kiss, the river shimmers, and two lanterns bring down a long red paper banner with the last words (slot note3). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "categories": [
     "viral-scenes",
     "love",
@@ -32,15 +32,21 @@
     "trăng rằm"
   ],
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
   "photos": 1

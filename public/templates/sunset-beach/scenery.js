@@ -1,9 +1,10 @@
 /* Dạo biển hoàng hôn: the beach, built in code for story.js (template.json "story" loads this file first). The sky page (a
    sunset, a dusk painted over it that fades in, the sun, the far sea in front), the sea on the card with its foam and wet
-   sand, the sand, a palm, shells and a starfish, crabs, gulls, a driftwood stick and a bottle with a message. The story
-   places and times them; the waves lap, the gulls fly and the crabs' legs go by T, the act's own time.
-     NM_BEACH.scenery(kit, layout) → the builders; layout: { PAGE, HORIZON, SUN, BACK, SHORE, DECAL, STICK, SURGES } */
-(window.NM_BEACH = window.NM_BEACH || {}).scenery = (kit, { PAGE, HORIZON, SUN, BACK, SHORE, DECAL, STICK, SURGES }) => {
+   sand, the sand, a palm, shells and a starfish, crabs, gulls, a driftwood stick and the stone it lies across, a bottle
+   with a message and a driftwood bench. The story places and times them; the waves lap, the gulls fly and the crabs' legs
+   go by T, the act's own time.
+     NM_BEACH.scenery(kit, layout) → the builders; layout: { PAGE, HORIZON, SUN, BACK, SHORE, DECAL, STICK, SURGES, BENCH } */
+(window.NM_BEACH = window.NM_BEACH || {}).scenery = (kit, { PAGE, HORIZON, SUN, BACK, SHORE, DECAL, STICK, SURGES, BENCH }) => {
   const { THREE, stage, ease, seg, clamp, lerp } = kit;
   const TAU = Math.PI * 2, R = Math.PI / 2;
   const PX = 1024 / PAGE.width;                                      // the page's canvas: pixels per card width
@@ -396,6 +397,30 @@
     stage.add(g, cork);                                              // the cork flies on its own once it pops
     return { root: g, cork, roll };
   }
+  /** a beach stone, rounded and a little flat: r across, its top h above the sand (its foot sunk in a little) */
+  function makeStone(r, h) {
+    const s = new THREE.Mesh(geo(new THREE.DodecahedronGeometry(1, 1)), mat('#9d958c', { roughness: 1, flatShading: true }));
+    s.scale.set(r, h * .54, r * .85); s.position.y = h * .46; s.castShadow = s.receiveShadow = true;
+    const g = new THREE.Group(); g.add(s); stage.add(g);
+    return g;
+  }
+  /** a driftwood bench: a weathered plank across two stones, its top BENCH.top above the sand. The group stands on the
+      sand, so scaling its height raises the bench out of it */
+  function makeBench() {
+    const { x0, x1, z, depth, top, thick } = BENCH, g = new THREE.Group();
+    const grain = kit.canvasTexture(256, 32, (c, w, h) => {
+      const r = seeded(77); c.fillStyle = '#c4b097'; c.fillRect(0, 0, w, h);
+      for (let i = 0; i < 26; i++) {
+        const y = r() * h; c.strokeStyle = `rgba(${r() < .5 ? '120,98,74' : '236,226,210'},${.25 + .3 * r()})`; c.lineWidth = 1 + 2 * r();
+        c.beginPath(); c.moveTo(0, y); for (let x = 16; x <= w; x += 16) c.lineTo(x, y + 2 * Math.sin(x * .03 + i)); c.stroke();
+      }
+    });
+    const plank = new THREE.Mesh(geo(new THREE.BoxGeometry(x1 - x0, thick, depth)), mat(0xffffff, { map: grain, roughness: .95 }));
+    plank.position.set((x0 + x1) / 2, top - thick / 2, z); plank.castShadow = plank.receiveShadow = true; g.add(plank);
+    for (const x of [x0 + .016, x1 - .016]) g.add(makeStone(.024, top - thick).translateX(x).translateZ(z));
+    stage.add(g);
+    return g;
+  }
 
-  return { heartXY, seeded, V3, mat, geo, pageZ, surgeAt, makePage, makeSea, poseSea, makeSand, makePalm, makeShells, makeCrab, makeGulls, poseGulls, makeStick, makeBottle };
+  return { heartXY, seeded, V3, mat, geo, pageZ, surgeAt, makePage, makeSea, poseSea, makeSand, makePalm, makeShells, makeCrab, makeGulls, poseGulls, makeStick, makeBottle, makeStone, makeBench };
 };

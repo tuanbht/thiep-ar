@@ -25,8 +25,8 @@
     FRONT: -.165,                                                    // the fronts of the two blocks across the road
     A: { x0: -.5, x1: -.08, h: .56 }, B: { x0: .02, x1: .5, h: .68 },
     ROAD: [-.1, .045], CROSS: [.04, .19],                            // the road (z); the zebra crossing (x)
-    WIN: { x0: .21, x1: .35, y0: .42, y1: .63, floor: .34 },         // her window, and the floor of her room behind it
-    DOOR: { x0: .06, x1: .16, h: .28 },
+    WIN: { x0: .21, x1: .35, y0: .42, y1: .63, floor: .28 },         // her window, and the floor of her room behind it (the sill at her hips)
+    DOOR: { x0: .06, x1: .16, h: .34 },                              // her door, tall enough for her (she is .2835)
     LAMP: [-.45, .085], POST: [-.37, .08], SIGNAL: [.215, .06]
   };
   const NOTE1_AT = [-.1, .5, .1], NOTE2_AT = [.0, .47, .12];         // where the words are read at stops 1 and 2
@@ -37,11 +37,11 @@
   const GREY_LIGHT = { hemi: new THREE.Color('#f2f0eb'), ground: new THREE.Color('#8d8a86'), sun: new THREE.Color('#ffffff') };
   const WARM_LIGHT = { hemi: new THREE.Color('#ffe2c6'), ground: new THREE.Color('#b8897a'), sun: new THREE.Color('#ffca94') };
   let city, paper, fly, boy, girl, tie, pen, stack, memo, fleet, sheet, trails, wind, threads, photo, develop, banner, glowCoral, heartGlow;
-  let leaves, scraps, sparks, hearts, puffs, capeCloth, warmBoy, warmGirl, legs = [];
+  let leaves, scraps, sparks, hearts, puffs, scarf, warmBoy, warmGirl;
 
   /* ── who does what: [from g, clip, options] ── */
   const BOY = [
-    [0, 'Idle'], [.2, 'Walking_A', { speed: 1.42 }], [2.55, 'Idle', { fade: .2 }], [2.68, 'Hit_B', { once: true, fade: .1 }], [3.5, 'Idle', { fade: .3 }],
+    [0, 'Idle'], [.2, 'Walking_A', { speed: 1.42 }], [2.55, 'Idle', { fade: .2 }],
     [4.1, 'Walking_A', { speed: 1.25 }], [4.8, 'Idle', { fade: .25 }],
     [12.75, 'Throw', { once: true, speed: 1.3, key: 1, fade: .1 }], [13.85, 'Idle', { fade: .25 }],
     [14.6, 'Throw', { once: true, speed: 1.3, key: 2, fade: .1 }], [15.7, 'Idle', { fade: .25 }],
@@ -51,7 +51,7 @@
     [31.55, 'Use_Item', { once: true, fade: .2 }], [32.75, 'Idle', { fade: .4 }], [34.2, 'Walking_A', { speed: .6 }], [34.7, 'Idle', { fade: .25 }]
   ];
   const GIRL = [
-    [0, 'Idle'], [3.33, 'Hit_A', { once: true, fade: .08 }], [4.0, 'Idle', { fade: .3 }], [5.5, 'Walking_A', { speed: 1.4 }], [6.35, 'Idle', { fade: .2 }],
+    [0, 'Idle'], [5.5, 'Walking_A', { speed: 1.4 }], [6.35, 'Idle', { fade: .2 }],
     [6.4, 'Use_Item', { once: true, fade: .2, speed: 1.2 }], [7.5, 'Idle', { fade: .2 }], [7.95, 'Running_A', { speed: .72, fade: .15 }], [9.05, 'Idle'],
     [10.6, 'Walking_A', { speed: 1.7 }], [11.3, 'Idle', { fade: .2 }],
     [24.45, 'Walking_A', { speed: 1.3 }], [25.0, 'Idle'], [25.1, 'Walking_A', { speed: 1.75 }], [27.45, 'Idle', { fade: .25 }],
@@ -70,17 +70,17 @@
     [15.8, -.15, .205, 2.27], [15.95, -.15, .205, 1.55], [16.3, -.15, .205, 1.55], [16.5, -.15, .205, 2.27],
     [17.55, -.15, .205, 2.27], [17.95, -.15, .205, .35], [23.6, -.15, .205, .35], [24.6, -.15, .205, .9], [24.75, -.15, .205, 1.25],
     [26.0, MEET[0] - .07, MEET[1], 1.3, 'linear'], [26.35, MEET[0] - .07, MEET[1], .35, 'out'],
-    [30.4, MEET[0] - .07, MEET[1], .35], [31.4, MEET[0] - .07, MEET[1], 1.35], [34.2, MEET[0] - .07, MEET[1], 1.35], [34.7, MEET[0] - .08, MEET[1], .8]
+    [30.4, MEET[0] - .07, MEET[1], .35], [31.4, MEET[0] - .07, MEET[1], 1.35], [34.2, MEET[0] - .07, MEET[1], 1.35], [34.7, MEET[0] - .05, MEET[1], 1.1]
   ];
-  const GIRL_WAY = [
+  const GIRL_WAY = [   // (in her room she keeps .06 back from the wall: her toes are that far ahead of her)
     [0, .1, .14, -.7], [2.7, .1, .14, -.7], [3.0, .1, .14, -1.25], [5.5, .1, .14, -1.25], [6.35, .0, .19, -1.45, 'linear'],
     [7.3, .0, .19, -1.45], [7.45, .0, .19, -.4], [7.8, .0, .19, -.2], [7.95, .0, .19, 2.4], [8.35, .1, .085, 2.95, 'linear'],
     [8.85, .11, -.14, 3.1, 'linear'], [9.05, .11, -.2, 3.14, 'out'],
-    [10.59, .11, -.2, 3.14], [10.6, .4, -.205, -R], [11.3, .28, -.203, -R, 'linear'], [11.5, .28, -.2, 0],
-    [15.6, .28, -.2, 0], [15.8, .28, -.2, -.55], [16.6, .28, -.2, -.55], [16.9, .28, -.2, .1],
-    [23.0, .28, -.2, .1], [23.3, .28, -.188, 0], [24.3, .28, -.188, 0], [24.5, .28, -.205, R], [25.0, .41, -.205, R, 'linear'],
+    [10.59, .11, -.2, 3.14], [10.6, .4, -.225, -R], [11.3, .28, -.225, -R, 'linear'], [11.5, .28, -.225, 0],
+    [15.6, .28, -.225, 0], [15.8, .28, -.225, -.55], [16.6, .28, -.225, -.55], [16.9, .28, -.225, .1],
+    [23.0, .28, -.225, .1], [23.3, .28, -.225, 0], [24.3, .28, -.225, 0], [24.5, .28, -.225, R], [25.0, .41, -.225, R, 'linear'],
     [25.09, .41, -.205, R], [25.1, .11, -.215, 0], [25.5, .11, -.14, 0, 'linear'], [27.4, MEET[0] + .07, MEET[1], 0, 'linear'], [27.7, MEET[0] + .07, MEET[1], -.35, 'out'],
-    [30.4, MEET[0] + .07, MEET[1], -.35], [31.4, MEET[0] + .07, MEET[1], -1.35], [34.2, MEET[0] + .07, MEET[1], -1.35], [34.7, MEET[0] + .08, MEET[1], -.8]
+    [30.4, MEET[0] + .07, MEET[1], -.35], [31.4, MEET[0] + .07, MEET[1], -1.35], [34.2, MEET[0] + .07, MEET[1], -1.35], [34.7, MEET[0] + .05, MEET[1], -1.1]
   ];
   const keysOf = way => [1, 2, 3].map(i => way.map(k => [k[0], k[i], k[4] || 'smooth']));
   const BOY_KEYS = keysOf(BOY_WAY), GIRL_KEYS = keysOf(GIRL_WAY);
@@ -162,21 +162,21 @@
     }
   }
 
-  /* ── the two of them in pencil greys (their palettes repainted, 8 x 4 swatches), each with one coral thing; warm(k)
-        brings their own colours in as the warmth reaches them ── */
+  /* ── the two of them in pencil greys (their own texture with its colour taken out), each with one coral thing built
+        here; warm(k) brings their own colours back in as the warmth reaches them ── */
   const canvas = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw && draw(cv.getContext('2d'), w, h); return cv; };
-  const ramp = (c, x, y, w, h, cols) => { const gr = c.createLinearGradient(0, y, 0, y + h); cols.forEach((k, i) => gr.addColorStop(i / (cols.length - 1), k)); c.fillStyle = gr; c.fillRect(x, y, w, h); };
-  function dress(m, cells) {
+  function dress(m) {
     let mt = null; m.scene.traverse(o => { if (!mt && o.isMesh && o.material && o.material.map) mt = o.material; });
     const img = mt && mt.map && mt.map.image; if (!img || !img.width) return () => {};
-    const S = 256, paint = hot => canvas(S, S, c => {
-      c.drawImage(img, 0, 0, S, S);
-      if (!hot) { c.globalCompositeOperation = 'saturation'; c.fillStyle = '#808080'; c.fillRect(0, 0, S, S); c.globalCompositeOperation = 'source-over'; }
-      for (const [col, row, grey, warm] of cells) { const r = hot ? warm : grey; if (r) ramp(c, col * S / 8, row * S / 4, S / 8, S / 4, r); }
+    const W = img.width, H = img.height, hot = canvas(W, H, c => c.drawImage(img, 0, 0));
+    const grey = canvas(W, H, c => {
+      c.drawImage(img, 0, 0);
+      c.globalCompositeOperation = 'saturation'; c.fillStyle = '#808080'; c.fillRect(0, 0, W, H);
+      c.globalCompositeOperation = 'screen'; c.fillStyle = '#2a2826'; c.fillRect(0, 0, W, H);   // a shade lighter, like pencil on cream
     });
-    const grey = paint(false), hot = paint(true), mix = canvas(S, S, c => c.drawImage(grey, 0, 0));
+    const mix = canvas(W, H, c => c.drawImage(grey, 0, 0));
     const old = mt.map, t = kit.keep(new THREE.CanvasTexture(mix));
-    t.flipY = old.flipY; t.colorSpace = old.colorSpace; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter;
+    t.flipY = old.flipY; t.colorSpace = old.colorSpace; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
     mt.map = t; mt.needsUpdate = true; old.dispose();
     let k = -1;
     return v => {
@@ -184,10 +184,32 @@
       const c = mix.getContext('2d'); c.globalAlpha = 1; c.drawImage(grey, 0, 0); c.globalAlpha = n; c.drawImage(hot, 0, 0); c.globalAlpha = 1; t.needsUpdate = true;
     };
   }
-  const SKIN = ['#f3eee6', '#e3dcd1', '#cdc4b6'], INKHAIR = ['#3b3e46', '#25272d', '#15161a'], WARMHAIR = ['#4a3328', '#33231b', '#1f1511'];
-  const CORALS = ['#ff9282', '#f26b5b', '#cf4b3b'];
+  /** a group on one of a model's bones that keeps the model's own frame as it stands at rest (card widths from its feet,
+      +x its left, +y up, +z where it faces): what is built in it goes where the bone goes. Make it before the model moves */
+  function onBone(m, bone) {
+    const b = m.node(bone), grp = new THREE.Group(); if (!b) return grp;
+    m.root.updateMatrixWorld(true);
+    new THREE.Matrix4().copy(b.matrixWorld).invert().multiply(m.root.matrixWorld).decompose(grp.position, grp.quaternion, grp.scale);
+    b.add(grp); return grp;
+  }
+  /** her coral scarf, in her chest's onBone frame (her fit to .2835): a loop round her neck and its two ends hanging in
+      front, one mesh so that the wind (flutter) can take them */
+  function makeScarf(frame) {
+    const m = kit.keep(new THREE.MeshStandardMaterial({ color: CORAL, roughness: .8, side: THREE.DoubleSide, emissive: CORAL, emissiveIntensity: .08 }));
+    const loop = new THREE.Mesh(kit.keep(new THREE.TorusGeometry(.0128, .0042, 8, 24)), m);
+    loop.rotation.x = R; loop.position.set(0, .2265, -.0055); loop.castShadow = true; frame.add(loop);
+    const g = new THREE.BufferGeometry(), pos = [], uv = [], idx = [];
+    [[-.003, .05, 0], [.007, .042, .0015]].forEach(([x, len, z]) => {   // one end a little longer than the other
+      const N = 8, base = pos.length / 3;
+      for (let i = 0; i <= N; i++) for (const sd of [-1, 1]) { pos.push(x + sd * .0055, -len * i / N, z); uv.push((sd + 1) / 2, 1 - i / N); }
+      for (let i = 0; i < N; i++) { const a = base + i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+    });
+    g.setIndex(idx); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+    const ends = new THREE.Mesh(kit.keep(g), m); ends.position.set(.003, .2235, .0115); ends.rotation.x = -.3; ends.castShadow = true; frame.add(ends);
+    return ends;
+  }
 
-  /* ── her scarf (the cape, a child of her chest): it streams in the wind, rippling, and a plane can pull it ── */
+  /* ── her scarf's ends: they stream in the wind, rippling, and a plane can pull them ── */
   function cloth(node) {
     if (!node || !node.geometry) return null;
     const geo = node.geometry, p = geo.attributes.position, base = new Float32Array(p.count * 3);
@@ -265,20 +287,13 @@
       paper = window.NM_PLANES.paper(kit);
       fly = window.NM_PLANES.flight(kit, paper);
 
-      /* the two of them: him in a grey suit and a coral tie, her in a grey dress and a coral scarf, both dark-haired */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .28 });
-      warmBoy = dress(boy, [[0, 0, SKIN, null], [1, 0, INKHAIR, WARMHAIR], [3, 0, ['#a6aab1', '#8a8e96', '#6f737b'], ['#8d97ad', '#727d95', '#59637a']],
-        [7, 0, ['#7c8088', '#62666e', '#4c4f56'], ['#6d7790', '#566079', '#434b60']], [6, 0, ['#4d5058', '#3b3e45', '#2b2d33'], ['#5b4033', '#46302a', '#33231d']],
-        [0, 1, ['#eceae5', '#d6d4ce', '#bebcb6'], ['#fff6ea', '#f0e2cc', '#d9c7ad']], [7, 1, ['#6c7078', '#565a61', '#43464c'], null], [2, 1, ['#9a9ea5', '#80848b', '#686c72'], null]]);
-      warmGirl = dress(girl, [[0, 0, SKIN, null], [1, 0, INKHAIR, WARMHAIR], [0, 1, ['#d6d8db', '#babdc2', '#9ea2a8'], ['#fbe3d2', '#f2cdb6', '#dfb197']], [1, 1, CORALS, CORALS],
-        [6, 0, ['#55585f', '#43464c', '#33353a'], ['#6b4a3a', '#55392c', '#402a20']], [7, 1, ['#5d6067', '#4a4d53', '#393b40'], ['#7a6670', '#62525a', '#4b3e45']],
-        [3, 2, ['#3e4148', '#2e3035', '#202226'], ['#4a332b', '#36251f', '#251914']], [5, 2, SKIN, null], [5, 0, ['#8c9097', '#73777e', '#5c5f65'], ['#e7b9a0', '#d39f86', '#bd866d']]]);
+      /* the two of them in pencil greys, his tie and her scarf coral (the shared couple: her 1.70 m to his 1.80) */
+      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .3 * .945 });
+      warmBoy = dress(boy); warmGirl = dress(girl);
       stage.add(boy.root, girl.root);
       boy.root.name = 'boy'; girl.root.name = 'girl';
-      tie = paper.tie(); stage.add(tie); boy.hold(tie, 'chest'); tie.position.set(0, .2, .33); tie.rotation.x = -.25; tie.scale.multiplyScalar(1.6); tie.scale.x *= 1.3;   // on his chest, its tip out over his tummy
-      const cape = girl.node('Rogue_Cape'); if (cape) cape.scale.set(.6, .5, .8);   // the cape cut down to a scarf's long tails
-      capeCloth = cloth(cape);
-      legs = ['Rogue_LegLeft', 'Rogue_LegRight'].map(n => girl.node(n)).filter(Boolean);
+      tie = paper.tie(); onBone(boy, 'chest').add(tie); tie.position.set(0, .2415, .0135); tie.rotation.x = -.06; tie.scale.set(1.25, 1.55, 1);   // knotted at his collar, down his front
+      scarf = cloth(makeScarf(onBone(girl, 'chest')));
       pen = new THREE.Mesh(kit.keep(new THREE.CylinderGeometry(.0028, .0028, .03, 8)), kit.keep(new THREE.MeshStandardMaterial({ color: CORAL, roughness: .5 })));
       stage.add(pen);
       stack = paper.stack(); stage.add(stack.root);
@@ -304,7 +319,7 @@
       const flatIn = m => (g, T, q) => q.setFromEuler(eHold.set(-.5, m.root.rotation.y, 0));    // a sheet in front of him to fold, its nose up a little
       const headOf = (who, g, T, out, up = .1) => {
         (who === 'boy' ? boyAt : girlAt)(g, out);
-        return out.add(vB.set(0, (who === 'boy' ? lerp(.27, .18, sitK(g)) : .25) + up, 0));
+        return out.add(vB.set(0, (who === 'boy' ? lerp(.27, .12, sitK(g)) : .26) + up, 0));
       };
       const throwLegs = (t0, path) => [[t0, LEG.hold(hands(boy), flatIn(boy), { fold: g => ease.inOut(seg(g, t0 + .17, t0 + .62)) }), .15],
         [t0 + .67, LEG.hold(hand(boy, 'handslot.r'), facing(boy, -.35), { fold: 1 }), .12], [path[0], path[1], .1]];
@@ -373,7 +388,7 @@
       /* the sheet from his stack: blown onto her face, drawn on, given back, held up at stop 1, kept, shown again at the end */
       const eTumble = new THREE.Euler(0, 0, 0, 'YXZ'), qLand = new THREE.Quaternion();
       const SHEET_Q = (g, T, q) => q.setFromEuler(eTumble.set(g * 9, g * 6.3, g * 4.1));   // tumbling
-      const faceOf = (g, T, out) => { stagePos(girl.node('head'), out); return out.add(vB.set(Math.sin(girl.root.rotation.y) * .07, -.005, Math.cos(girl.root.rotation.y) * .07)); };
+      const faceOf = (g, T, out) => { stagePos(girl.node('head'), out); return out.add(vB.set(Math.sin(girl.root.rotation.y) * .03, .008, Math.cos(girl.root.rotation.y) * .03)); };
       const qTurn = new THREE.Quaternion(), eTurn = new THREE.Euler(0, 0, 0, 'YXZ');
       /** a sheet held up, its written face the way the holder looks (yaw more), tipped back by pitch */
       const shown = (m, yaw = 0, pitch = -.25) => (g, T, q) => q.copy(paper.FACE).premultiply(qTurn.setFromEuler(eTurn.set(pitch, m.root.rotation.y + yaw, 0)));
@@ -434,29 +449,31 @@
       boy.root.position.set(bx, 0, bz); boy.root.rotation.y = br;
       girl.root.position.set(gx, inRoom(g) ? L.WIN.floor : 0, gz); girl.root.rotation.y = gr;
       girl.root.visible = !inside(g);
-      for (const leg of legs) leg.visible = !inRoom(g);              // at her window only her top half shows: her legs would come through the wall
       const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
       boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
 
-      /* bodies and heads: looking at things, laughing, slumping, leaning out, looking up */
-      boy.bend('head', -.35 * bump(g, 9.35, 9.6, 9.9, 10.3) + .3 * bump(g, 9.9, 10.1, 10.3, 10.6) - .45 * bump(g, 11.0, 11.3, 11.7, 12.0) - .3 * bump(g, 12.15, 12.3, 12.5, 12.65)
+      /* bodies and heads: a start when the gust takes his sheet and when it slaps her face, looking at things, laughing,
+         slumping, leaning out, looking up */
+      const startle = bump(g, 2.68, 2.8, 3.1, 3.45), slap = bump(g, 3.33, 3.43, 3.65, 3.95);
+      boy.bend('head', -.3 * startle - .35 * bump(g, 9.35, 9.6, 9.9, 10.3) + .3 * bump(g, 9.9, 10.1, 10.3, 10.6) - .45 * bump(g, 11.0, 11.3, 11.7, 12.0) - .3 * bump(g, 12.15, 12.3, 12.5, 12.65)
         - .3 * bump(g, 14.0, 14.15, 14.35, 14.5) - .3 * bump(g, 15.9, 16.05, 16.25, 16.4) + .4 * bump(g, 18.9, 19.3, 19.4, 19.8) - .35 * bump(g, 19.4, 19.8, 20.2, 20.7)
         - .45 * bump(g, 26.4, 26.9, 30.2, 30.8) + .15 * bump(g, 34.6, 35.0, 60, 61), .25 * Math.sin(T * 9) * bump(g, 14.2, 14.3, 14.6, 14.75), .18 * bump(g, 34.6, 35.0, 60, 61));
-      boy.bend('chest', .3 * bump(g, 4.75, 4.95, 5.25, 5.5) + .25 * bump(g, 18.95, 19.3, 19.4, 19.8) + .12 * bump(g, 23.45, 23.6, 23.7, 23.9), 0, 0);   // a bow sorry; slumped; a nudge
-      girl.bend('head', -.4 * bump(g, 3.8, 4.0, 4.2, 4.4) + .35 * bump(g, 4.05, 4.25, 4.45, 4.65) + .3 * bump(g, 4.6, 4.75, 5.3, 5.45) - .3 * bump(g, 11.5, 11.8, 15.5, 15.7)
+      boy.bend('chest', -.2 * startle + .3 * bump(g, 4.75, 4.95, 5.25, 5.5) + .25 * bump(g, 18.95, 19.3, 19.4, 19.8) + .12 * bump(g, 23.45, 23.6, 23.7, 23.9), 0, 0);   // a bow sorry; slumped; a nudge
+      girl.bend('head', -.35 * slap - .4 * bump(g, 3.8, 4.0, 4.2, 4.4) + .35 * bump(g, 4.05, 4.25, 4.45, 4.65) + .3 * bump(g, 4.6, 4.75, 5.3, 5.45) - .3 * bump(g, 11.5, 11.8, 15.5, 15.7)
         - .45 * bump(g, 26.8, 27.3, 30.2, 30.8) - .25 * bump(g, 23.3, 23.5, 24.0, 24.3), .25 * bump(g, 7.3, 7.45, 7.6, 7.8), -.2 * bump(g, 34.6, 35.0, 60, 61));
-      girl.bend('chest', .05 * Math.sin(T * 26) * bump(g, 4.05, 4.15, 4.55, 4.7) + .25 * bump(g, 23.25, 23.45, 24.0, 24.3), 0, 0);   // giggling; leaning out of the window
+      girl.bend('chest', -.25 * slap + .05 * Math.sin(T * 26) * bump(g, 4.05, 4.15, 4.55, 4.7) + .25 * bump(g, 23.25, 23.45, 24.0, 24.3), 0, 0);   // giggling; leaning out of the window
 
       /* hands: his reach for the sheet, then the two of them holding hands at the end */
       if (g > 6.4 && g < 7.3) stagePos(girl.node('handslot.r'), TARGET.boy);
       if (g > 33.6 && g < 34.4) stagePos(boy.node('handslot.r'), TARGET.girl);
-      if (g > 34.4) { stagePos(boy.node('upperarm.r'), vA); stagePos(girl.node('upperarm.l'), vS); TARGET.boy.lerpVectors(vA, vS, .5).add(vB.set(0, -.07, .05)); TARGET.girl.copy(TARGET.boy); }
+      if (g > 34.4) { stagePos(boy.node('upperarm.r'), vA); stagePos(girl.node('upperarm.l'), vS); TARGET.boy.lerpVectors(vA, vS, .5).add(vB.set(0, -.055, .04)); TARGET.girl.copy(TARGET.boy); }
       arms(boy, ARMS.boy, g); arms(girl, ARMS.girl, g);
 
-      /* her scarf in the wind (stronger in the gusts, pulled out by a plane at her window) */
+      /* her scarf's ends in the wind (stronger in the gusts, pulled out by a plane at her window): they hang in front of her,
+         so the wind lifts them forward, off her chest */
       const gust = bump(g, 2.6, 2.9, 3.4, 4.0) + bump(g, 7.3, 7.5, 8.2, 8.6);
       const tug = bump(g, 23.15, 23.4, 24.0, 24.35);
-      flutter(capeCloth, .25 + .3 * gust + .35 * Math.sin(T * 1.3) * .2 + .9 * tug + .3 * (g > 25.4 && g < 27.4 ? 1 : 0), -.15 - .3 * gust + .1 * Math.sin(T * .8), .5 + gust, T);
+      flutter(scarf, -(.25 + .3 * gust + .35 * Math.sin(T * 1.3) * .2 + .9 * tug + .3 * (g > 25.4 && g < 27.4 ? 1 : 0)), -.15 - .3 * gust + .1 * Math.sin(T * .8), .5 + gust, T);
 
       /* what they hold: his stack, her pen */
       const left = stagePos(boy.node('handslot.l'), vA);

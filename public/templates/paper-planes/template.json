@@ -31,17 +31,23 @@
     "tình đầu",
     "đen trắng"
   ],
-  "notes": "A windy city street drawn in pencil greys on cream, with one colour, coral (KayKit Adventurers, CC0: the Knight without his helmet and cape, recoloured in story.js into a grey suit with black hair and a coral tie built in code; the Rogue recoloured into a grey dress with black hair, her green collar and cape cut down and turned into a coral scarf; weapons dropped by scripts/pack-models.mjs). The street is built in city.js (a pop-up page of far office towers, his office block and her block with her window, her door and a café, the alley between them, the road and its zebra crossing, a lamp, a post box, the crossing light), the paper in paper.js (sheets that fold into darts along their real creases and open again, dashed trails) and the flying in flight.js. Stop 1: he walks in with a stack of papers and a gust slaps his top sheet onto the face of a girl waiting at the crossing; she laughs, draws a coral heart on it and brings it back, then the wind hurries her across the road and in at her door; the sheet floats up with the card's first words (slot note1) by her heart. Stop 2: her window lights up across the road; he folds plane after plane and throws them: one is swirled off into the alley, one bumps her window as she looks away, one blows off over the roofs; he slumps on the pavement and that last plane comes back and opens in the air with the card's second words (slot note2). Stop 3: it folds up and dives into the alley; the lost planes there wake and rise, circle him and nudge him up and down the street, tug her scarf at her window till she comes out of her door and across the road; at the corner six planes bring down the card's photo hanging under them, developing as it comes, with its caption (slot caption). Stop 4: face to face, he holds out the sheet and she knows her heart on it; warm colour seeps out from where they stand, across the road, up the walls and into the sky, the lamp lights, all the planes circle them in a heart and two of them raise a banner with the last words (slot note3). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A windy city street drawn in pencil greys on cream, with one colour, coral, played by the shared grown-up couple (templates/_models: Grab3D's Casual Man and Casual Woman, CC0, with Quaternius's Universal Animation Library): story.js takes the colour out of their clothes, builds his coral tie and her coral scarf, and gives them their own colours back when the warmth comes in at the end. The street is built in city.js (a pop-up page of far office towers, his office block and her block with her window and door looking into the rooms behind them, a café, the alley between them, the road and its zebra crossing, a lamp, a post box, the crossing light), the paper in paper.js (sheets that fold into darts along their real creases and open again, dashed trails) and the flying in flight.js. Stop 1: he walks in with a stack of papers and a gust slaps his top sheet onto the face of a girl waiting at the crossing; she laughs, draws a coral heart on it and brings it back, then the wind hurries her across the road and in at her door; the sheet floats up with the card's first words (slot note1) by her heart. Stop 2: her window lights up across the road; he folds plane after plane and throws them: one is swirled off into the alley, one bumps her window as she looks away, one blows off over the roofs; he slumps on the pavement and that last plane comes back and opens in the air with the card's second words (slot note2). Stop 3: it folds up and dives into the alley; the lost planes there wake and rise, circle him and nudge him up and down the street, tug her scarf at her window till she comes out of her door and across the road; at the corner six planes bring down the card's photo hanging under them, developing as it comes, with its caption (slot caption). Stop 4: face to face, he holds out the sheet and she knows her heart on it; warm colour seeps out from where they stand, across the road, up the walls and into the sky, the lamp lights, all the planes circle them in a heart and two of them raise a banner with the last words (slot note3). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
   "photos": 1

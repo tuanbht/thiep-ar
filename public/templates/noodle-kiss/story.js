@@ -5,8 +5,9 @@
                      pushes it in, then goes round behind the table to his own; a plate of spaghetti drops onto the table
                      with a bounce and a curl of steam, and the card's first words (note1) are chalked onto the menu board
      2 · 10–20 s     they twirl their forks and eat; then both slurp one long noodle from its two ends, it shortens and
-                     pulls them together into a surprise kiss; they freeze, blush, giggle and look away; a camera flash,
-                     and the card's photo hangs on the wall in a gilt frame with its caption (caption)
+                     pulls them together, chairs and all, a hop a pull round the table, into a surprise kiss; they
+                     freeze, hop back apart, blush, giggle and look away; a camera flash, and the card's photo hangs on
+                     the wall in a gilt frame with its caption (caption)
      3 · 20–30 s     he nudges the last meatball across the plate to her with his fork; she smiles; the candle's flame
                      grows into a little heart; they hop their chairs round the table to sit close and hold hands, hearts
                      rise; the photo moves onto the menu board and a ribbon with the last words (note2) unrolls under a
@@ -28,12 +29,26 @@
   const GAP = .14, TURN = .25, OUT = .045, SWIVEL = -.65, SCOOT = .85;   // SCOOT: in the end they hop their chairs round to sit closer
   const seatAt = (side, turn, o = {}) => { o.a = -side * (Math.PI / 2 - turn); o.x = TABLE.x + side * GAP * Math.cos(turn); o.z = TABLE.z - GAP * Math.sin(turn); return o; };
   const HER = seatAt(-1, TURN), HIS = seatAt(1, TURN), SH = {}, SB = {};
+  /* the noodle's three pulls: each draws their chairs a hop round the table towards each other (to KISS_TURN, swivelled
+     KISS_SWIVEL to face: grown-ups lean only so far over a table), and once the kiss is over they hop back apart */
+  const PULLS = [[13.4, 13.75], [13.95, 14.3], [14.5, 14.9]], KISS_TURN = .9, KISS_SWIVEL = .6;
+  const pulled = g => PULLS.reduce((k, [a, b]) => k + ease.out(seg(g, a, b)) / 3, 0) * (1 - ease.inOut(seg(g, 15.45, 16.05)));
   const scoot = g => ease.inOut(seg(g, 25, 25.7));
-  const hopY = g => .008 * Math.abs(Math.sin(TAU * seg(g, 25, 25.7)));   // two little hops on the way
+  const turnAt = g => lerp(TURN, SCOOT, scoot(g)) + (KISS_TURN - TURN) * pulled(g);
+  const hopY = g => .008 * (Math.abs(Math.sin(TAU * seg(g, 25, 25.7))) + Math.abs(Math.sin(TAU * seg(g, 15.45, 16.05)))   // two little hops
+    + PULLS.reduce((h, [a, b]) => h + Math.sin(Math.PI * seg(g, a, b)), 0));                                               // a hop a pull
   const NIGHT = { hemi: new THREE.Color('#5b66a6'), ground: new THREE.Color('#1c1a33'), sun: new THREE.Color('#8090d0') };
   const LIT = { hemi: new THREE.Color('#ffd6ae'), ground: new THREE.Color('#4a3040'), sun: new THREE.Color('#ffc896') };
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
-  let K = .137, BACK = .054;                                         // his scale; how far in front of the hips a seated one's feet are
+  const TALL = { boy: .3, girl: .3 * .945 };                         // their heights, in card widths (her 1.70 m to his 1.80 m)
+  const K = TALL.boy / 2.186;                                        // a KayKit unit: the chairs' scale (that pack's people stood 2.186 tall)
+  /* where the chair clips sit them: the seat's top, .098 H / .4 for him and .102 H / .4 for her (the chairs are made that
+     high), and the hips .066 H / .4 behind the feet (each stands that far in front of the seat to sit) */
+  const SEAT = (.098 * TALL.boy + .102 * TALL.girl) / .8, BACK = { boy: .066 * TALL.boy / .4, girl: .066 * TALL.girl / .4 };
+  /* the arms, in the models' own units (metres): shoulder to elbow, elbow to the middle of the fist */
+  const ARMS = { boy: [.265, .328], girl: [.23, .308] };
+  /* just in front of the lips, and the cheeks, on each head bone (its own units, centimetres); tilt: the cheek's lean */
+  const MOUTH = { boy: [0, 2, 9], girl: [0, 6.7, 11.2] }, CHEEK = { boy: [[4.5, 5.1, 5.3], 3.2, -.35], girl: [[4.3, 8.9, 6.7], 3, -.55] };
   const herSit = V3(), hisSit = V3(), cg = { x: 0, z: 0, a: 0 }, cb = { x: 0, z: 0, a: 0 }, c0 = { x: 0, z: 0, a: 0 };
   let boy, girl, chairs, wall, door, bulbs, candle, plate, forks, coils, noodle, easel, photo, frame, garland, banner;
   let blushG, blushB, mouths, winGlow, lantern, flash, sparks, notes, steam, hearts, drops, particles;
@@ -60,8 +75,8 @@
   }
   const herOut = g => ease.inOut(seg(g, 2.85, 3.3)) - ease.inOut(seg(g, 4.75, 5.25));
   const hisOut = g => ease.inOut(seg(g, 6.1, 6.6)) - ease.inOut(seg(g, 8.1, 8.6));
-  /** the spot in front of a chair's seat, facing where it faces */
-  const sitSpot = (c, out) => out.set(c.x + Math.sin(c.a) * BACK, 0, c.z + Math.cos(c.a) * BACK);
+  /** the spot `back` in front of a chair's seat, facing where it faces */
+  const sitSpot = (c, back, out) => out.set(c.x + Math.sin(c.a) * back, 0, c.z + Math.cos(c.a) * back);
 
   /* ── where things are: bones and marks on the stage, and a two-bone reach for the arms ── */
   const mStage = new THREE.Matrix4(), qInv = new THREE.Quaternion(), qA = new THREE.Quaternion(), qB = new THREE.Quaternion();
@@ -72,7 +87,7 @@
   /** an arm reaching for a point on the stage: the elbow found from the two bones' lengths, bent down and out */
   function reach(m, side, target, k) {
     if (k <= 0) return;
-    const s = m.scene.scale.x, a = .24 * s, b = .43 * s, out = side === 'l' ? 1 : -1;
+    const s = m.scene.scale.x, [ua, fa] = m === boy ? ARMS.boy : ARMS.girl, a = ua * s, b = fa * s, out = side === 'l' ? 1 : -1;
     at(m, `upperarm.${side}`, vS);
     vD.subVectors(target, vS); const L = clamp(vD.length(), .3 * (a + b), .995 * (a + b)); vD.normalize();
     const cosA = clamp((a * a + L * L - b * b) / (2 * a * L), -1, 1), sinA = Math.sqrt(1 - cosA * cosA);
@@ -82,16 +97,24 @@
     m.aim(`upperarm.${side}`, vT.subVectors(vE, vS).applyQuaternion(qInv).toArray(AIM), k);
     m.aim(`lowerarm.${side}`, vT.copy(vS).addScaledVector(vD, L).sub(vE).applyQuaternion(qInv).toArray(AIM), k);
   }
-  /* a pose leaning in over the table: [spine, chest, head] forward, a turn towards the other, a tilt of the head */
-  const SLURP = { lean: [.16, .12, -.28], yaw: .04, roll: 0 }, KISS = { lean: [.62, .46, -.95], yaw: .12, roll: .18 };   // chins up: the noodle shows
+  /* a pose leaning in over the table: from the hips (the thighs and shins kept where the clip put them), [spine, chest,
+     head] forward, a turn towards the other, a tilt of the head (both to their own right, as a kiss tilts) */
+  const SLURP = { hips: 0, lean: [.16, .12, -.28], yaw: .04, roll: 0 }, KISS = { hips: .7, lean: [0, 0, -1], yaw: .15, roll: .4 };   // chins up: the noodle shows
+  const LEGS = [['upperleg.l', 'lowerleg.l'], ['lowerleg.l', 'foot.l'], ['upperleg.r', 'lowerleg.r'], ['lowerleg.r', 'foot.r']], LEG = LEGS.map(() => [0, 0, 0]);
   function lean(m, s, k, p) {                                          // s: +1 she (turns right towards him), -1 he
     if (!k) return;
+    if (p.hips) {
+      qInv.copy(m.root.quaternion).invert();
+      LEGS.forEach(([a, b], i) => at(m, b, vT).sub(at(m, a, vTmp)).applyQuaternion(qInv).toArray(LEG[i]));
+      m.bend('hips', p.hips * k, 0, 0);
+      LEGS.forEach(([a], i) => m.aim(a, LEG[i]));
+    }
     m.bend('spine', p.lean[0] * k, s * p.yaw * .5 * k, 0); m.bend('chest', p.lean[1] * k, s * p.yaw * k, 0);
-    m.bend('head', p.lean[2] * k, s * p.yaw * .35 * k, s * p.roll * k);
+    m.bend('head', p.lean[2] * k, s * p.yaw * .35 * k, p.roll * k);
   }
   const mixPose = (k, o = { lean: [0, 0, 0] }) => {                    // SLURP to KISS
     for (let i = 0; i < 3; i++) o.lean[i] = lerp(SLURP.lean[i], KISS.lean[i], k);
-    o.yaw = lerp(SLURP.yaw, KISS.yaw, k); o.roll = lerp(SLURP.roll, KISS.roll, k); return o;
+    o.hips = lerp(SLURP.hips, KISS.hips, k); o.yaw = lerp(SLURP.yaw, KISS.yaw, k); o.roll = lerp(SLURP.roll, KISS.roll, k); return o;
   };
   const POSE = mixPose(0);
 
@@ -115,7 +138,9 @@
   const NP = Array.from({ length: 41 }, () => V3());
   function hangNoodle(a, b, extra, wob, T) {
     const d = a.distanceTo(b), h = Math.sqrt(1.5 * d * Math.max(0, extra));   // a curve this deep is `extra` longer than the gap
-    vM.addVectors(a, b).multiplyScalar(.5); vM.y -= h;
+    vM.addVectors(a, b).multiplyScalar(.5);
+    const off = Math.hypot(vM.x - PLATE.x, vM.z - PLATE.z), floor = PLATE.y + .004 + .012 * clamp((off - .03) / .02);
+    vM.y = Math.max(vM.y - h, 2 * floor - vM.y);                        // its lowest point (half way to vM) dips into the pasta, not the cloth
     vM2.subVectors(b, a).cross(UP).normalize();                         // across the noodle: it wobbles as it is pulled
     for (let i = 0; i <= 40; i++) {
       const t = i / 40, u = 1 - t, p = NP[i];
@@ -135,7 +160,7 @@
       [o[0], o[1]] = walk(g, [[.75, -.4, -.36], [.95, -.4, -.33, 'in'], [1.6, -.41, -.15], [2.3, -.35, .07, 'out'], [3.3, -.35, .07], [3.85, herSit.x, herSit.z, 'inOut']]);
       const into = Math.atan2(herSit.x + .35, herSit.z - .07);
       o[2] = tween(g, [[0, 0], [1.6, 0], [2.1, .55], [2.3, 1.1], [3.3, 1.1], [3.4, into], [3.8, into], [4.05, HER.a + SWIVEL]]);
-    } else { chairPose(seatAt(-1, lerp(TURN, SCOOT, scoot(g)), SH), herOut(g), herOut(g), CW); sitSpot(CW, vW); o[0] = vW.x; o[1] = vW.z; o[2] = CW.a; }
+    } else { chairPose(seatAt(-1, turnAt(g), SH), herOut(g), herOut(g), CW); CW.a += KISS_SWIVEL * pulled(g); sitSpot(CW, BACK.girl, vW); o[0] = vW.x; o[1] = vW.z; o[2] = CW.a; }
     return o;
   }
   /** he: out after her, behind her chair to pull it, pushes it in, round the back of the table to his own */
@@ -149,7 +174,7 @@
       const [ex, ez] = behind(chairPose(HER, 0, 0, CW), back(g));
       [o[0], o[1]] = walk(g, [[5.3, ex, ez], [5.5, ex - .012, ez - .045, 'in'], [5.85, -.25, -.225], [6.55, -.05, -.222], [7.1, hisSit.x, hisSit.z, 'out']]);
       o[2] = tween(g, [[5.3, HER.a], [5.55, 2.5], [5.85, 2.45], [6.05, 1.72], [6.5, 1.72], [6.75, .7], [7.1, .7], [7.35, HIS.a + SWIVEL]]);
-    } else { chairPose(seatAt(1, lerp(TURN, SCOOT, scoot(g)), SB), hisOut(g), hisOut(g), CW); sitSpot(CW, vW); o[0] = vW.x; o[1] = vW.z; o[2] = CW.a; }
+    } else { chairPose(seatAt(1, turnAt(g), SB), hisOut(g), hisOut(g), CW); CW.a -= KISS_SWIVEL * pulled(g); sitSpot(CW, BACK.boy, vW); o[0] = vW.x; o[1] = vW.z; o[2] = CW.a; }
     return o;
   }
   /** Walking_A's speed for the ground really covered (.1 card widths a second at speed 1 for one .3 tall) */
@@ -159,15 +184,13 @@
     seconds: [10, 10, 10],
 
     build() {
-      /* the two of them, new clothes; their chairs take his scale (the KayKit packs share one) */
-      boy = kit.model('boy').fit({ height: .3 }); K = boy.scene.scale.x; BACK = .397 * K;
-      sitSpot(chairPose(HER, 1, 1, c0), herSit); sitSpot(chairPose(HIS, 1, 1, c0), hisSit);   // where each stands to sit: chair out
-      girl = kit.model('girl').fit({ height: .288 });
+      /* the two of them; the chairs, at the seat height the sitting clips sit at */
+      boy = kit.model('boy').fit({ height: TALL.boy }); girl = kit.model('girl').fit({ height: TALL.girl });
+      sitSpot(chairPose(HER, 1, 1, c0), BACK.girl, herSit); sitSpot(chairPose(HIS, 1, 1, c0), BACK.boy, hisSit);   // where each stands to sit: chair out
       stage.add(boy.root, girl.root);
-      S.dressBoy(boy); S.dressGirl(girl);
-      mouths = [girl, boy].map(m => { const o = new THREE.Object3D(); o.position.set(0, .2, .5); m.node('head')?.add(o); return o; });
-      blushG = S.makeBlush(girl, [.21, .11, .52], .18); blushB = S.makeBlush(boy, [.29, .27, .5], .2);
-      const chairModel = kit.model('chair'); chairModel.scene.scale.setScalar(K); S.dressChair(chairModel);
+      mouths = [[girl, MOUTH.girl], [boy, MOUTH.boy]].map(([m, p]) => { const o = new THREE.Object3D(); o.position.set(...p); m.node('head')?.add(o); return o; });
+      blushG = S.makeBlush(girl, ...CHEEK.girl); blushB = S.makeBlush(boy, ...CHEEK.boy);
+      const chairModel = kit.model('chair'); chairModel.scene.scale.set(K, SEAT / .5, K); S.dressChair(chairModel);   // its seat's top .5 up
       chairs = [chairModel.root, chairModel.root.clone(true)]; chairs.forEach(c => stage.add(c));
 
       /* the alley */
@@ -244,8 +267,9 @@
       const glowIn = .35 + .65 * open; door.room.forEach(m => m.color.setRGB(glowIn, glowIn, glowIn));
 
       /* the chairs: hers out and back in under her, his out to meet him and in again */
-      const round = lerp(TURN, SCOOT, scoot(g)), hy = hopY(g);
+      const round = turnAt(g), sw = KISS_SWIVEL * pulled(g), hy = hopY(g);
       chairPose(seatAt(-1, round, SH), herOut(g), herOut(g), cg); chairPose(seatAt(1, round, SB), hisOut(g), hisOut(g), cb);
+      cg.a += sw; cb.a -= sw;
       chairs[0].position.set(cg.x, hy, cg.z); chairs[0].rotation.y = cg.a;
       chairs[1].position.set(cb.x, hy, cb.z); chairs[1].rotation.y = cb.a;
 
@@ -254,7 +278,7 @@
       girl.root.position.set(gx, hy, gz); girl.root.rotation.y = ga;
       boy.root.position.set(bx, hy, bz); boy.root.rotation.y = ba;
       const freeze = g > 14.9 && g < 15.4;                               // the kiss: both stock-still
-      for (const [m, list, at, h] of [[girl, GIRL, herAt, .288], [boy, BOY, hisAt, .3]]) {
+      for (const [m, list, at, h] of [[girl, GIRL, herAt, TALL.girl], [boy, BOY, hisAt, TALL.boy]]) {
         const c = clipAt(list, g);
         if (c[1] === 'Walking_A') m.play(c[1], { ...c[2], speed: pace(at, g, h) });
         else m.play(c[1], freeze ? { ...c[2], speed: 0 } : c[2]);
@@ -336,9 +360,8 @@
 
       /* chapter 2: down to the plate together; one noodle, slurped from both ends, pulls them into a kiss */
       const down = ease.inOut(seg(g, 12.95, 13.35)), up = ease.back(seg(g, 15.4, 15.85));
-      const pulls = [[13.4, 13.75], [13.95, 14.3], [14.5, 14.9]];
       let k = 0, pulling = 0;
-      pulls.forEach(([a, b]) => { const p = seg(g, a, b); k += ease.out(p) / 3; if (p > 0 && p < 1) pulling = Math.sin(Math.PI * p); });
+      PULLS.forEach(([a, b]) => { const p = seg(g, a, b); k += ease.out(p) / 3; if (p > 0 && p < 1) pulling = Math.sin(Math.PI * p); });
       const bend = down * (1 - up);
       mixPose(k, POSE);
       lean(girl, 1, bend, POSE); lean(boy, -1, bend, POSE);
@@ -358,7 +381,7 @@
           color: ['#ff4f7b', '#ff8fab', '#ffd1dc', '#e8436d'][(rng() * 4) | 0], size: .022 + rng() * .02, life: 2.4, shape: 'heart', spin: (rng() - .5) * 4 }));
       }
       if (g > 15 && g < 15.3 && kit.once('wow')) for (const m of [girl, boy]) {      // surprise! a star over each head
-        at(m, 'head', vTmp); sparks.burst(5, i => ({ x: vTmp.x, y: vTmp.y + .13, z: vTmp.z, vx: (i - 2) * .06, vy: .12, drag: 3, color: '#fff1b8', size: .022, life: .7, shape: 'star', spin: 5 }));
+        at(m, 'head', vTmp); sparks.burst(5, i => ({ x: vTmp.x, y: vTmp.y + .055, z: vTmp.z, vx: (i - 2) * .06, vy: .12, drag: 3, color: '#fff1b8', size: .022, life: .7, shape: 'star', spin: 5 }));
       }
 
       /* chapter 2: back upright, pink cheeks, a giggle, a shy look away (her hand to her mouth, his to the back of his head) */
@@ -372,8 +395,8 @@
       }
       const shy = bump(g, 16, 16.35, 18.3, 18.7);
       if (shy) {
-        onStage(mouths[0], vM); vM.y -= .006; vTmp.set(.02, 0, -.01).applyQuaternion(girl.root.quaternion); reach(girl, 'l', vM.add(vTmp), shy);
-        at(boy, 'head', vH); vTmp.set(-.03, .06, -.05).applyQuaternion(boy.root.quaternion); reach(boy, 'r', vH.add(vTmp), shy);
+        onStage(mouths[0], vM); vM.y -= .003; vTmp.set(.005, 0, .008).applyQuaternion(girl.root.quaternion); reach(girl, 'l', vM.add(vTmp), shy);
+        at(boy, 'head', vH); vTmp.set(-.008, .016, -.022).applyQuaternion(boy.root.quaternion); reach(boy, 'r', vH.add(vTmp), shy);
       }
 
       /* chapter 2: the photo in its gilt frame, hung on the wall after the flash; chapter 3 carries it onto the menu board */
@@ -413,10 +436,10 @@
       if (glance) girl.bend('head', .2 * glance, -.1, 0);
       if (smile) {
         girl.bend('head', -.08 * smile, 0, .22 * smile); girl.bend('chest', .05 * Math.abs(Math.sin(T * 10)) * smile, 0, 0);
-        at(girl, 'chest', vM); vTmp.set(0, .03, .05).applyQuaternion(girl.root.quaternion); vM.add(vTmp);
+        at(girl, 'chest', vM); vTmp.set(0, .01, .03).applyQuaternion(girl.root.quaternion); vM.add(vTmp);
         reach(girl, 'r', vM, smile); reach(girl, 'l', vH2.copy(vM).add(vTmp.set(0, 0, -.01)), smile);
       }
-      if (g > 23.2 && g < 23.5 && kit.once('smile')) { at(girl, 'head', vTmp); hearts.burst(7, () => ({ x: vTmp.x, y: vTmp.y + .12, z: vTmp.z, vx: (rng() - .5) * .1, vy: .1 + rng() * .05,
+      if (g > 23.2 && g < 23.5 && kit.once('smile')) { at(girl, 'head', vTmp); hearts.burst(7, () => ({ x: vTmp.x, y: vTmp.y + .05, z: vTmp.z, vx: (rng() - .5) * .1, vy: .1 + rng() * .05,
         drag: .6, color: ['#ff4f7b', '#ff8fab'][(rng() * 2) | 0], size: .022, life: 1.8, shape: 'heart', spin: (rng() - .5) * 3 })); }
 
       /* chapter 3: the flame becomes a heart; both look at it */

@@ -14,20 +14,37 @@
     2
   ],
   "reveal": null,
-  "notes": "A sunset walk on the beach (KayKit Adventurers, CC0: the Barbarian bare-headed under a straw hat built in code, recoloured into an aqua beach shirt, rolled-up navy trousers and bare feet, his beard tinted brown; the Rogue without her cape, recoloured into a coral sundress with bare arms and legs, a hibiscus in her hair; weapons, the bear hat and the capes dropped by scripts/pack-models.mjs). The rest is built in code: a sky page that folds up like a pop-up card (a sunset, a dusk painted over it that fades in, the sun sinking behind the far sea), a strip of sea whose waves move its corners, with foam and wet sand, the sand, a palm, shells, a starfish, two crabs, gulls, a driftwood stick and a bottle with a message. Stop 1: she leads him by the hand along the waterline, footprints pressing into the sand; a big wave runs up the beach, they hop away from it hand in hand and laugh, and a note with the card's first words (slot note1) comes up. Stop 2: he picks up a driftwood stick and draws a glowing heart in the sand; a wave rolls a bottle to her feet, she picks it up, the cork pops and the card's photo flies out of it, unrolling into a polaroid with its caption (slot caption). Stop 3: they sit facing the sunset as dusk falls; she traces a heart in the air, sparkles rise off the sun's path into a heart round the setting sun, she leans on his shoulder, his arm goes round her, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A sunset walk on the beach (the shared grown-up couple in templates/_models: Grab3D's Casual Man and Casual Woman with Quaternius's animations, CC0, in their own clothes; she is fitted at .945 of his height; his straw hat and the hibiscus behind her ear are built in code). The rest is built in code: a sky page that folds up like a pop-up card (a sunset, a dusk painted over it that fades in, the sun sinking behind the far sea), a strip of sea whose waves move its corners, with foam and wet sand, the sand, a palm, shells, a starfish, two crabs, gulls, a driftwood stick lying across a stone, a bottle with a message and a driftwood bench (a plank on two stones, its top at the couple's chair height). Stop 1: she leads him by the hand along the waterline, footprints pressing into the sand; a big wave runs up the beach, they hop away from it hand in hand and laugh, and a note with the card's first words (slot note1) comes up. Stop 2: he picks up a driftwood stick and draws a glowing heart in the sand; a wave rolls a bottle to her feet and it stands up in the wet sand; she picks it up by the neck, the cork pops and the card's photo flies out of it, unrolling into a polaroid with its caption (slot caption). Stop 3: the bench rises out of the sand and they sit on it facing the sunset as dusk falls; she traces a heart in the air, sparkles rise off the sun's path into a heart round the setting sun, she leans on his shoulder, his arm goes round her, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
-  "categories": ["couple", "love", "viral-scenes"],
-  "tags": ["biển", "hoàng hôn", "dạo biển", "nắm tay", "bãi cát", "sóng"],
+  "categories": [
+    "couple",
+    "love",
+    "viral-scenes"
+  ],
+  "tags": [
+    "biển",
+    "hoàng hôn",
+    "dạo biển",
+    "nắm tay",
+    "bãi cát",
+    "sóng"
+  ],
   "photos": 1
 }
