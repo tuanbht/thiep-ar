@@ -25,7 +25,6 @@ import {
 } from "./ui";
 import { isAct3d, useActFlow } from "./useActFlow";
 import { useGestures } from "./useGestures";
-import Image from "next/image";
 
 declare global {
   interface Window {
