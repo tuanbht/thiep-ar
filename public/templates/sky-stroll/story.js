@@ -2,7 +2,7 @@
    flower shop and its sign, the balcony, bunting, lamps, birds, clouds, rings of light, her basket) is built by
    scenery.js, loaded first. Three chapters of about ten seconds, each ending at a stop:
      1 · 0–10 s    the flower town pops up at golden hour; she walks down the cobbled lane with her basket; a gust
-                   scatters petals and whirls them into a column, and out of it steps a young man in a green coat; she
+                   scatters petals and whirls them into a column, and out of it steps a young man in an olive jacket; she
                    startles, he bows and snaps his fingers, and the flower shop's sign flies up off its bracket with the
                    card's first words (note1); he offers his arm and she takes it
      2 · 10–20 s   he steps up onto the air, a ring of light under his foot, and holds out his hand; she follows and they
@@ -22,23 +22,26 @@
   const S = window.NM_SKYWALK.scenery(kit, { PAGE, LANE });
   const { BALCONY: BAL, SIGN, ROW } = S;
   const NOTE_AT = new THREE.Vector3(-.12, .69, -.02);               // the sign's ring at the first stop: its board hangs over the two of them
+  const ON = BAL.z0 + .047;                                        // how far out on her balcony they stand: clear of its rail and of the wall
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
   const HOURS = [                                                    // afternoon, sunset, dusk: the sky's light, the ground's, the sun's
     ['#fff3e6', '#d8b9b4', '#fff0da', 1.1, 1.45], ['#ffd6c4', '#b98aa0', '#ffb486', 1.05, 1.3], ['#c2b6f2', '#6a5888', '#dcc2ff', .85, .9]
   ].map(([h, gr, s, hi, si]) => ({ hemi: new THREE.Color(h), ground: new THREE.Color(gr), sun: new THREE.Color(s), hi, si }));
   const PETALS = ['#ff9fbb', '#ffd1dc', '#ffffff', '#ffb3c6', '#ffe08a'];
-  let boy, girl, cape, basket, page, lane, town = [], bunting, lamps, vane, bulbs = [], houses = [];
+  const H = .3;                                                      // his height; hers is H * .945 (1.70 m to his 1.80)
+  let boy, girl, basket, page, lane, town = [], bunting, lamps, vane, bulbs = [], houses = [];
   let sign, photo, banner, doves, ribbons, birds, clouds, rings, standing, petals, sparks, hearts, wind, stars;
 
   /* ── who plays which clip from story time g: [from g, clip, options] ── */
   const GIRL = [
-    [0, 'Idle'], [.3, 'Walking_A', { speed: 1.15, fade: .25 }], [3.85, 'Idle', { fade: .35 }], [8.7, 'Walking_A', { speed: 1.2, fade: .2 }],
+    [0, 'Idle'], [.3, 'Walking_A', { speed: 1.23, fade: .25 }], [3.85, 'Idle', { fade: .35 }], [8.7, 'Walking_A', { speed: 1.2, fade: .2 }],
     [9.3, 'Idle', { fade: .25 }], [12.1, 'Walking_A', { speed: 1.05, fade: .2 }], [15.55, 'Idle', { fade: .3 }],
-    [20.45, 'Walking_A', { speed: 1.1, fade: .25 }], [24.95, 'Idle', { fade: .2 }], [27.15, 'Walking_A', { fade: .15 }], [27.45, 'Idle', { fade: .2 }]
+    [20.45, 'Walking_A', { speed: 1.1, fade: .25 }], [24.95, 'Idle', { fade: .2 }], [27.15, 'Walking_A', { speed: 1.2, fade: .15 }], [27.45, 'Idle', { fade: .2 }]
   ];
   const BOY = [
     [0, 'Idle'], [10.5, 'Walking_A', { speed: 1.3, fade: .2 }], [11.3, 'Idle', { fade: .2 }], [12.6, 'Walking_A', { speed: 1.2, fade: .25 }],
-    [15.3, 'Idle', { fade: .3 }], [20.75, 'Walking_A', { fade: .25 }], [25.45, 'Idle', { fade: .2 }], [27.1, 'Walking_A', { fade: .15 }], [27.45, 'Idle', { fade: .2 }]
+    [15.3, 'Idle', { fade: .3 }], [20.75, 'Walking_A', { fade: .25 }], [24.9, 'Idle', { fade: .25 }], [27.1, 'Walking_A', { speed: 1.1, fade: .15 }],
+    [27.45, 'Idle', { fade: .2 }]                                    // Idle at 24.9: his feet together for the hop down onto her balcony
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
 
@@ -49,79 +52,25 @@
     [8.7, -.255, 0, .055, 1.3], [9.25, -.19, 0, .062, 1.2], [9.9, -.19, 0, .062, .8], [10.7, -.19, 0, .062, .8], [11.0, -.19, 0, .062, 1.15],
     [12.1, -.19, 0, .062, 1.2], [12.45, -.13, .02, .06, 1.2, 'in'], [12.75, -.095, .05, .058, 1.2],
     [15.1, .16, .43, -.004, 1.25, 'linear'], [15.6, .185, .46, -.012, .35, 'out'], [20.3, .185, .46, -.012, .35], [20.7, .175, .46, -.01, -1.2],
-    [22.9, -.07, .44, .02, -1.2, 'linear'], [24.6, -.215, .17, -.075, -1.1, 'linear'], [25.0, -.232, BAL.y, -.085, -1.0, 'out'],
-    [25.6, -.232, BAL.y, -.085, -.2], [25.8, -.232, BAL.y, -.085, -.2], [27.0, -.232, BAL.y, -.085, TAU - .2, 'linear'],
-    [27.15, -.232, BAL.y, -.085, TAU + 1.0], [27.45, -.205, BAL.y, -.085, TAU + 1.05]
+    [22.9, -.07, .44, -.06, -1.2, 'linear'], [23.6, -.13, .33, ON, -1.3, 'linear'],   // behind her rail's line while still above it,
+    [24.6, -.215, .17, ON, -1.25, 'linear'], [25.0, -.232, BAL.y, ON, -1.1, 'out'],        // then down her stair inside the balcony
+    [25.6, -.232, BAL.y, ON, -.2], [25.8, -.232, BAL.y, ON, -.2], [27.0, -.232, BAL.y, ON, TAU - .2, 'linear'],
+    [27.15, -.232, BAL.y, ON, TAU + 1.0], [27.45, -.194, BAL.y, ON, TAU + R - .3]   // a step to him: face to face for the hug, a little to you
   ];
   const BOY_WAY = [
     [0, -.05, 0, .075, -1.15], [8.7, -.05, 0, .075, -1.15], [9.3, -.065, 0, .072, -1.05], [9.9, -.065, 0, .072, -.7], [10.4, -.065, 0, .072, -.7],
     [10.6, -.06, 0, .072, 1.2], [10.75, -.04, .004, .07, 1.2, 'in'], [11.25, .03, .05, .066, 1.2, 'out'], [11.5, .03, .05, .066, -1.0],
     [12.4, .03, .05, .066, -1.0], [12.65, .03, .05, .066, 1.2], [12.75, .045, .065, .064, 1.25, 'in'], [15.0, .31, .46, -.02, 1.25, 'linear'],
     [15.35, .325, .46, -.025, .6, 'out'], [15.8, .325, .46, -.025, -.3], [20.4, .325, .46, -.025, -.3], [20.8, .315, .46, -.02, -1.2],
-    [21.0, .3, .46, -.015, -1.2, 'in'], [23.4, .07, .44, .01, -1.2, 'linear'], [25.1, -.09, .17, -.075, -1.1, 'linear'],
-    [25.5, -.105, BAL.y, -.085, -1.05, 'out'], [26.0, -.105, BAL.y, -.085, -.5], [27.1, -.105, BAL.y, -.085, -.5], [27.45, -.135, BAL.y, -.085, -1.05]
+    [21.0, .3, .46, -.015, -1.2, 'in'], [23.4, .07, .44, -.05, -1.2, 'linear'], [24.2, -.015, .335, ON, -1.3, 'linear'],   // in over the rail's
+    [24.9, -.1, .31, ON, -1.25, 'linear'], [25.5, -.105, BAL.y, ON, -1.1, 'in'],         // corner, high, then a hop down after her
+    [26.0, -.105, BAL.y, ON, -.7], [27.1, -.105, BAL.y, ON, -.7], [27.45, -.146, BAL.y, ON, -R + .3]
   ];
   const keysOf = way => [1, 2, 3, 4].map(i => way.map(k => [k[0], k[i], k[5] || 'smooth']));
   const GIRL_KEYS = keysOf(GIRL_WAY), BOY_KEYS = keysOf(BOY_WAY);
   /* the photo's ring (its bottom, middle): in from the left with the doves, then up, over and down to the right */
   const PHOTO_KEYS = keysOf([[16.8, -.8, .8, -.06], [19.2, -.25, .42, -.02, 0, 'out'], [20.1, -.25, .42, -.02], [21.3, -.12, .66, -.16],
     [23.6, .27, .7, -.15, 0, 'linear'], [25.2, .3, .38, -.12, 0, 'out']]);
-
-  /* ── the cast's clothes: each model's look is one palette texture of 8 x 4 swatches; some get new colours, and some
-        parts move to another swatch first (a gauntlet onto skin: a bare hand). Swatches are [column, row] ── */
-  /** moves the triangles of `mesh` sitting in swatch `from` (their centre passing keep(x, y, z), in the model's own units) to `to` */
-  function remap(mesh, from, to, keep = () => true) {
-    const g = mesh && mesh.geometry, uv = g && g.attributes.uv, pos = g && g.attributes.position; if (!uv) return;
-    const idx = g.index, n = idx ? idx.count : uv.count, move = new Set(), c = [0, 0, 0];
-    for (let i = 0; i < n; i += 3) {                                  // pick first, then move: moving as we go would
-      const v = [0, 1, 2].map(k => (idx ? idx.getX(i + k) : i + k));  // shift a shared corner out of the next one's swatch
-      const u0 = (uv.getX(v[0]) + uv.getX(v[1]) + uv.getX(v[2])) / 3, v0 = (uv.getY(v[0]) + uv.getY(v[1]) + uv.getY(v[2])) / 3;
-      if (Math.floor(u0 * 8) !== from[0] || Math.floor(v0 * 4) !== from[1]) continue;
-      for (let a = 0; a < 3; a++) c[a] = (pos.getComponent(v[0], a) + pos.getComponent(v[1], a) + pos.getComponent(v[2], a)) / 3;
-      if (keep(...c)) v.forEach(j => move.add(j));
-    }
-    move.forEach(j => uv.setXY(j, uv.getX(j) + (to[0] - from[0]) / 8, uv.getY(j) + (to[1] - from[1]) / 4));
-    uv.needsUpdate = true;
-  }
-  /** the palette with swatches recoloured ({ 'column,row': colour }): each keeps its own shading, scaled onto the colour */
-  function repaint(m, colours) {
-    let material = null; m.scene.traverse(o => { if (!material && o.isMesh && o.material && o.material.map) material = o.material; });
-    const img = material && material.map && material.map.image; if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }), w = img.width / 8, h = img.height / 4; c.drawImage(img, 0, 0);
-    for (const [key, hex] of Object.entries(colours)) {
-      const [cx, cy] = key.split(',').map(Number), d = c.getImageData(cx * w, cy * h, w, h), p = d.data, col = new THREE.Color(hex);
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      for (let i = 0; i < p.length; i += 4) {
-        const k = (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1);
-        p[i] = Math.min(255, col.r * 255 * k); p[i + 1] = Math.min(255, col.g * 255 * k); p[i + 2] = Math.min(255, col.b * 255 * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    material.map = t; material.needsUpdate = true; old.dispose();
-  }
-  /* him: black hair; a dark green coat, its tails his cape; a white shirt collar, bare hands, charcoal trousers, brown
-     boots, a pink flower in his buttonhole where the knight wore his rosette */
-  function dressHim() {
-    for (const arm of ['Knight_ArmLeft', 'Knight_ArmRight']) {
-      const a = boy.node(arm);
-      remap(a, [3, 0], [0, 0], x => Math.abs(x) > .72); remap(a, [3, 0], [3, 1], x => Math.abs(x) > .6);   // hands; a deep cuff
-      remap(a, [7, 0], [3, 0]); remap(a, [4, 0], [3, 0]); remap(a, [6, 0], [3, 1]);                        // plates and straps: plain sleeve
-    }
-    for (const leg of ['Knight_LegLeft', 'Knight_LegRight']) [[3, 0], [7, 0], [6, 0]].forEach(s => remap(boy.node(leg), s, [5, 1]));   // greaves: boots
-    remap(boy.node('Knight_Body'), [0, 1], [2, 2]);
-    repaint(boy, { '1,0': '#2a2226', '3,0': '#3f8f62', '0,1': '#367e55', '3,1': '#2a5d42', '7,0': '#f4ede0', '7,1': '#3a3436',
-      '6,0': '#6a4430', '2,1': '#e9b949', '5,1': '#5a3826', '2,2': '#ff8fb0', '1,1': '#7cc47a' });
-  }
-  /* her: chestnut hair, a rose dress with a white collar and cuffs, a raspberry sash, bare hands, plum boots */
-  function dressHer() {
-    for (const arm of ['Rogue_ArmLeft', 'Rogue_ArmRight']) remap(girl.node(arm), [5, 2], [0, 0]);
-    remap(girl.node('Rogue_Body'), [6, 0], [0, 1]);                    // the strap and the pouch: the dress
-    repaint(girl, { '1,0': '#5e3020', '0,1': '#e8829f', '1,1': '#fff4e6', '5,0': '#b8466a', '3,0': '#f0c050', '7,1': '#e8829f', '3,2': '#8a3a4f' });
-  }
 
   /* ── bones on the stage, arms that reach ── */
   const mStage = new THREE.Matrix4(), qInv = new THREE.Quaternion(), vS = new THREE.Vector3(), vTo = new THREE.Vector3();
@@ -171,7 +120,7 @@
         small ones circle high, then round the two of them in the air, and go to roost at dusk; the doves bring the photo ── */
   const PERCH = [[-.39, .258, -.17], [.075, .35, -.21], [.12, .009, .16], [.2, .009, .11]];   // ridges (the bird's middle sits above them), the lane
   const ROOST = [[.24, .279, -.19], [.435, .229, -.165], [-.42, .258, -.17], [.015, .35, -.21]];
-  const DOVE_PERCH = [[-.25, BAL.y + .052, BAL.z1 - .004], [-.13, BAL.y + .052, BAL.z1 - .004]];
+  const DOVE_PERCH = [[-.25, BAL.y + BAL.rail + .002, BAL.z1 - .004], [-.13, BAL.y + BAL.rail + .002, BAL.z1 - .004]];   // on her balcony's rail
   const vP = new THREE.Vector3(), vQ = new THREE.Vector3(), vC = new THREE.Vector3();
   function circle(i, T, cx, cy, cz, rx, rz, out) {
     const a = T * (.9 + i * .07) + i * 1.6;
@@ -189,12 +138,10 @@
     seconds: [10, 10, 10],
 
     build() {
-      /* the two of them */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .285 });
+      /* the two of them (the shared couple, templates/_models) */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: H * .945 });
       boy.root.name = 'boy'; girl.root.name = 'girl';
-      dressHim(); dressHer();
       stage.add(boy.root, girl.root);
-      const cn = boy.node('Knight_Cape'); cape = cn && cn.geometry ? { node: cn, rx: cn.rotation.x } : null;
       basket = S.makeBasket(); basket.scale.setScalar(1.25); stage.add(basket);
 
       /* the town */
@@ -314,8 +261,8 @@
       hands(boy, 'l', girl, 'r', bump(g, 12.1, 12.35, 12.55, 12.75));  // she takes it; then up they go
       hands(boy, 'r', girl, 'r', bump(g, 12.6, 12.8, 15.3, 15.6));
       hands(boy, 'r', girl, 'l', bump(g, 16.55, 16.9, 20.25, 20.5));
-      const wobble = bump(g, 12.5, 12.75, 13.3, 13.7);                // her first steps: the free arm out for balance
-      if (wobble) { girl.aim('upperarm.l', [.9, .1 + .25 * Math.sin(T * 7), -.1], wobble); girl.aim('lowerarm.l', [.9, .3, 0], wobble); girl.bend('spine', 0, 0, .1 * Math.sin(T * 6), wobble); }
+      const wobble = bump(g, 12.5, 12.75, 13.3, 13.7);                // her first steps: the free arm out for balance, up over her balcony's rail
+      if (wobble) { girl.aim('upperarm.l', [.8, .35 + .25 * Math.sin(T * 7), .3], wobble); girl.aim('lowerarm.l', [.9, .3, 0], wobble); girl.bend('spine', 0, 0, .1 * Math.sin(T * 6), wobble); }
       const down = bump(g, 15.8, 16.05, 16.55, 16.85), laugh = bump(g, 16.6, 16.85, 17.45, 17.85);
       if (down) { girl.bend('chest', .22, 0, 0, down); girl.bend('head', .42, 0, 0, down); boy.bend('head', .2, .25, 0, down); clutch(down); }   // looking down, the basket hugged
       if (laugh) { const shake = Math.sin(T * 17); girl.bend('head', -.3, 0, .1, laugh); girl.bend('chest', -.06 + .05 * shake, 0, 0, laugh); boy.bend('head', -.22, .2, 0, laugh); boy.bend('chest', -.04 * shake, 0, 0, laugh); }
@@ -331,8 +278,8 @@
       const clap = bump(g, 25.95, 26.15, 26.9, 27.1);
       if (clap) { const c = .25 * Math.abs(Math.sin(T * 9)); boy.aim('upperarm.r', [-.2, -.35, .9], clap); boy.aim('lowerarm.r', [.5 - c, .45, .7], clap); boy.aim('upperarm.l', [.2, -.35, .9], clap); boy.aim('lowerarm.l', [-.5 + c, .45, .7], clap); }
       const hug = ease.smooth(seg(g, 27.5, 28.05));
-      if (hug) {
-        boy.aim('upperarm.r', [-.42, .05, .9], hug); boy.aim('lowerarm.r', [.8, .1, .6], hug); boy.aim('upperarm.l', [.42, .05, .9], hug); boy.aim('lowerarm.l', [-.8, .1, .6], hug);
+      if (hug) {                                                      // his elbows out round her, his hands at her waist
+        boy.aim('upperarm.r', [-.55, -.45, .7], hug); boy.aim('lowerarm.r', [.65, -.05, .75], hug); boy.aim('upperarm.l', [.55, -.45, .7], hug); boy.aim('lowerarm.l', [-.65, -.05, .75], hug);
         girl.aim('upperarm.l', [.42, .3, .9], hug); girl.aim('lowerarm.l', [-.75, .4, .55], hug);   // her basket stays in the other hand
         girl.bend('head', 0, -.3, -.14, hug); boy.bend('head', .1, .3, .1, hug); boy.bend('chest', .12, 0, 0, hug);
       }
@@ -348,9 +295,6 @@
         if (dt && aloft > .5 && rng() < dt * 7) sparks.emit({ x: q.m.position.x + (rng() - .5) * .07, y: q.m.position.y - .005, z: q.m.position.z + (rng() - .5) * .04, vy: -.05 - rng() * .04,
           sway: .01, color: rng() < .5 ? '#ffe6a8' : '#ffc2d6', size: .012 + rng() * .008, life: 1.3, shape: rng() < .5 ? 'sparkle' : 'glow', spin: 2 });
       });
-
-      /* the coat's tails stream back in the gust and on the air */
-      if (cape) cape.node.rotation.x = cape.rx + .5 * gust + (.12 + .06 * Math.sin(T * 5)) * bump(g, 10.6, 11, 25.2, 25.6) + .04 * Math.sin(T * 2.3) * (1 - gust);
 
       /* ── her basket, upright in her right hand (in her left on the climb, so her right can hold his: it changes hands
             while she hugs it to her chest); it swings as she walks and flies out as she twirls ── */
@@ -431,11 +375,11 @@
       });
 
       /* ── at the balcony: a puff of petals as she lands, the twirl's spiral, the hug's hearts ── */
-      if (g > 25.05 && kit.once('land')) petals.burst(22, () => { const a = rng() * TAU; return { x: -.232 + Math.cos(a) * .05, y: BAL.y + .01, z: -.085 + Math.sin(a) * .03,
+      if (g > 25.05 && kit.once('land')) petals.burst(22, () => { const a = rng() * TAU; return { x: -.232 + Math.cos(a) * .05, y: BAL.y + .01, z: ON + Math.sin(a) * .03,
         vx: Math.cos(a) * .2, vy: .15 + rng() * .1, vz: Math.sin(a) * .1, drag: 1.5, gravity: -.15, color: PETALS[(rng() * 5) | 0], size: .016, life: 1.6, shape: 'petal', spin: 4, floor: BAL.y }; });
       if (dt && g > 25.8 && g < 27.1) for (let i = 0; i < 3; i++) {
         const a = T * 8 + i * TAU / 3, k = seg(g, 25.8, 27.1);
-        (i ? petals : sparks).emit({ x: -.232 + Math.cos(a) * .07, y: BAL.y + .02 + k * .25, z: -.085 + Math.sin(a) * .05, vx: -Math.sin(a) * .15, vy: .12, vz: Math.cos(a) * .1, drag: 1,
+        (i ? petals : sparks).emit({ x: -.232 + Math.cos(a) * .07, y: BAL.y + .02 + k * .25, z: ON + Math.sin(a) * .05, vx: -Math.sin(a) * .15, vy: .12, vz: Math.cos(a) * .1, drag: 1,
           color: i ? PETALS[(rng() * 5) | 0] : '#fff1b8', size: i ? .016 : .02, life: 1.1, shape: i ? 'petal' : 'sparkle', spin: 4 });
       }
       if (g > 28 && kit.once('hug')) hearts.burst(26, () => ({ x: -.17, y: BAL.y + .3, z: -.06, vx: (rng() - .5) * .45, vy: .14 + rng() * .25, vz: (rng() - .5) * .15, gravity: -.18, drag: .9,

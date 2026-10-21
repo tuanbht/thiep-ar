@@ -11,20 +11,37 @@
     2
   ],
   "reveal": null,
-  "notes": "A surprise bouquet in a flower shop's garden (KayKit Adventurers, CC0: the Barbarian in his bear hat and cape, weapons and mug dropped, and the Mage in a smaller witch hat with her open spellbook, wand, staff and closed book dropped, by scripts/pack-models.mjs; the bouquet, the garden, the butterflies and the petals are built in story.js). Stop 1: he tiptoes in with roses hidden behind his back and taps her shoulder; she jumps, her book flies off in a puff, he holds the bouquet out with a bow and a gift tag with the card's first words (slot note1) comes up. Stop 2: she steps up, takes it, smells it and cheers; flowers bloom across the card in a wave from her feet, butterflies rise and the card's photo comes up out of the flowers with its caption (slot caption). Stop 3: they join hands and twirl round the middle while petals swirl up into a heart; they turn to the front hand in hand and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A surprise bouquet in a flower shop's garden (the shared grown-up couple in templates/_models: Grab3D's Casual Man and Woman with Quaternius's animations, CC0; her open book, the bouquet, the garden, the butterflies and the petals are built in story.js). Stop 1: he tiptoes in with roses hidden behind his back and taps her shoulder; she jumps, her book flies off in a puff, he holds the bouquet out with a bow and a gift tag with the card's first words (slot note1) comes up. Stop 2: she steps up, takes it, smells it and cheers; flowers bloom across the card in a wave from her feet, butterflies rise and the card's photo comes up out of the flowers with its caption (slot caption). Stop 3: they join hands and skip round the middle while petals swirl up into a heart; they turn to the front hand in hand and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
-  "categories": ["love", "couple"],
-  "tags": ["bó hoa", "tặng hoa", "bất ngờ", "20/10", "8/3", "valentine", "cánh đồng hoa"],
+  "categories": [
+    "love",
+    "couple"
+  ],
+  "tags": [
+    "bó hoa",
+    "tặng hoa",
+    "bất ngờ",
+    "20/10",
+    "8/3",
+    "valentine",
+    "cánh đồng hoa"
+  ],
   "photos": 1
 }

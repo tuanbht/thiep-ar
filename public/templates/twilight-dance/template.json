@@ -14,17 +14,23 @@
     2
   ],
   "reveal": null,
-  "notes": "A dance at dusk on a hill above the city (KayKit Adventurers, CC0: the Barbarian bare-headed with dark hair painted onto his head, his beard darkened, recoloured into a dark blue shirt with a navy sash, cream trousers and dark tap shoes; the Mage without her hat but with her cape, recoloured into a lilac dress, a rose cape and plum stockings, her shoes changing colour when she puts on her dance shoes; weapons, the bear hat, his cape and her hat dropped by scripts/pack-models.mjs). The rest is built in code by scenery.js: a sky page from violet to gold with a night painted over it that fades in, a city far below whose lights come on street by street and ripple, a grassy hilltop with a cobbled path, an old streetlamp with its pool of light, a bench, two trees, lavender, two pairs of shoes, and three carriers for the words. Stop 1: they stroll in from both sides pretending not to see each other (she shakes her head, he shrugs), the lamp flickers on, he leans on its post and holds out his hand, and an enamel plate swings down from the lamp with the card's first words (slot note1). Stop 2: she sits on the bench to change her shoes while he swings round the lamppost, feet off the ground; she rolls her eyes but her foot taps, then they tap side by side, hops and kicks in step, and the music notes gather into a frame of bulbs round the card's photo with its caption (slot caption). Stop 3: night falls; hand in hand they sway, he twirls her, they spin as a ripple of light runs through the city, he dips her as a shooting star crosses, they come up forehead to forehead and a ribbon unrolls above them with the last words (slot note2). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
+  "notes": "A dance at dusk on a hill above the city (the shared grown-up couple of templates/_models: Grab3D's Casual Man and Casual Woman with Quaternius's animations, CC0, in their own clothes; she is fitted at .945 of his height; her lilac dance shoes go on in a burst of sparkles, with a bow on each toe and a strap round each ankle, and the white trainers she had on land by the bench). The rest is built in code by scenery.js: a sky page from violet to gold with a night painted over it that fades in, a city far below whose lights come on street by street and ripple, a grassy hilltop with a cobbled path, an old streetlamp with its pool of light, a bench, two trees, lavender, two pairs of shoes, and three carriers for the words. Stop 1: they stroll in from both sides pretending not to see each other (she shakes her head, he shrugs), the lamp flickers on, he leans on its post and holds out his hand, and an enamel plate swings down from the lamp with the card's first words (slot note1). Stop 2: she sits on the bench to change her shoes while he swings round the lamppost, feet off the ground; she rolls her eyes but her foot taps, then they tap side by side, hops and kicks in step, and the music notes gather into a frame of bulbs round the card's photo with its caption (slot caption). Stop 3: night falls; hand in hand they sway, he twirls her in a ring of sparkles, they spin as a ripple of light runs through the city, he dips her as a shooting star crosses, they come up forehead to forehead and a ribbon unrolls above them with the last words (slot note2). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
   "categories": [

@@ -306,15 +306,15 @@
       windows: [[.5, .3, .22, .22], [.3, .74, .17, .2]], door: [.72, .2, .42], boxes: [0], chimney: true, lightAt: 23.4, pop: .9 }
   ];
   const HOME = ROW[1], SHOP = ROW[3];
-  const BALCONY = { x0: HOME.x - .125, x1: HOME.x + .125, y: HOME.h * HOME.floor + .004, z0: HOME.z + HOME.d / 2, z1: HOME.z + HOME.d / 2 + .105 };
+  const BALCONY = { x0: HOME.x - .125, x1: HOME.x + .125, y: HOME.h * HOME.floor + .004, z0: HOME.z + HOME.d / 2, z1: HOME.z + HOME.d / 2 + .105, rail: .165 };   // rail: its height, a grown-up's waist
   /** the house with the balcony: on the upper floor a stone balcony on brackets, its iron railing lined with pots of
       flowers, and a string of little bulbs that light at dusk */
   function makeBalcony(bulbs) {
-    const g = new THREE.Group(), { x0, x1, y, z0, z1 } = BALCONY, w = x1 - x0, d = z1 - z0, cx = (x0 + x1) / 2;
+    const g = new THREE.Group(), { x0, x1, y, z0, z1, rail } = BALCONY, w = x1 - x0, d = z1 - z0, cx = (x0 + x1) / 2;
     const stone = mat('#f6ebe0', { roughness: .9 }), iron = mat('#3f6f5c', { roughness: .45, metalness: .3 });
     g.add(mesh(new THREE.BoxGeometry(w, .008, d), stone, cx, y - .004, z0 + d / 2));
     for (const k of [-.4, 0, .4]) { const br = mesh(new THREE.BoxGeometry(.012, .022, .03), stone, cx + k * w, y - .019, z0 + .015); br.rotation.x = .5; g.add(br); }
-    const rail = .05, posts = [];
+    const posts = [];
     for (let i = 0; i <= 13; i++) posts.push([x0 + .006 + (w - .012) * i / 13, y + rail / 2, z1 - .004]);
     for (const zz of [z0 + .02, z0 + .05, z0 + .08]) for (const xx of [x0 + .004, x1 - .004]) posts.push([xx, y + rail / 2, zz]);
     g.add(copies(new THREE.CylinderGeometry(.0013, .0013, rail, 5), iron, posts));

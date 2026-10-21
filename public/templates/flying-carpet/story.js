@@ -1,5 +1,5 @@
 /* Thảm bay đêm trăng (a carpet ride under the moon), told by the shared act _acts/lovestory.js; the city is built by
-   scenery.js and the rug, hair, scarf and word carriers by props.js, both loaded first. Four chapters of ten seconds, each
+   scenery.js and the rug and word carriers by props.js, both loaded first. Four chapters of ten seconds, each
    ending at a stop:
      1 · 0–10 s    the night city pops up out of the card as dusk turns to night; she comes out onto her balcony, leans on
                    the railing and gazes at the big moon; a rug rises rippling from the street with a young man sitting on
@@ -22,11 +22,14 @@
   const PAGE = { width: 1.12, height: 1.0, curve: .08, z: -.3 };      // the painted sky at the back
   const MOON = { x: .12, y: .5, r: .16 };                            // the moon on it
   const HOUSE = { x0: -.5, x1: -.2, z0: -.2, z1: .01, h: .16, top: .45, dz: -.1 };   // her house: the ground floor; the upper storey to dz, up to top
-  const BAL = { y: .172, x0: -.47, x1: -.2, z0: -.1, z1: .2, gap: [.05, .195] };    // her balcony's floor; the opening in its railing (z)
+  const BAL = { y: .172, x0: -.47, x1: -.2, z0: -.1, z1: .2, gap: [.05, .195], rail: .165 };   // her balcony's floor; the opening in its railing (z); the railing's height: a grown-up's waist (.55 of his)
   const S = window.NM_CARPET.scenery(kit, { PAGE, MOON, HOUSE, BAL }), P = window.NM_CARPET.props(kit);
   const DOCK = [-.015, BAL.y + .004, .13];                              // the rug by the opening, its front to her (yaw -R)
   const SEAT = { boy: [-.075, .02], girl: [.075, .02] };              // where they sit on the rug, in its own space: she on his left
-  const LEAN = [-.255, -.02], GATE = [-.25, .132];                  // where she leans on the railing; the opening
+  /** how far ahead of him she sits: at the balcony the rug's front faces it, so you see them one behind the other; a little
+      ahead, she is not in his lap. She moves up beside him as the rug spins up off the balcony */
+  const ahead = g => .07 * (1 - ease.inOut(seg(g, 12.5, 13.3)));
+  const LEAN = [-.268, -.02], GATE = [-.25, .124];                  // where she leans on the railing (her toes short of it); the opening
   const HOVER = [[0, .24, .07, 0], [.04, .23, .12, .35], [0, .2, .08, 0]];   // where the rug waits at stops 2, 3 and 4: x, y, z, yaw
   const PHOTO3 = [.34, .3, .1], PHOTO4 = [.43, .245, -.05];           // the photo (its foot) at stop 3, and aside at stop 4
   const DUSK = { hemi: new THREE.Color('#f3d6ff'), ground: new THREE.Color('#6f4f7a'), sun: new THREE.Color('#ffd2b0') };
@@ -34,13 +37,14 @@
   const FEST = { hemi: new THREE.Color('#d6c4ff'), ground: new THREE.Color('#5c3a64'), sun: new THREE.Color('#ffe2c8') };
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
-  let boy, girl, rug, hair, scarf = [], sash = [], page, house, square, roofs, strings = [], lanterns = [], lifters = [], clouds = [], doves = [], cords = [];
+  const H = .3;                                                      // his height; hers is H * .945 (1.70 m to his 1.80)
+  let boy, girl, rug, page, house, square, roofs, strings = [], lanterns = [], lifters = [], clouds = [], doves = [], cords = [];
   let scroll, cloudNote, banner, photo, rim, flash, sparks, hearts, stars, mist, fire, shine = [];
 
   /* ── who does what, from story time g: [from g, clip, options] ── */
   const BOY = [
     [0, 'Sit_Floor_Idle'], [5.6, 'Sit_Floor_StandUp', { once: true, fade: .2 }], [6.7, 'Idle', { fade: .25 }],
-    [7.1, 'Walking_A', { speed: 1.7, fade: .2 }], [7.8, 'Idle', { fade: .2 }],
+    [7.1, 'Walking_A', { speed: 1.5, fade: .2 }], [7.8, 'Idle', { fade: .2 }],
     [10.0, 'Walking_Backwards', { speed: 1.8, fade: .2 }], [10.6, 'Idle', { fade: .2 }],
     [11.4, 'Sit_Floor_Down', { once: true, fade: .2 }], [12.4, 'Sit_Floor_Idle', { fade: .3 }]
   ];
@@ -52,11 +56,13 @@
     [10.25, 'Jump_Full_Short', { once: true, fade: .12 }], [11.15, 'Idle', { fade: .2 }],
     [11.45, 'Sit_Floor_Down', { once: true, fade: .2 }], [12.45, 'Sit_Floor_Idle', { fade: .3 }]
   ];
-  /* her way on the balcony until she hops on: [g, x, z, facing] (out of her door, to the railing, to the opening) */
-  const GIRL_WAY = [[0, -.37, -.01, .35], [.95, -.37, -.01, .35], [1.25, -.355, -.01, 1.1], [2.0, LEAN[0] - .01, LEAN[1], R], [2.2, ...LEAN, 1.6],
-    [5.15, ...LEAN, 1.6], [5.4, LEAN[0], LEAN[1] + .015, .4], [6.0, GATE[0], GATE[1] - .008, .45], [6.3, ...GATE, R - .45],   // half to you at the opening
+  /* her way on the balcony until she hops on: [g, x, z, facing, ease into it] (out of her door, to the railing, along it
+     to the opening, her hand clear of its post) */
+  const GIRL_WAY = [[0, -.37, -.01, .35], [.95, -.37, -.01, .35], [1.25, -.355, -.01, 1.1], [2.0, LEAN[0] - .02, LEAN[1], R], [2.2, ...LEAN, 1.6],
+    [5.15, ...LEAN, 1.6], [5.4, LEAN[0] - .012, LEAN[1] + .015, .4], [5.72, LEAN[0] - .008, .065, .42, 'in'], [6.0, GATE[0], GATE[1] - .008, .45, 'out'],
+    [6.3, ...GATE, R - .45],                                         // half to you at the opening
     [7.85, ...GATE, R - .45], [8.25, GATE[0] - .026, GATE[1], R - .45], [8.85, GATE[0] - .026, GATE[1], R - .45], [9.2, ...GATE, R - .45]];
-  const wayKeys = [1, 2, 3].map(i => GIRL_WAY.map(k => [k[0], k[i], 'smooth']));
+  const wayKeys = [1, 2, 3].map(i => GIRL_WAY.map(k => [k[0], k[i], k[4] || 'smooth']));
 
   /* ── the rug's flight: paths, and its pose (place, heading, pitch into a climb, bank into a turn) along them ── */
   const curve = pts => new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), false, 'centripetal', .5);
@@ -120,6 +126,23 @@
     m.aim(`upperarm.${side}`, [vT.x, vT.y - bendElbow, vT.z], k); m.aim(`lowerarm.${side}`, [vT.x, vT.y + bendElbow, vT.z], k);
   }
   const clasp = (m, k) => { if (k <= 0) return; m.aim('upperarm.r', [-.25, -.45, .85], k); m.aim('lowerarm.r', [.7, .45, .55], k); m.aim('upperarm.l', [.25, -.45, .85], k); m.aim('lowerarm.l', [-.7, .45, .55], k); };
+  /** an arm that puts the hand on a point on the stage: two bones, the elbow bending towards `pole` (own space, given for
+      the right arm; the left mirrors it); out of reach, the arm points straight at it */
+  const SPAN = new Map(), vN = new THREE.Vector3(), vQ = new THREE.Vector3(), vE = new THREE.Vector3(), vL = new THREE.Vector3();
+  function handOn(m, side, target, k, pole) {
+    if (k <= 0) return;
+    const up = m.node(`upperarm.${side}`), key = m.root.name + side;
+    if (!SPAN.has(key)) SPAN.set(key, [onStage(up, vN).distanceTo(onStage(m.node(`lowerarm.${side}`), vQ)), vQ.distanceTo(onStage(m.node(`handslot.${side}`), vE))]);
+    const [a, b] = SPAN.get(key);
+    onStage(up, vS); stage.getWorldQuaternion(qW); vL.copy(target).sub(vS).applyQuaternion(qW);
+    m.root.getWorldQuaternion(qW); vL.applyQuaternion(qW.invert());   // the way to it, in the character's own space
+    const dist = vL.length() || 1, A = Math.acos(clamp((a * a + dist * dist - b * b) / (2 * a * dist), -1, 1));
+    vN.copy(vL).divideScalar(dist);
+    vQ.set(side === 'r' ? pole[0] : -pole[0], pole[1], pole[2]).addScaledVector(vN, -vQ.dot(vN)).normalize();
+    vE.copy(vN).multiplyScalar(Math.cos(A)).addScaledVector(vQ, Math.sin(A));     // the upper arm, to the elbow
+    vL.addScaledVector(vE, -a);                                                    // the forearm, from the elbow to the point
+    m.aim(`upperarm.${side}`, vE.toArray(), k); m.aim(`lowerarm.${side}`, vL.toArray(), k);
+  }
   const toRug = (x, y, z, out) => out.set(x, y, z).applyQuaternion(rug.root.quaternion).add(rug.root.position);
   /* bursts */
   const fizz = (x, y, z, n, s = .3, cols = ['#fff1b8', '#ffd1dc', '#ffffff', '#c9d6ff']) => sparks.burst(n, () => ({ x, y, z, vx: (rng() - .5) * s, vy: rng() * s, vz: (rng() - .5) * s * .6,
@@ -140,16 +163,9 @@
     seconds: [10, 10, 10, 10],
 
     build() {
-      /* the two of them: him clean-shaven with black hair, a white shirt, a deep green sash and trousers; her hood a plum
-         headscarf over a coral outfit; the rug they ride */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .29 });
-      P.dress(boy, girl);
+      /* the two of them (the shared couple, templates/_models) and the rug they ride */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: H * .945 });
       for (const m of [boy, girl]) m.scene?.traverse(o => { if (o.isMesh) [].concat(o.material).forEach(x => { if (x && !shine.includes(x)) shine.push(x); }); });
-      hair = P.hair(); boy.node('head')?.add(hair);
-      scarf = [P.tail('#b04b92', '#f2c35a', .2, .55, 1.4), P.tail('#9a3f7c', '#f2c35a', .17, .44, 1.4)];   // the two ends of her headscarf's knot
-      scarf.forEach((t, i) => { t.pin.position.set(i ? .1 : -.08, .3, -.53); t.pin.rotation.z = i ? -.15 : .12; girl.node('head')?.add(t.pin); });
-      sash = [P.tail('#3fa36c', '#f2c35a', .16, .42, 1.4), P.tail('#2f8a5a', '#f2c35a', .14, .34, 1.4)];
-      sash.forEach((t, i) => { t.pin.position.set(-.52, .32, .05 + i * .06); t.pin.rotation.y = -R; boy.node('hips')?.add(t.pin); });
       rug = P.rug({ L: .36, W: .3 }); stage.add(rug.root, girl.root); rug.root.add(boy.root);
 
       /* the city: the sky page with its moon, her house and balcony, rooftops, strings of lanterns */
@@ -251,33 +267,35 @@
       boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
       boy.root.visible = g > 3.3;
       const bz = tween(g, [[7.1, -.02], [7.8, .085, 'linear'], [10.0, .085], [10.6, SEAT.boy[1], 'smooth']]), bx = tween(g, [[10.0, 0], [10.6, SEAT.boy[0], 'smooth']]);
-      const turnIn = ease.inOut(seg(g, 32, 33)), kissX = lerp(1, .72, turnIn), toYou = .6 * bump(g, 7.6, 8.0, 10.0, 10.4);   // half to you while he offers his hand
-      boy.root.position.set(bx * kissX, rug.heightAt(bx, bz), bz); boy.root.rotation.set(0, .75 * turnIn + toYou, 0);
+      const turnIn = ease.inOut(seg(g, 32, 33)), kissX = lerp(1, .42, turnIn), toYou = .6 * bump(g, 7.6, 8.0, 10.0, 10.4);   // half to you while he offers his hand
+      boy.root.position.set(bx * kissX, rug.heightAt(bx, bz), bz); boy.root.rotation.set(0, toYou, 0);
 
       /* ── her: on the balcony, then a hop onto the rug; seated on it from then on ── */
       if (g < 10.9) {
         if (girl.root.parent !== stage) stage.add(girl.root);
         let x = tween(g, wayKeys[0]), z = tween(g, wayKeys[1]), y = BAL.y, yaw = tween(g, wayKeys[2]);
         if (g > 10.5) {                                              // the hop: from the opening up and over to her place on the rug
-          const u = ease.inOut(seg(g, 10.5, 10.9)), to = toRug(SEAT.girl[0], rug.heightAt(...SEAT.girl), SEAT.girl[1], vH);   // in the air with the jump's own lift-off
-          x = lerp(GATE[0], to.x, u); z = lerp(GATE[1], to.z, u); y = lerp(BAL.y, to.y, u) + .06 * Math.sin(Math.PI * u); yaw = lerp(yaw, R, u);
+          const u = ease.inOut(seg(g, 10.5, 10.9)), to = toRug(SEAT.girl[0], rug.heightAt(SEAT.girl[0], SEAT.girl[1] + ahead(g)), SEAT.girl[1] + ahead(g), vH);   // in the air with the jump's own lift-off
+          x = lerp(GATE[0], to.x, u); z = lerp(GATE[1], to.z, u * u); y = lerp(BAL.y, to.y, u) + .06 * Math.sin(Math.PI * u); yaw = lerp(yaw, R, u);   // out through the middle of the opening, clear of its posts
         }
         girl.root.position.set(x, y, z); girl.root.rotation.set(0, yaw, 0);
       } else {
         if (girl.root.parent !== rug.root) rug.root.add(girl.root);
-        girl.root.position.set(SEAT.girl[0] * kissX, rug.heightAt(...SEAT.girl), SEAT.girl[1]);
-        girl.root.rotation.set(0, lerp(Math.PI, 0, ease.inOut(seg(g, 11.05, 11.45))) - .75 * turnIn, 0);
+        girl.root.position.set(SEAT.girl[0] * kissX, rug.heightAt(SEAT.girl[0], SEAT.girl[1] + ahead(g)), SEAT.girl[1] + ahead(g));
+        girl.root.rotation.set(0, lerp(Math.PI, 0, ease.inOut(seg(g, 11.05, 11.45))), 0);
       }
       const show = ease.back(seg(g, .55, .9)); girl.root.scale.setScalar(Math.max(.001, show)); girl.root.visible = g > .55;
       if (g > .6 && g < 1.4 && kit.once('her')) fizz(-.37, BAL.y + .15, -.01, 14, .25);
-      if (g > 10.9 && g < 11.5 && kit.once('land')) { toRug(SEAT.girl[0], 0, SEAT.girl[1], vH); fizz(vH.x, vH.y + .01, vH.z, 16, .3); }
+      if (g > 10.9 && g < 11.5 && kit.once('land')) { toRug(SEAT.girl[0], 0, SEAT.girl[1] + ahead(g), vH); fizz(vH.x, vH.y + .01, vH.z, 16, .3); }
 
       /* ── chapter 1's gestures ── */
-      const lean = bump(g, 2.1, 2.5, 4.55, 4.9);                      // leaning on the railing, gazing at the moon, a sigh
+      const lean = bump(g, 2.1, 2.5, 4.55, 4.9);                      // leaning on the railing (it comes to her waist), her hands together on its rail, gazing up at the moon, a sigh
       if (lean) {
-        girl.bend('chest', .2, 0, 0, lean); girl.bend('head', -.45 + .05 * Math.sin(g * 2.2), .28, .08 * Math.sin(g * 1.3), lean);
-        girl.aim('upperarm.r', [-.18, -.35, .9], lean); girl.aim('lowerarm.r', [.45, .05, .9], lean); girl.aim('upperarm.l', [.18, -.35, .9], lean); girl.aim('lowerarm.l', [-.45, .05, .9], lean);
-        girl.bend('spine', .05 * Math.sin(Math.PI * seg(g, 3.2, 4.2)), 0, 0, lean);
+        const sigh = Math.sin(Math.PI * seg(g, 3.2, 4.2));
+        girl.bend('Spine02', .22 - .06 * sigh, 0, 0, lean); girl.bend('spine', .14, 0, 0, lean);   // over the rail from the waist: bent before the arms reach
+        girl.bend('head', -.75 + .05 * Math.sin(g * 2.2), .28, .08 * Math.sin(g * 1.3), lean);
+        for (const [side, dz] of [['r', .008], ['l', -.008]])        // over the top onto the rail, and off it the same way
+          handOn(girl, side, vH.set(BAL.x1 - .005, BAL.y + BAL.rail + .006 + .08 * (1 - lean), girl.root.position.z + dz), lean, [-.7, -.6, -.2]);
       }
       const notice = bump(g, 4.55, 4.8, 5.2, 5.5);                     // she sees the rug rising: a start, a look
       if (notice) { girl.bend('head', .1, -.6, 0, notice); girl.bend('spine', -.12 * Math.sin(Math.PI * seg(g, 4.75, 5.15)), 0, 0, notice); }
@@ -291,7 +309,7 @@
       const offer = bump(g, 7.75, 8.0, 10.2, 10.5), nod = bump(g, 8.35, 8.5, 8.75, 8.9);
       toRug(-.02, .2, .19, vT);                                       // where their hands meet, over the opening
       const meet = vH2.set(lerp(vT.x, BAL.x1 + .015, .6), BAL.y + .2, GATE[1] + .035);
-      if (g < 10.9) meet.lerp(onStage(girl.node('upperarm.r'), vT), ease.inOut(seg(g, 10.2, 10.85)) * .5);
+      if (g < 11) meet.lerp(onStage(girl.node('upperarm.r'), vT), ease.inOut(seg(g, 10.2, 10.85)) * .5);   // her hand comes with her as she hops
       if (offer) { reach(boy, 'l', meet, offer, .12); boy.bend('head', .08, 0, -.2 * nod, offer); }
       const take = bump(g, 9.15, 9.5, 10.85, 11.0);
       if (take) reach(girl, 'r', meet, take, .1);
@@ -317,16 +335,20 @@
       if (touch) { const c = clouds[3].root; reach(girl, 'l', onStage(c, vT), touch, 0); girl.bend('chest', .1, 0, -.12, touch); }
       const look3 = bump(g, 26.4, 26.8, 30, 30.3);                     // at the photo coming down
       if (look3) { girl.bend('head', -.1, .5, 0, look3); boy.bend('head', -.05, .5, 0, look3); }
+      /* the end: the floor clip leans them back on their hands; they sit up side by side, the knee nearest the other one
+         drawn up and the far hand on the far knee, and lean together to kiss, heads tipped together, faces still to you.
+         The backs bend before the arms reach: a bend afterwards would swing the arms out of place */
+      const up = ease.smooth(seg(g, 32, 33)), kiss = ease.smooth(seg(g, 33.3, 34.0));
+      if (up) for (const [m, s] of [[boy, 1], [girl, -1]]) {        // s: 1 when the other one is on its left
+        const near = s > 0 ? 'l' : 'r', far = s > 0 ? 'r' : 'l';
+        m.bend('spine', .25 * up, 0, -s * .14 * kiss); m.bend('chest', .2 * up, s * .3 * turnIn, -s * .1 * kiss);   // turned to each other from the chest up
+        m.bend('head', -.12 * kiss, s * .7 * kiss, -s * .05 * kiss);   // two profiles meeting, to you
+        m.aim(`upperleg.${near}`, [0, .5, .85], up); m.aim(`lowerleg.${near}`, [0, -.75, .55], up);
+        m.aim(`upperarm.${far}`, [-s * .2, -.8, .35], up); m.aim(`lowerarm.${far}`, [s * .1, -.2, .95], up);
+      }
       const hands = bump(g, 32.3, 32.8, 40, 41);                        // they take each other's hands, then kiss
-      if (hands) { toRug(0, .1, SEAT.boy[1] + .07, vT); reach(boy, 'l', vT, hands, .15); reach(girl, 'r', vT, hands, .15); }
-      const kiss = ease.smooth(seg(g, 33.3, 34.0));
-      if (kiss) { boy.bend('chest', .1, 0, -.04, kiss); boy.bend('head', .02, 0, -.14, kiss); girl.bend('chest', .1, 0, .04, kiss); girl.bend('head', .02, 0, .14, kiss); }   // heads tipped together, faces still to you
+      if (hands) { toRug(0, .12, SEAT.boy[1] + .06, vT); reach(boy, 'l', vT, hands, .15); reach(girl, 'r', vT, hands, .15); }
       if (g > 34.0 && g < 34.8 && kit.once('kiss')) { toRug(0, .27, SEAT.boy[1] + .05, vH); love(vH.x, vH.y, vH.z, 26, .4); }
-
-      /* ── her scarf and his sash in the wind ── */
-      const wind = seated ? f.wind : 0;
-      scarf.forEach((t, i) => P.flutter(t, .3 + wind * 1.1 + .06 * Math.sin(T * 1.7 + i), T, .35 + wind * 1.1, i * 1.3));
-      sash.forEach((t, i) => P.flutter(t, .12 + (g > 3.3 ? f.wind : 0) * .9, T, .3 + f.wind, 1.5 + i));
 
       /* ── stop 1: the scroll with his question ── */
       const sOpen = ease.out(seg(g, 7.95, 8.65)) * (1 - ease.in(seg(g, 10.0, 10.35))), sIn = ease.back(seg(g, 7.75, 8.0)), sOut = ease.in(seg(g, 10.3, 10.7));

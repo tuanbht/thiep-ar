@@ -1,15 +1,17 @@
 /* Bó hoa bất ngờ (a surprise bouquet), told by the shared act _acts/lovestory.js. Three chapters, each ending at a stop:
-     1 · 0–6.4 s     she stands reading her spellbook; he tiptoes in from the left with a bouquet hidden behind his back
+     1 · 0–6.4 s     she stands reading her book; he tiptoes in from the left with a bouquet hidden behind his back
                      and taps her shoulder; she jumps, the book flies off in a puff, and he holds the bouquet out with a
                      bow; a gift tag with the card's first words (note1) comes up
      2 · 6.4–12.4 s  she takes the bouquet, smells it and cheers; flowers bloom across the card in a wave from her feet,
                      butterflies rise, and the card's photo comes up out of the flowers with its caption
-     3 · 12.4–18.8 s they join hands and twirl round the middle while petals swirl up and gather into a heart; they turn
+     3 · 12.4–18.8 s they join hands and skip round the middle while petals swirl up and gather into a heart; they turn
                      to the front hand in hand and a banner with the last words (note2) rises
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
   const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
   const TAU = Math.PI * 2;
+  const H = .29, HER = H * .945;                                     // their heights, in card widths (1.80 m and 1.70 m)
+  const STRIDE = { boy: .1 * H / .3 };                               // a walk's stride a second at speed 1 (the model's pace makes KayKit's his)
   const rand = (s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)(520);   // the garden's own seed: the same flowers every time
   const SHE = { x: .16, z: -.02 }, TAKE = { x: .115, z: -.02 };     // where she reads; where she steps up to take the bouquet
   const HE = { x: -.07, z: -.02 }, TAP = .03;                        // where he stands after a hop back; where he taps her shoulder
@@ -18,25 +20,25 @@
   const PHOTO = { x: .055, z: -.17 };                                // where the photo comes up out of the flowers
   const DAY = { hemi: new THREE.Color('#fff6f0'), ground: new THREE.Color('#c9a9c4'), sun: new THREE.Color('#ffffff') };
   const ROSY = { hemi: new THREE.Color('#ffe4ec'), ground: new THREE.Color('#d9a0b8'), sun: new THREE.Color('#ffe2c8') };
-  let boy, girl, hat, bouquet, book, bookHome, note, banner, photo, halo, field, petals, flies, flyFrom, bang, hearts, sparks, drift;
+  let boy, girl, bouquet, book, note, banner, photo, halo, field, petals, flies, flyFrom, bang, hearts, sparks, drift;
 
   /* the pose a character holds at story time g: which clip, where, which way it looks */
-  const BOY = [                                                      // [from g, clip, options]
-    [0, 'Walking_A', { speed: 1.65 }], [3.35, 'Idle', { fade: .3 }], [8.35, 'Cheer', { once: true, fade: .2 }], [10, 'Idle', { fade: .4 }],
-    [12.95, 'Running_Strafe_Right', { fade: .3 }], [15.7, 'Idle', { fade: .4 }]
+  const BOY = [                                                      // [from g, clip, options]; the twirl is a skip round, side-on (no strafe clip)
+    [0, 'Walking_A', { speed: .17 / STRIDE.boy }], [3.35, 'Idle', { fade: .3 }], [8.35, 'Cheer', { once: true, fade: .2 }], [10, 'Idle', { fade: .4 }],
+    [12.95, 'Dance_A', { fade: .3 }], [15.7, 'Idle', { fade: .4 }]
   ];
-  const GIRL = [
-    [0, 'Idle'], [4.3, 'Hit_B', { once: true, fade: .08 }], [4.95, 'Idle', { fade: .35 }], [6.45, 'Walking_A', { fade: .15 }],
+  const GIRL = [                                                     // her start is a jump with her arms up (no flinch clip)
+    [0, 'Idle'], [6.45, 'Walking_A', { fade: .15 }],
     [6.95, 'Idle', { fade: .25 }], [7.7, 'Cheer', { once: true, fade: .2 }], [9.35, 'Idle', { fade: .4 }],
-    [12.95, 'Running_Strafe_Right', { fade: .3 }], [15.7, 'Idle', { fade: .4 }]
+    [12.95, 'Dance_A', { fade: .3 }], [15.7, 'Idle', { fade: .4 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
 
   /* arm poses in a character's own space, [upper arm, forearm], for the right arm (the left one mirrors x); some move */
   const ARM = {
-    read: [[-.3, -.55, .8], [.4, .45, .8]],                              // holding the open book in front
-    page: (g) => { const k = Math.sin(Math.PI * seg(g, 1.5, 2.1)); return [[-.3, -.55, .8], [.4 + .35 * k, .45 + .1 * k, .8 - .35 * k]]; },   // turning a page
+    read: [[-.15, -.9, .4], [.45, .2, .87]],                             // holding the open book in front of her chest
+    page: (g) => { const k = Math.sin(Math.PI * seg(g, 1.5, 2.1)); return [[-.15, -.9, .4], [.45 + .35 * k, .2 + .1 * k, .87 - .35 * k]]; },   // turning a page
     back: [[-.2, -.75, -.6], [.45, -.25, -.85]],                       // hands behind the back
     offer: [[-.12, -.45, .9], [.05, -.05, 1]],
     fright: [[-.55, .45, .5], [-.1, .95, .25]],
@@ -44,8 +46,8 @@
     reach: [[-.15, -.15, 1], [.05, .05, 1]],
     sniff: [[-.25, -.55, .75], [.55, .75, .35]],
     hug: [[-.3, -.5, .8], [.75, -.05, .65]],                          // a bouquet held close, low
-    scratch: [[-.5, .8, .2], [.6, .55, -.55]],                         // a shy hand to the back of the head
     up: [[-.6, .75, -.25], [-.35, .9, -.2]],                            // held up high and back, away from the other one
+    cheer: [[-.35, .9, .2], [-.15, 1, .15]],                             // the bouquet up high as she cheers (the clip raises the other arm)
     out: [[-.8, .45, .3], [-.6, .75, .2]],
     wave: (g, T) => [[-.45, .85, .25], [-.1 + .45 * Math.sin(T * 7), 1, .25]]
   };
@@ -57,7 +59,7 @@
     },
     girl: {                                                          // the book is in her left hand; she takes the bouquet in her right
       l: [[0, 'read', 0], [4.32, 'fright', .15], [4.9, 'cheek', .3], [7.65, null, .3], [9.05, 'hug', .55], [12.55, 'up', .45]],
-      r: [[0, 'page', 0], [4.32, 'fright', .15], [4.9, 'cheek', .3], [6.55, 'reach', .45], [7.25, 'sniff', .4], [7.65, null, .15], [9.05, 'hug', .55], [12.55, 'join', .45], [15.75, 'side', .5]]
+      r: [[0, 'page', 0], [4.32, 'fright', .15], [4.9, 'cheek', .3], [6.55, 'reach', .45], [7.25, 'sniff', .4], [7.65, 'cheer', .2], [9.05, 'hug', .55], [12.55, 'join', .45], [15.75, 'side', .5]]
     }
   };
   /* reaches: arms that go for a point on the stage (her shoulder, the hand in his); straight, from the shoulder */
@@ -70,8 +72,28 @@
     return [vTo.x, vTo.y, vTo.z];
   };
   const holdHand = (g, m, side) => { const d = toward(m, side, MEET); return [d, d]; };
+  /** an arm that puts the hand on a point: the elbow bends out towards `pole` (own space, for the right arm; the left
+      mirrors it); out of reach, the arm points straight at it */
+  const SPAN = new Map(), vN = new THREE.Vector3(), vQ = new THREE.Vector3(), vE = new THREE.Vector3(), vL = new THREE.Vector3();
+  const onStage = (m, bone, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return out.setFromMatrixPosition(b.matrixWorld).applyMatrix4(mStage); };
+  function handOn(m, side, target, pole) {
+    const key = m.root.name + side;
+    if (!SPAN.has(key)) SPAN.set(key, [onStage(m, `upperarm.${side}`, vN).distanceTo(onStage(m, `lowerarm.${side}`, vQ)), vQ.distanceTo(onStage(m, `handslot.${side}`, vE))]);
+    const [a, b] = SPAN.get(key), d = toward(m, side, target), dist = Math.hypot(d[0], d[1], d[2]) || 1;
+    vN.fromArray(d).divideScalar(dist);
+    const A = Math.acos(clamp((a * a + dist * dist - b * b) / (2 * a * dist), -1, 1));
+    vQ.set(side === 'r' ? pole[0] : -pole[0], pole[1], pole[2]); vQ.addScaledVector(vN, -vQ.dot(vN)).normalize();
+    vE.copy(vN).multiplyScalar(Math.cos(A)).addScaledVector(vQ, Math.sin(A));     // the upper arm, to the elbow
+    vL.fromArray(d).addScaledVector(vE, -a);                                       // the forearm, from the elbow to the point
+    return [vE.toArray(), vL.toArray()];
+  }
+  const NAPE = new THREE.Vector3(), vO = new THREE.Vector3();
   const REACH = {
     tap: (g, m, side) => { const d = toward(m, side, MEET); return [d, [d[0], d[1] + .5 * Math.max(0, Math.sin((g - 3.82) * 21)) * Math.hypot(d[0], d[2]), d[2]]]; },
+    scratch: (g, m, side) => {                                       // a shy hand on the back of the head, rubbing a little; the elbow out in front
+      onStage(m, 'head', NAPE).add(vO.set(-.006, .018 + .003 * Math.sin(g * 26), -.024).applyQuaternion(m.root.quaternion));
+      return handOn(m, side, NAPE, [-.8, .2, .6]);
+    },
     join: holdHand,                                                  // facing each other, to dance
     side: holdHand                                                   // side by side, at the end
   };
@@ -155,6 +177,22 @@
       const tail = new THREE.Mesh(tailG, ribbon); tail.position.set(s * .0042, -.0085, .0079); tail.rotation.z = s * .28; b.add(tail);
     }
     const knot = new THREE.Mesh(kit.keep(new THREE.SphereGeometry(.0042, 10, 8)), ribbon); knot.position.set(0, .002, .0079); b.add(knot);
+    b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    return b;
+  }
+
+  /** her book, open: two plum covers in a shallow V with cream pages on them and a ribbon marker; its spine along z,
+      its pages facing +y */
+  function makeBook() {
+    const b = new THREE.Group(), cover = mat('#7b4fa3', { roughness: .6 }), paper = mat('#fff6e6', { roughness: .9 });
+    const coverG = kit.keep(new THREE.BoxGeometry(.034, .0025, .048)), pagesG = kit.keep(new THREE.BoxGeometry(.031, .005, .044));
+    for (const s of [-1, 1]) {
+      const half = new THREE.Group(); half.rotation.z = s * .2; b.add(half);
+      const c = new THREE.Mesh(coverG, cover); c.position.x = s * .017;
+      const p = new THREE.Mesh(pagesG, paper); p.position.set(s * .0165, .0035, 0);
+      half.add(c, p);
+    }
+    const marker = new THREE.Mesh(kit.keep(new THREE.BoxGeometry(.003, .001, .022)), mat('#e8436d')); marker.position.set(.003, .0045, .028); b.add(marker);
     b.traverse(o => { if (o.isMesh) o.castShadow = true; });
     return b;
   }
@@ -321,16 +359,13 @@
     seconds: [6.4, 6, 6.4],
 
     build() {
-      /* the two of them: he keeps his bear hat and cape, she her witch hat (smaller, pushed back so her face shows) */
-      boy = kit.model('boy').fit({ height: .29 }); girl = kit.model('girl').fit({ height: .33 });
+      /* the two of them; her book is built here */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
-      hat = girl.node('Mage_Hat');
-      if (hat) { hat.scale.multiplyScalar(.74); hat.position.y += .1; hat.position.z -= .05; }
-      book = girl.node('Spellbook_open');
-      if (book) bookHome = { parent: book.parent, p: book.position.clone(), q: book.quaternion.clone(), s: book.scale.clone() };
+      book = makeBook(); stage.add(book);
 
       const roseG = roseGeometry();
-      bouquet = makeBouquet(roseG); bouquet.scale.setScalar(1.35); stage.add(bouquet);   // big enough to read from a phone's length
+      bouquet = makeBouquet(roseG); bouquet.scale.setScalar(1.05); stage.add(bouquet);   // a grown-up's armful, still easy to see from a phone's length
       field = makeField(roseG);
       petals = makePetals();
       flies = FLIGHTS.map(f => { const s = butterfly(...f.c); stage.add(s); return s; });
@@ -367,7 +402,7 @@
     reset() {
       [hearts, sparks, drift].forEach(p => p.clear());
       boy.stop(); girl.stop();
-      if (book && bookHome) { bookHome.parent.add(book); book.position.copy(bookHome.p); book.quaternion.copy(bookHome.q); book.scale.copy(bookHome.s); book.visible = true; }
+      book.scale.setScalar(1); book.visible = true;
     },
 
     pose({ g, T, dt, held }) {
@@ -385,7 +420,7 @@
       let bRot = lerp(lerp(Math.PI / 2, 1.42, ease.inOut(seg(g, 4.7, 5.2))), 1.05, ease.inOut(seg(g, 10, 10.6)));
       let gRot = lerp(lerp(.55, -1.42, ease.out(seg(g, 4.32, 4.72))), -1.05, ease.inOut(seg(g, 10, 10.6)));
       let by = .0045 * Math.abs(Math.sin(Math.PI * 2 * g * 1.65 / 1.07)) * walking + .02 * Math.sin(Math.PI * seg(g, 4.32, 4.62)) + .03 * Math.sin(Math.PI * seg(g, 8.45, 8.8));
-      let gy = .045 * Math.sin(Math.PI * seg(g, 4.32, 4.7)) + .04 * Math.sin(Math.PI * seg(g, 7.8, 8.15)), stepB = 1, stepG = 1;
+      let gy = .045 * Math.sin(Math.PI * seg(g, 4.32, 4.7)) + .04 * Math.sin(Math.PI * seg(g, 7.8, 8.15));
 
       /* chapter 3: they square up, twirl one full turn round the middle, then turn to the front hand in hand */
       if (g > 12.4) {
@@ -397,27 +432,24 @@
         gx = lerp(cx + R * ux, END.x, front); gz = lerp(cz + R * uz, END.z, front);
         bRot = lerp(lerp(1.05, Math.atan2(ux, uz), face), .3, front);
         gRot = lerp(lerp(-1.05, Math.atan2(-ux, -uz), face), -.3, front);
-        const hop = .035 * Math.sin(Math.PI * seg(g, 16.25, 16.6));
-        by = hop; gy = hop;
-        const v = R * TAU * 6 * spin * (1 - spin) / 2.7;               // how fast they go round: the side-steps keep up
-        stepB = Math.max(.25, v / .47); stepG = Math.max(.25, v / .43);
+        const hop = .035 * Math.sin(Math.PI * seg(g, 16.25, 16.6)), skip = bump(g, 13, 13.3, 15.4, 15.7);   // a skip on every step round
+        by = hop + kit.hop(g - 13, .3, .012) * skip; gy = hop + kit.hop(g - 13.15, .3, .012) * skip;
       }
       boy.root.position.set(bx, by, bz); boy.root.rotation.y = bRot;
       girl.root.position.set(gx, gy, gz); girl.root.rotation.y = gRot;
-      const bc = clipAt(BOY, g), gc = clipAt(GIRL, g), strafe = 'Running_Strafe_Right';
-      boy.play(bc[1], bc[1] === strafe ? { ...bc[2], speed: stepB } : bc[2]); girl.play(gc[1], gc[1] === strafe ? { ...gc[2], speed: stepG } : gc[2]);
+      const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
+      boy.play(bc[1], bc[2]); girl.play(gc[1], gc[2]);
 
       /* bodies: the sneak's crouch, the lean to tap, a start, the bow; her reading, a sniff, swaying; leaning back to spin */
       const spinning = bump(g, 12.95, 13.3, 15.4, 15.8);
       boy.bend('chest', .22 * walking + .16 * bump(g, 3.7, 3.85, 4.25, 4.4) - .2 * Math.sin(Math.PI * seg(g, 4.3, 4.75)) +
         .2 * bump(g, 4.75, 5.2, 7.1, 7.6) - .08 * spinning, 0, 0);
       boy.bend('head', .08 * bump(g, 3.4, 3.6, 4.3, 4.4), -.6 * bump(g, 1.2, 1.45, 2, 2.3), -.12 * bump(g, 7.5, 7.8, 8.2, 8.4) - .05 * ease.smooth(seg(g, 16.3, 16.8)));
-      girl.bend('spine', -.14 * spinning, 0, .08 * Math.sin(T * 2.2) * bump(g, 9.4, 9.8, 12.5, 12.9));
+      girl.bend('spine', -.14 * spinning - .25 * Math.sin(Math.PI * seg(g, 4.3, 4.8)), 0, .08 * Math.sin(T * 2.2) * bump(g, 9.4, 9.8, 12.5, 12.9));
       boy.bend('spine', .05 * Math.sin(T * 2.6) * bump(g, 10.2, 10.6, 12.5, 12.8), 0, .03 * Math.sin(T * 1.4) * bump(g, 5.4, 5.8, 6.5, 6.8));   // rocking on his heels
       girl.bend('head', .15 * (1 - ease.smooth(seg(g, 4.3, 4.42))) + .03 * Math.sin(g * 1.4) * (1 - seg(g, 4, 4.3)) + .2 * bump(g, 7.25, 7.4, 7.6, 7.75),
         0, .18 * Math.sin(T * 2) * bump(g, 4.9, 5.3, 6.6, 6.9));
       if (spinning) { boy.bend('spine', -.14 * spinning, 0, 0); girl.bend('chest', -.08 * spinning, 0, 0); boy.bend('head', -.22 * spinning, 0, 0); girl.bend('head', -.2 * spinning, 0, 0); }
-      if (hat) hat.rotation.x = -.3 - .35 * spinning;                     // pushed back by the spin, its brim clears him
 
       /* arms, by the tables; reaching arms go for MEET: her shoulder for the tap, then the point where their hands join */
       if (g < 6) { girl.node('upperarm.r').updateWorldMatrix(true, false); MEET.setFromMatrixPosition(girl.node('upperarm.r').matrixWorld).applyMatrix4(mStage); }
@@ -437,30 +469,29 @@
       if (g > 5 && g < 5.4 && kit.once('ta-da')) sparks.burst(18, () => ({ x: hP1.x, y: hP1.y + .05, z: hP1.z, vx: (rng() - .5) * .4, vy: .1 + rng() * .3, vz: (rng() - .5) * .3,
         drag: 2, color: ['#fff1b8', '#ffc2d6', '#ffffff'][(rng() * 3) | 0], size: .018 + rng() * .012, life: .8, shape: rng() < .5 ? 'sparkle' : 'glow' }));
 
-      /* the book: in her hands until she jumps, then up and away in a puff */
-      if (book) {
-        if (g >= 4.33 && kit.once('book')) {
-          book.updateWorldMatrix(true, false); mHand.multiplyMatrices(mStage, book.matrixWorld).decompose(bookFrom.p, bookFrom.q, bookFrom.s);
-          stage.add(book);
-        }
-        if (book.parent === stage) {
-          const t = g - 4.33, gone = ease.in(seg(g, 4.66, 4.76));
-          book.position.set(bookFrom.p.x + .22 * t, bookFrom.p.y + .95 * t - 1.7 * t * t, bookFrom.p.z + .1 * t);
-          book.quaternion.copy(bookFrom.q).premultiply(qSpin.setFromAxisAngle(vAxis, 11 * t));
-          book.scale.copy(bookFrom.s).multiplyScalar(Math.max(.001, 1 - gone));
-          book.visible = g < 4.76;
-          if (g > 4.72 && g < 5 && kit.once('poof')) {
-            sparks.burst(26, () => ({ x: book.position.x, y: book.position.y, z: book.position.z, vx: (rng() - .5) * .5, vy: (rng() - .3) * .4, vz: (rng() - .5) * .3,
-              drag: 2.4, color: ['#d9c8ff', '#fff1b8', '#ffffff', '#ffc2d6'][(rng() * 4) | 0], size: .02 + rng() * .02, life: .9, shape: rng() < .6 ? 'sparkle' : 'glow' }));
-            hearts.burst(6, () => ({ x: book.position.x, y: book.position.y, z: book.position.z, vx: (rng() - .5) * .2, vy: .1 + rng() * .15, gravity: -.1, drag: .8,
-              color: '#c4a7ff', size: .016 + rng() * .01, life: 1.4, shape: 'heart', spin: (rng() - .5) * 3 }));
-          }
+      /* the book: open on her left hand, tipped up to her face, until she jumps; then up and away in a puff */
+      if (g < 4.33) {
+        const hand = girl.node('handslot.l'); hand.updateWorldMatrix(true, false);
+        book.position.setFromMatrixPosition(hand.matrixWorld).applyMatrix4(mStage).add(vR.set(-.012, .012, 0).applyQuaternion(girl.root.quaternion));
+        book.quaternion.copy(girl.root.quaternion).multiply(qSpin.setFromAxisAngle(vF.set(1, 0, 0), -.95)); book.scale.setScalar(1); book.visible = true;
+      } else {
+        if (kit.once('book')) { book.updateWorldMatrix(true, false); mHand.multiplyMatrices(mStage, book.matrixWorld).decompose(bookFrom.p, bookFrom.q, bookFrom.s); }
+        const t = g - 4.33, gone = ease.in(seg(g, 4.66, 4.76));
+        book.position.set(bookFrom.p.x + .22 * t, bookFrom.p.y + .95 * t - 1.7 * t * t, bookFrom.p.z + .1 * t);
+        book.quaternion.copy(bookFrom.q).premultiply(qSpin.setFromAxisAngle(vAxis, 11 * t));
+        book.scale.copy(bookFrom.s).multiplyScalar(Math.max(.001, 1 - gone));
+        book.visible = g < 4.76;
+        if (g > 4.72 && g < 5 && kit.once('poof')) {
+          sparks.burst(26, () => ({ x: book.position.x, y: book.position.y, z: book.position.z, vx: (rng() - .5) * .5, vy: (rng() - .3) * .4, vz: (rng() - .5) * .3,
+            drag: 2.4, color: ['#d9c8ff', '#fff1b8', '#ffffff', '#ffc2d6'][(rng() * 4) | 0], size: .02 + rng() * .02, life: .9, shape: rng() < .6 ? 'sparkle' : 'glow' }));
+          hearts.burst(6, () => ({ x: book.position.x, y: book.position.y, z: book.position.z, vx: (rng() - .5) * .2, vy: .1 + rng() * .15, gravity: -.1, drag: .8,
+            color: '#c4a7ff', size: .016 + rng() * .01, life: 1.4, shape: 'heart', spin: (rng() - .5) * 3 }));
         }
       }
 
       /* chapter 1: a "!" over her as she jumps; little hearts over her, then the gift tag with the first words */
       const startle = ease.back(seg(g, 4.33, 4.5)) * (1 - ease.in(seg(g, 4.9, 5.05)));
-      bang.scale.setScalar(Math.max(.001, .09 * startle)); bang.position.set(gx - .02, .39 + gy, gz + .02); bang.material.rotation = -.2 + .1 * Math.sin(g * 30) * startle;
+      bang.scale.setScalar(Math.max(.001, .09 * startle)); bang.position.set(gx - .02, HER + .055 + gy, gz + .02); bang.material.rotation = -.2 + .1 * Math.sin(g * 30) * startle;
       if (held && dt && g < 6.5 && rng() < dt * .9) hearts.emit({ x: gx + (rng() - .5) * .04, y: .34, z: gz, vy: .05, sway: .02, color: '#ff8fab', size: .018, life: 2, shape: 'heart' });
       if (g > 5.35 && g < 5.8 && kit.once('glad')) hearts.burst(10, () => ({ x: gx + (rng() - .5) * .05, y: .3, z: gz, vx: (rng() - .5) * .14, vy: .12 + rng() * .1, gravity: -.08, drag: .6,
         color: ['#ff4f7b', '#ff8fab', '#ffc2d1'][(rng() * 3) | 0], size: .022 + rng() * .014, life: 2, shape: 'heart', spin: (rng() - .5) * 3 }));

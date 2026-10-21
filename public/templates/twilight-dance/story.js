@@ -11,22 +11,25 @@
                      she rolls her eyes but her foot is tapping, then she joins him and they tap side by side, hops and
                      kicks in step, music notes flying; the notes gather into a frame of bulbs round the card's photo
                      with its caption (caption)
-     3 · 20.5–31 s   night comes: hand in hand they sway, he twirls her under his arm, her cape flaring, they spin as a
+     3 · 20.5–31 s   night comes: hand in hand they sway, he twirls her under his arm in a ring of sparkles, they spin as a
                      ripple of light runs through the city, he dips her as a shooting star crosses the sky; they come up
                      forehead to forehead and a ribbon unrolls above them with the last words (note2)
    Everything is a function of g, the story's clock (it holds still at a stop), so any chapter can be played on its own;
    the twinkling, the swaying and the bulbs' chase go by T, the act's own time. */
 (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => {
-  const { THREE, stage, tween, ease, seg, clamp, lerp, rng, words } = kit;
+  const { THREE, stage, tween, ease, seg, lerp, rng, words } = kit;
   const TAU = Math.PI * 2, R = Math.PI / 2;                          // R: facing +x
   const FLOOR = .008;                                                // the hilltop stands this far off the card
+  const H = .3, HER = H * .945;                                      // their heights (her 1.70 m to his 1.80)
   const PAGE = { width: 1.12, height: .78, curve: .08, z: -.3 };     // the painted sky, at the card's back edge
   const LAMP = { x: -.05, z: -.075, bar: .55, chain: .018 };         // the post; the bar the plate hangs from, its chains
-  const BENCH = { x: .28, z: -.12, turn: -.5, len: .17, seat: .05 }; // its seat at the height Sit_Chair sits at
+  const BENCH = { x: .28, z: -.12, turn: -.5, len: .17, seat: .102 * HER / .4 };   // its seat at the height Sit_Chair sits her at
   const PATH = [[-.56, .17], [-.36, .1], [-.17, .055], [0, .03], [.18, 0], [.36, -.06], [.56, -.15]];
-  const SIT = [BENCH.x + Math.sin(BENCH.turn) * .036, BENCH.z + Math.cos(BENCH.turn) * .036];   // Sit_Chair's hips come down .036 behind the feet
+  const SIT_BACK = .066 * HER / .4;                                  // Sit_Chair settles her hips this far behind her feet
+  const SIT = [BENCH.x + Math.sin(BENCH.turn) * SIT_BACK, BENCH.z + Math.cos(BENCH.turn) * SIT_BACK];
   const PHOTO_AT = [.17, .33, -.02], PHOTO_ASIDE = [.385, .29, -.12], RIBBON_AT = [.03, .645, .04];
   const SWAP = 13.35;                                                // the moment her new shoes are on
+  const NEW = '#c99df3', OLD = '#f5f2ec';                           // her lilac dance shoes; the white trainers she takes off
   const S = window.NM_TWILIGHT.scenery(kit, { PAGE, FLOOR, LAMP, BENCH, PATH });
   const { pageZ } = S;
   const bump = (g, a, b, c, d) => ease.smooth(seg(g, a, b)) * (1 - ease.smooth(seg(g, c, d)));
@@ -34,20 +37,19 @@
     hemi: ['#ffd8c8', '#cdb8ff', '#9aa6ff'].map(c => new THREE.Color(c)), ground: ['#7a5a78', '#4d3b6a', '#2c2850'].map(c => new THREE.Color(c)),
     sun: ['#ffc79a', '#d4c2ff', '#aebcff'].map(c => new THREE.Color(c))
   };
-  let boy, girl, cape, texA, texB, page, city, lamp, plate, photo, marquee, ribbon, newShoes, oldShoes, trees;
+  let boy, girl, page, city, lamp, plate, photo, marquee, ribbon, newShoes, oldShoes, worn, trees;
   let notes, sparks, hearts, stars, flies, particles;
 
   /* ── who plays which clip, from story time g: [from g, clip, options] ── */
   const BOY = [
-    [0, 'Idle'], [.4, 'Walking_A', { speed: 1.15, fade: .25 }], [3.4, 'Idle', { fade: .25 }], [6, 'Walking_A', { speed: 1.5, fade: .2 }],
-    [6.8, 'Idle', { fade: .2 }], [11.35, 'Running_A', { speed: .55, fade: .2 }], [12.55, 'Jump_Idle', { fade: .2 }],
-    [13.35, 'Running_A', { speed: .55, fade: .15 }], [13.65, 'Idle', { fade: .2 }], [15.6, 'Walking_A', { speed: 1.8, fade: .2 }],
+    [0, 'Idle'], [.4, 'Walking_A', { speed: 1, fade: .25 }], [3.4, 'Idle', { fade: .25 }], [6, 'Walking_A', { speed: 1.5, fade: .2 }],
+    [6.8, 'Idle', { fade: .2 }], [11.35, 'Running_A', { speed: .55, fade: .2 }], [13.65, 'Idle', { fade: .2 }], [15.6, 'Walking_A', { speed: 1.8, fade: .2 }],
     [16.5, 'Idle', { fade: .2 }], [20.7, 'Walking_A', { speed: .8, fade: .2 }], [21.15, 'Idle', { fade: .2 }]
   ];
   const GIRL = [
-    [0, 'Idle'], [.8, 'Walking_A', { speed: 1.55, fade: .25 }], [3.9, 'Idle', { fade: .25 }], [10.45, 'Walking_A', { speed: 1.65, fade: .2 }],
+    [0, 'Idle'], [.8, 'Walking_A', { speed: 1.27, fade: .25 }], [3.9, 'Idle', { fade: .25 }], [10.45, 'Walking_A', { speed: 1.9, fade: .2 }],
     [11.75, 'Idle', { fade: .15 }], [12.05, 'Sit_Chair_Down', { once: true, fade: .2 }], [12.85, 'Sit_Chair_Idle', { fade: .3 }],
-    [14.8, 'Sit_Chair_StandUp', { once: true, fade: .2 }], [15.6, 'Walking_A', { speed: 1.9, fade: .2 }], [16.7, 'Idle', { fade: .2 }]
+    [14.8, 'Sit_Chair_StandUp', { once: true, fade: .2 }], [15.6, 'Walking_A', { speed: 1.65, fade: .2 }], [16.7, 'Idle', { fade: .2 }]
   ];
   const clipAt = (list, g) => { let c = list[0]; for (const x of list) if (g >= x[0]) c = x; return c; };
 
@@ -56,18 +58,18 @@
     [0, -.46, .137, 1.86], [.4, -.46, .137, 1.86], [.7, -.445, .133, 1.86, 'in'], [3.1, -.215, .074, 1.86, 'linear'], [3.4, -.2, .07, 1.86, 'out'],
     [3.9, -.2, .07, -.45], [5, -.2, .07, -.45], [5.35, -.2, .07, .5], [6, -.2, .07, .7], [6.8, -.12, -.02, 1.05], [10.8, -.12, -.02, 1.05],
     [11.2, -.12, -.02, .67],                                         // the swing round the post takes over here (see swingAt)
-    [13.8, -.135, -.048, 1.2], [15.6, -.135, -.048, 1.2], [15.75, -.13, -.044, .83], [16.5, -.02, .06, .83, 'linear'], [16.85, -.02, .06, 0],
-    [19.4, -.02, .06, 0], [19.7, -.012, .06, .18], [20.6, -.012, .06, .18], [21.15, -.016, .05, R], [22.8, -.016, .05, R], [23.05, -.002, .05, R],
-    [24.5, -.002, .05, R], [24.75, -.04, .05, R], [25.6, -.04, .05, R + TAU], [26, .02, .05, R + TAU], [27.6, .02, .05, R + TAU], [28, 0, .05, R + TAU]
+    [13.8, -.135, -.048, 1.2], [15.6, -.135, -.048, 1.2], [15.75, -.13, -.044, .83], [16.5, -.035, .06, .83, 'linear'], [16.85, -.035, .06, 0],
+    [19.4, -.035, .06, 0], [19.7, -.012, .06, .18], [20.6, -.012, .06, .18], [21.15, -.006, .05, R], [22.8, -.006, .05, R], [23.05, .025, .05, R],
+    [24.5, .025, .05, R], [24.75, -.04, .05, R], [25.6, -.04, .05, R + TAU], [26, .055, .05, R + TAU], [27.6, .055, .05, R + TAU], [28, .035, .05, R + TAU]
   ];
   const GIRL_WAY = [
     [0, .44, -.1, -1.25], [.8, .44, -.1, -1.25], [1.1, .427, -.096, -1.25, 'in'], [3.6, .143, .001, -1.25, 'linear'], [3.9, .13, .005, -1.25, 'out'],
     [4.2, .13, .005, .55], [5.1, .13, .005, .55], [5.4, .13, .005, -.25], [7.5, .13, .005, -.25], [7.9, .12, .005, -.75], [10.3, .12, .005, -.75],
     [10.45, .12, .005, 2.1], [10.7, .127, .001, 2.1, 'in'], [11.5, SIT[0] - .008, SIT[1] + .005, 2.1, 'linear'], [11.75, ...SIT, 2.1, 'out'],
-    [12.05, ...SIT, BENCH.turn], [15.4, ...SIT, BENCH.turn], [15.6, ...SIT, -.77], [16.6, .146, .044, -.77, 'linear'], [16.75, .14, .05, -.77, 'out'],
-    [16.85, .14, .05, 0], [19.4, .14, .05, 0], [19.7, .132, .05, -.18], [20.6, .132, .05, -.18], [21.15, .146, .05, -R],
-    [22.8, .146, .05, -R], [23.1, .128, .05, -R], [24.5, .128, .05, -R - 2 * TAU], [24.75, .17, .05, -R - 2 * TAU], [25.65, .17, .05, -R - 3 * TAU], [26, .14, .05, -R - 3 * TAU],
-    [27.6, .14, .05, -R - 3 * TAU], [28, .128, .05, -R - 3 * TAU]
+    [12.05, ...SIT, BENCH.turn], [15.4, ...SIT, BENCH.turn], [15.6, ...SIT, -.77], [16.6, .161, .044, -.77, 'linear'], [16.75, .155, .05, -.77, 'out'],
+    [16.85, .155, .05, 0], [19.4, .155, .05, 0], [19.7, .132, .05, -.18], [20.6, .132, .05, -.18], [21.15, .136, .05, -R],
+    [22.8, .136, .05, -R], [23.1, .11, .05, -R], [24.5, .11, .05, -R - 2 * TAU], [24.75, .17, .05, -R - 2 * TAU], [25.65, .17, .05, -R - 3 * TAU], [26, .118, .05, -R - 3 * TAU],   // close for the dip: his arm round her back
+    [27.6, .118, .05, -R - 3 * TAU], [28, .09, .05, -R - 3 * TAU]
   ];
   /* the stars that come out one by one as night falls, chosen once: a replay shows the same sky */
   const STARS = (r => Array.from({ length: 30 }, (_, i) => { const x = (r() - .5) * 1.04; return { key: `star${i}`, at: 19 + i * .3, x, y: .4 + r() * .36, z: pageZ(x) + .01,
@@ -93,103 +95,90 @@
       slide: b === 4 ? -.022 * ease.inOut(f) : b === 5 ? -.022 * (1 - ease.inOut(f)) : 0 };
   }
 
-  /* ── their evening clothes: the palette texture is 8 × 4 flat swatches; parts move between swatches (geometry unshared
-        first, so a moved triangle does not drag its neighbours' corners along) and swatches take new colours ── */
-  const cell = (cx, cy) => ({ cx, cy });
-  function remap(mesh, from, to, keep = () => true) {
-    const g0 = mesh?.geometry; if (!g0) return;
-    const geo = g0.index ? g0.toNonIndexed() : g0; if (geo !== g0) { mesh.geometry = geo; g0.dispose(); }
-    const uv = geo.attributes.uv, pos = geo.attributes.position, m = (a, i) => (a.getX(i) + a.getX(i + 1) + a.getX(i + 2)) / 3;
-    for (let i = 0; i < uv.count; i += 3) {
-      const u0 = m(uv, i), v0 = (uv.getY(i) + uv.getY(i + 1) + uv.getY(i + 2)) / 3;
-      if (Math.floor(u0 * 8) !== from.cx || Math.floor(v0 * 4) !== from.cy) continue;
-      if (!keep(m(pos, i), (pos.getY(i) + pos.getY(i + 1) + pos.getY(i + 2)) / 3, (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3)) continue;
-      for (let k = 0; k < 3; k++) uv.setXY(i + k, uv.getX(i + k) + (to.cx - from.cx) / 8, uv.getY(i + k) + (to.cy - from.cy) / 4);
-    }
-    uv.needsUpdate = true;
-  }
-  /** the palette with swatches recoloured, each keeping its own shading scaled onto the new colour */
-  function palette(material, colours) {
-    const img = material.map.image, cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(img, 0, 0);
-    const w = img.width / 8, h = img.height / 4;
-    for (const [key, hex] of Object.entries(colours)) {
-      const [cx, cy] = key.split(',').map(Number), d = c.getImageData(cx * w, cy * h, w, h), p = d.data;
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      const [r, gr, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-      for (let i = 0; i < p.length; i += 4) {
-        const k = (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1);
-        p[i] = Math.min(255, r * k); p[i + 1] = Math.min(255, gr * k); p[i + 2] = Math.min(255, b * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT; t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    return t;
-  }
-  function dressBoy() {                                              // dark hair (painted on: he is bald under the bear hat), a dark blue shirt
-    remap(boy.node('Barbarian_Head'), cell(0, 0), cell(1, 0), (x, y, z) => y > lerp(1.93, 1.62, clamp((.25 - z) / .6)));
-    for (const arm of ['Barbarian_ArmLeft', 'Barbarian_ArmRight']) [[6, 0, 1, 1], [3, 0, 1, 1], [7, 2, 0, 0]].forEach(([a, b, c, d]) => remap(boy.node(arm), cell(a, b), cell(c, d)));
-    remap(boy.node('Barbarian_Body'), cell(6, 0), cell(0, 1), (x, y) => y > .78);   // the strap across his chest: shirt now
-    for (const leg of ['Barbarian_LegLeft', 'Barbarian_LegRight']) { remap(boy.node(leg), cell(6, 0), cell(7, 1)); remap(boy.node(leg), cell(2, 1), cell(3, 2)); }
-    const m = boy.node('Barbarian_Body').material, old = m.map;
-    m.map = palette(m, { '1,0': '#1e1613', '0,1': '#25418c', '1,1': '#203a7c', '7,0': '#1a2d63', '2,1': '#25418c', '6,0': '#1b2550', '7,1': '#e2d4ba',
-      '3,0': '#e2b45a', '3,2': '#2a201c' }); m.needsUpdate = true; old.dispose();   // cream trousers under a navy sash, dark tap shoes
-  }
-  function dressGirl() {                                             // a lilac dress, a rose cape, plum stockings; her shoes change in chapter 2
-    for (const leg of ['Mage_LegLeft', 'Mage_LegRight']) remap(girl.node(leg), cell(3, 2), cell(7, 1), (x, y) => y > .11);
-    remap(girl.node('Mage_Body'), cell(2, 2), cell(0, 1));            // the book pouch at her hip: part of the dress
-    const m = girl.node('Mage_Body').material, base = { '0,1': '#c3a4f0', '1,1': '#e57d9c', '7,1': '#5a3a7e', '3,0': '#fff4e8', '5,0': '#7a4fb0',
-      '4,0': '#f6eeff', '2,1': '#e07a98' };
-    texA = palette(m, { ...base, '3,2': '#5e3c74' }); texB = palette(m, { ...base, '3,2': '#f1eaff' });
-    m.map.dispose(); m.map = texA; m.needsUpdate = true;
-  }
-  /* the cape is a rigid mesh on her chest bone: it lifts and ripples as she turns (its vertices kept to bend from) */
-  function cloth(node) {
-    if (!node || !node.geometry) return null;
-    const geo = node.geometry, p = geo.attributes.position, base = new Float32Array(p.count * 3);
-    let top = -Infinity, bottom = Infinity;
-    for (let i = 0; i < p.count; i++) { base[i * 3] = p.getX(i); base[i * 3 + 1] = p.getY(i); base[i * 3 + 2] = p.getZ(i); top = Math.max(top, base[i * 3 + 1]); bottom = Math.min(bottom, base[i * 3 + 1]); }
-    return { node, geo, base, top, len: top - bottom || 1, rx: node.rotation.x, ry: node.rotation.y };
-  }
-  function flutter(cl, lift, swirl, T, amp) {
-    if (!cl) return;
-    cl.node.rotation.x = cl.rx + lift; cl.node.rotation.y = cl.ry + swirl;
-    const p = cl.geo.attributes.position, b = cl.base;
-    for (let i = 0; i < p.count; i++) {
-      const s = (cl.top - b[i * 3 + 1]) / cl.len;                    // 0 where it hangs from, 1 at its hem
-      p.setZ(i, b[i * 3 + 2] - cl.len * s * s * (amp * .07 * Math.sin(T * 9 - s * 4 + b[i * 3] * 6) + lift * .1));
-    }
-    p.needsUpdate = true; cl.geo.computeVertexNormals();
-  }
-
   /* ── where things are in someone's hands ── */
   const mStage = new THREE.Matrix4(), qInv = new THREE.Quaternion(), vS = new THREE.Vector3(), vT = new THREE.Vector3(), vA = new THREE.Vector3(), vB = new THREE.Vector3();
   const vC = new THREE.Vector3(), vD = new THREE.Vector3();
   const at = (m, bone, out) => { const b = m.node(bone); b.updateWorldMatrix(true, false); return out.setFromMatrixPosition(b.matrixWorld).applyMatrix4(mStage); };
   const D = [0, 0, 0], U = [0, 0, 0];                                  // directions handed to aim(), filled in place
   const toward = (m, side, target) => { at(m, `upperarm.${side}`, vS); vS.subVectors(target, vS).applyQuaternion(qInv.copy(m.root.quaternion).invert()); return vS.toArray(D); };
-  /** an arm reaching for a point on the stage: the upper arm a little below the line, the forearm along it */
+  /** an arm reaching for a point: in reach, the elbow bends (out, and down by `sag`: up when it is less than 0) so the hand
+      lands on it; out of reach, the arm points at it, the upper arm a little below the line */
+  const LEN = new Map(), vI = new THREE.Vector3(), vN = new THREE.Vector3(), vQ = new THREE.Vector3(), vE = new THREE.Vector3(), vL = new THREE.Vector3();
   function reach(m, side, target, k, sag = .25) {
     if (k <= 0) return;
-    const d = toward(m, side, target); U[0] = d[0]; U[1] = d[1] - sag * Math.hypot(d[0], d[2]); U[2] = d[2];
-    m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k);
+    const key = m.root.name + side;
+    if (!LEN.has(key)) { at(m, `lowerarm.${side}`, vL); LEN.set(key, [at(m, `upperarm.${side}`, vI).distanceTo(vL), vL.distanceTo(at(m, `handslot.${side}`, vI))]); }
+    const [a, b] = LEN.get(key), d = toward(m, side, target), dist = vI.fromArray(d).length();
+    if (dist >= (a + b) * .999) {
+      const s = sag * Math.min(1, (dist - a - b) / (.3 * (a + b)));
+      U[0] = d[0]; U[1] = d[1] - s * Math.hypot(d[0], d[2]); U[2] = d[2];
+      m.aim(`upperarm.${side}`, U, k); m.aim(`lowerarm.${side}`, d, k); return;
+    }
+    const A = Math.acos(Math.min(1, Math.max(-1, (a * a + dist * dist - b * b) / (2 * a * dist))));
+    vN.copy(vI).normalize(); vQ.set(side === 'r' ? -1 : 1, -.3 - 2.5 * sag, -.3); vQ.addScaledVector(vN, -vQ.dot(vN)).normalize();
+    vE.copy(vN).multiplyScalar(Math.cos(A)).addScaledVector(vQ, Math.sin(A));          // the upper arm, to the elbow
+    vI.addScaledVector(vE, -a);                                                        // the forearm, from the elbow to the point
+    m.aim(`upperarm.${side}`, vE.toArray(U), k); m.aim(`lowerarm.${side}`, vI.toArray(D), k);
   }
   /** both arms (own space, the right one given; the left mirrored) */
   const arms = (m, up, low, k) => { if (k <= 0) return; m.aim('upperarm.r', up, k); m.aim('lowerarm.r', low, k);
     m.aim('upperarm.l', [-up[0], up[1], up[2]], k); m.aim('lowerarm.l', [-low[0], low[1], low[2]], k); };
+  /** her new shoes, on her feet: a lilac skin over the trainers she has on (their own triangles, pushed out a little along
+      their normals and skinned to the same bones, so it bends with every step), and on each foot's bone a bow on the toe
+      and a strap round the ankle, placed where the file stands the foot (its bind pose: flat on the ground, toes to +z, in
+      metres) through the bone's inverse bind matrix (the bones are in centimetres; the bind matrices carry that) */
+  function fitShoes(m, color) {
+    let skin = null; m.scene?.traverse(o => { if (o.isSkinnedMesh && !skin) skin = o; });
+    if (!skin) return [];
+    const sk = skin.skeleton, src = skin.geometry, { position: pos, normal: nrm, skinIndex: si, skinWeight: sw } = src.attributes;
+    const at = b => new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(sk.boneInverses[b]).invert());
+    const feet = ['l', 'r'].map(side => { const fi = sk.bones.indexOf(m.node(`foot.${side}`)), ti = sk.bones.indexOf(m.node(`toes.${side}`)); return { side, fi, ti, ankle: at(fi), box: new THREE.Box3() }; });
+    const v = new THREE.Vector3(), n = new THREE.Vector3(), shod = new Uint8Array(pos.count);
+    for (let i = 0; i < pos.count; i++) for (const f of feet) {        // the trainers: what a foot carries, below the ankle
+      let w = 0; for (let k = 0; k < 4; k++) { const b = si.getComponent(i, k); if (b === f.fi || b === f.ti) w += sw.getComponent(i, k); }
+      if (w > .5 && v.fromBufferAttribute(pos, i).applyMatrix4(skin.bindMatrix).y < f.ankle.y * .62) { shod[i] = 1; f.box.expandByPoint(v); }
+    }
+    const P = [], N = [], SI = [], SW = [], I = [], fresh = new Map(), idx = src.index, count = idx ? idx.count : pos.count;
+    for (let t = 0; t < count; t += 3) {
+      const tri = [0, 1, 2].map(k => (idx ? idx.getX(t + k) : t + k));
+      if (!tri.every(i => shod[i])) continue;
+      for (const i of tri) {
+        if (!fresh.has(i)) {
+          fresh.set(i, fresh.size); n.fromBufferAttribute(nrm, i).normalize(); v.fromBufferAttribute(pos, i).addScaledVector(n, .004);   // 4 mm out
+          P.push(v.x, v.y, v.z); N.push(n.x, n.y, n.z);
+          for (let k = 0; k < 4; k++) { SI.push(si.getComponent(i, k)); SW.push(sw.getComponent(i, k)); }
+        }
+        I.push(fresh.get(i));
+      }
+    }
+    const g = kit.keep(new THREE.BufferGeometry());
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4)); g.setIndex(I);
+    const lilac = kit.keep(new THREE.MeshStandardMaterial({ color, roughness: .32, metalness: .35, emissive: color, emissiveIntensity: .25 }));
+    const shell = new THREE.SkinnedMesh(g, lilac); shell.frustumCulled = false; shell.castShadow = true;
+    shell.position.copy(skin.position); shell.quaternion.copy(skin.quaternion); shell.scale.copy(skin.scale);
+    skin.parent.add(shell); shell.bind(sk, skin.bindMatrix);
+    const pink = kit.keep(new THREE.MeshStandardMaterial({ color: 0xff7aa0, roughness: .5 })), loopG = kit.keep(new THREE.SphereGeometry(.016, 8, 6).scale(1.5, .8, .7));
+    const strapG = kit.keep(new THREE.TorusGeometry(.046, .0045, 6, 24).rotateX(Math.PI / 2));
+    const trims = feet.map(f => {                                      // a bow on the toe, a strap round the ankle: in the file's metres, then onto the bone
+      const b = f.box, trim = new THREE.Group(), holder = new THREE.Group();
+      for (const sx of [-1, 1]) { const loop = new THREE.Mesh(loopG, pink); loop.position.set((b.min.x + b.max.x) / 2 + sx * .017, b.max.y * .72, b.max.z - .055); loop.rotation.z = sx * .4; trim.add(loop); }
+      const strap = new THREE.Mesh(strapG, lilac); strap.position.set(f.ankle.x, b.max.y + .006, f.ankle.z + .01); trim.add(strap);
+      trim.traverse(o => { o.castShadow = true; });
+      holder.matrixAutoUpdate = false; holder.matrix.copy(sk.boneInverses[f.fi]); holder.add(trim); m.node(`foot.${f.side}`).add(holder);
+      return trim;
+    });
+    return [shell, ...trims];
+  }
 
   return {
     seconds: [10, 10.5, 10.5],
 
     build() {
-      /* the two of them: the Barbarian bare-headed with dark hair painted on, the Mage without her hat, her cape kept */
-      boy = kit.model('boy').fit({ height: .3 }); girl = kit.model('girl').fit({ height: .282 });
+      /* the two of them, the shared couple at their own heights */
+      boy = kit.model('boy').fit({ height: H }); girl = kit.model('girl').fit({ height: HER });
       stage.add(boy.root, girl.root);
-      dressBoy(); dressGirl();
       boy.root.rotation.order = girl.root.rotation.order = 'YXZ';      // turn first, then lean: a lean goes the way they face
-      cape = cloth(girl.node('Mage_Cape'));
 
       /* the hilltop */
       page = S.makePage(); stage.add(page.root);
@@ -202,8 +191,9 @@
       trees.forEach(t => stage.add(t.root));
       stage.add(S.makeLavender([[-.33, .2, 11], [-.44, .05, 9], [.05, .16, 9], [.36, .06, 10], [-.2, -.05, 8], [.15, -.1, 8], [.45, -.06, 7]]));
       stage.add(S.makeTufts([[-.41, -.19, 10], [.43, -.185, 10], [LAMP.x, LAMP.z, 6]]));
-      newShoes = S.makePair('#f1eaff', true); oldShoes = S.makePair('#5e3c74', false);
+      newShoes = S.makePair(NEW, true); oldShoes = S.makePair(OLD, false);
       stage.add(newShoes.root, oldShoes.root);
+      worn = fitShoes(girl, NEW);                                     // the same pair once they are on her feet
 
       /* the card's words and photo, each on its own carrier */
       plate = S.makePlate(words('note1', 'Hoàng hôn đẹp thế này, nhảy với anh nhé?'), .44);
@@ -259,7 +249,7 @@
       const sway = g > 21.2 && g < 22.9 ? Math.sin((g - 21.2) / 1.7 * TAU) * bump(g, 21.2, 21.4, 22.6, 22.9) : 0;   // step-touch, hand in hand
       const bob = .005 * Math.abs(Math.sin((g - 21.2) / 1.7 * TAU)) * bump(g, 21.2, 21.4, 22.6, 22.9);
       bx += .012 * sway; gx += .012 * sway; by += bob; gy += bob;
-      gDip = .78 * bump(g, 26, 26.55, 27.1, 27.6);
+      gDip = .15 * bump(g, 26, 26.55, 27.1, 27.6);                   // a little lean from her feet: the rest is her back arching
       boy.root.position.set(bx, by, bz); boy.root.rotation.set(.22 * bump(g, 25.95, 26.5, 27.1, 27.6), br, bLean);
       girl.root.position.set(gx, gy, gz); girl.root.rotation.set(-gDip, gr, 0);
       const bc = clipAt(BOY, g), gc = clipAt(GIRL, g);
@@ -313,14 +303,14 @@
       newShoes.root.visible = g < SWAP;
       newShoes.root.position.copy(vA).lerp(vB, toFeet); newShoes.root.position.y -= .006 * (1 - toFeet);
       newShoes.root.rotation.set(lerp(R + .15 * Math.sin(T * 3.1 + 1) * (1 - toFeet), 0, toFeet), gr + .3 * Math.sin(T * 2.3) * (1 - toFeet), 0);
-      newShoes.root.scale.setScalar(Math.max(.001, lerp(1.6, 1, toFeet) * (1 - seg(g, SWAP - .15, SWAP))));   // big enough to see swinging from her hand
-      girl.node('Mage_Body').material.map = g < SWAP ? texA : texB;
+      newShoes.root.scale.setScalar(Math.max(.001, 1.6 * (1 - seg(g, SWAP - .15, SWAP))));   // her size: big enough to see swinging from her hand
       if (g > SWAP && g < SWAP + .4 && kit.once('swap')) sparks.burst(26, () => ({ x: vB.x, y: FLOOR + .01, z: vB.z, vx: (rng() - .5) * .3, vy: .1 + rng() * .25, vz: (rng() - .5) * .3,
         gravity: -.4, drag: 1.8, color: ['#f1eaff', '#ffd1dc', '#fff1b8'][(rng() * 3) | 0], size: .014 + rng() * .01, life: .9, shape: 'sparkle', spin: 4 }));
       const drop = ease.back(seg(g, SWAP + .05, SWAP + .4));
       oldShoes.root.visible = g > SWAP;
       oldShoes.root.position.set(BENCH.x + .095, FLOOR + .03 * (1 - seg(g, SWAP + .05, SWAP + .3)), BENCH.z + .07); oldShoes.root.rotation.y = -.7;
-      oldShoes.root.scale.setScalar(Math.max(.001, drop));
+      oldShoes.root.scale.setScalar(Math.max(.001, 1.6 * drop));
+      worn.forEach(w => { w.visible = g > SWAP - .05; });                // the new pair on her feet, out of the sparkles
       /* her eye roll, arms folded, and the foot that taps along anyway */
       const fold = bump(g, 13.75, 14, 14.65, 14.85);
       if (fold) { arms(girl, [-.3, -.35, .9], [.95, .15, .3], fold); girl.bend('head', -.22 * fold - .12 * Math.sin((g - 13.8) * 5) * fold, .3 * Math.sin((g - 13.8) * 5) * fold, 0); }
@@ -383,11 +373,11 @@
       }
       const back = bump(g, 27.65, 28, 40, 41);                        // and the other two hands joined behind
       if (back) { at(boy, 'upperarm.l', vB).add(at(girl, 'upperarm.r', vC)).multiplyScalar(.5); vB.y -= .07; vB.z -= .015; reach(boy, 'l', vB, back); reach(girl, 'r', vB, back); }
-      const skirt = bump(g, 21.1, 21.4, 22.7, 22.95);                 // her free hand holds her skirt out, his rests at his side
+      const skirt = bump(g, 21.1, 21.4, 22.7, 22.95);                 // her free hand out to the side, his rests at his side
       if (skirt) { girl.aim('upperarm.r', [-.6, -.75, .1], skirt); girl.aim('lowerarm.r', [-.75, -.55, .2], skirt); }
       const twirl = bump(g, 22.9, 23.15, 24.45, 24.7);                // his right hand up high, her left up to it, and round she goes
       if (twirl) {
-        vA.set((bx + gx) / 2, FLOOR + .222, (bz + gz) / 2 + .025);   // short arms: joined just above their shoulders
+        vA.set((bx + gx) / 2, FLOOR + .31, (bz + gz) / 2 + .025);    // joined above her head
         reach(boy, 'r', vA, twirl, 0); reach(girl, 'l', vA, twirl, 0);
         girl.aim('upperarm.r', [-.85, .1, .2], twirl); girl.aim('lowerarm.r', [-.8, .35, .1], twirl);
         boy.aim('upperarm.l', [.55, -.7, -.2], twirl); boy.aim('lowerarm.l', [-.75, -.15, .25], twirl);   // his left hand on his hip
@@ -395,21 +385,21 @@
       const spin = bump(g, 24.65, 24.85, 25.6, 25.8);                 // spinning apart, arms up and out
       if (spin) for (const m of [boy, girl]) arms(m, [-.6, .7, .15], [-.45, .85, .1], spin);
       const dip = bump(g, 25.95, 26.4, 27.2, 27.6);
-      if (dip) {
-        at(girl, 'chest', vA); vA.x -= .01; reach(boy, 'r', vA, dip, .1);                             // his arm at her back
+      if (dip) {                                                      // she arches back over his arm, he leans over her
+        girl.bend('spine', -.35 * dip, 0, 0); girl.bend('chest', -.35 * dip, 0, 0); girl.bend('head', -.3 * dip, 0, 0);
+        boy.bend('chest', .22 * dip, 0, 0); boy.bend('head', .1 * dip, 0, 0);
+        at(girl, 'spine', vA); vA.x -= Math.sin(gr) * .022 - Math.cos(gr) * .01; vA.z -= Math.cos(gr) * .022 + Math.sin(gr) * .01;   // behind her back, on the near side:
+        reach(boy, 'r', vA, dip, .1);                                                                                         // his arm round her
         at(boy, 'upperarm.r', vB); reach(girl, 'l', vB, dip * .9, .15);                               // her hand on his shoulder
         girl.aim('upperarm.r', [-.75, -.35, -.4], dip); girl.aim('lowerarm.r', [-.7, -.2, -.6], dip);  // her other arm thrown back
-        girl.aim('upperleg.r', [0, -.55, .85], dip * .8); girl.aim('lowerleg.r', [0, -.2, 1], dip * .8);
-        boy.bend('chest', .22 * dip, 0, 0); boy.bend('head', .1 * dip, 0, 0); girl.bend('head', -.15 * dip, 0, 0);
+        girl.aim('upperleg.r', [0, -.8, .6], dip * .7); girl.aim('lowerleg.r', [0, -.5, .85], dip * .7);   // and a leg out along the ground
       }
       const close = ease.smooth(seg(g, 28.05, 28.8)), rock = .03 * Math.sin(T * 1.4) * seg(g, 29.5, 30.5);
-      if (close) for (const m of [boy, girl]) { m.bend('chest', .16 * close, 0, 0); m.bend('head', .2 * close, 0, 0); }
+      if (close) for (const m of [boy, girl]) { m.bend('chest', .2 * close, 0, 0); m.bend('head', .3 * close, 0, 0); }
       if (rock) { boy.bend('spine', 0, 0, rock); girl.bend('spine', 0, 0, rock); }
-      /* her cape: still while she walks, flaring out as she turns */
+      /* as she turns, a ring of sparkles off her hem */
       const spinRate = Math.abs(tween(g, GIRL_KEYS[2]) - tween(g - .05, GIRL_KEYS[2])) / .05;
-      const swish = Math.min(g < 24.6 ? .38 : 1, spinRate * .14);       // near him in the twirl it only swishes: flared, it would reach him
-      flutter(cape, swish + .25 * gDip, -Math.min(.5, spinRate * .05), T, .35 + Math.min(1, spinRate * .1));
-      if (dt && spinRate > 3) for (let i = 0; i < 2; i++) {                                         // a ring of sparkles off her hem
+      if (dt && spinRate > 3) for (let i = 0; i < 2; i++) {
         const a = rng() * TAU; sparks.emit({ x: gx + Math.cos(a) * .05, y: FLOOR + .03 + rng() * .04, z: gz + Math.sin(a) * .05, vx: -Math.sin(a) * .1, vz: Math.cos(a) * .1, vy: .04,
           drag: 1.5, color: rng() < .5 ? '#f1d9ff' : '#fff1b8', size: .012 + rng() * .008, life: .7, shape: 'sparkle', spin: 4 });
       }

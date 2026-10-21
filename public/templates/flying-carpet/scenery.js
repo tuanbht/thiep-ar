@@ -1,8 +1,9 @@
 /* Thảm bay đêm trăng: the city, built in code for story.js (template.json "story" loads this file first). The sky page at
    the back (a dusk, and a night painted over it that fades in: a big moon low over a skyline of domes and towers with lit
-   windows and strings of lanterns), her house with its balcony (a carved railing with an opening on the city side between
-   two lantern posts, an arched doorway, a dome), rooftops on the card (domes, a tower with a ring balcony, a flat roof with
-   a little pavilion), strings of lanterns between them, sky lanterns, clouds and doves. The story places and times them.
+   windows and strings of lanterns), her house with its balcony (a carved railing at a grown-up's waist with an opening on
+   the city side between two posts that hang out lanterns, an arched doorway, a dome), rooftops on the card (domes, a tower
+   with a ring balcony, a flat roof with a little pavilion), strings of lanterns between them, sky lanterns, clouds and
+   doves. The story places and times them.
      NM_CARPET.scenery(kit, layout) → the builders; layout: { PAGE, MOON, HOUSE, BAL } */
 (window.NM_CARPET = window.NM_CARPET || {}).scenery = (kit, { PAGE, MOON, HOUSE, BAL }) => {
   const { THREE, lerp } = kit;
@@ -216,7 +217,7 @@
 
   /* ── her house: the ground floor, an arcade under the balcony, the balcony with its carved railing, the upper storey
         with her doorway, a dome. The railing has an opening on the city side (z between BAL.gap) ── */
-  const RH = .062;                                                   // the railing's height
+  const RH = BAL.rail;                                               // the railing's height
   const carved = kit.canvasTexture(256, 64, (c, W, H) => {             // a stone screen: pointed arches pierced through, a diamond in each
     c.fillStyle = '#f2e3c6'; c.fillRect(0, 0, W, H);
     c.fillStyle = '#d9c29a'; c.fillRect(0, 0, W, 6); c.fillRect(0, H - 7, W, 7);
@@ -225,10 +226,11 @@
     c.globalCompositeOperation = 'source-over'; c.fillStyle = '#f2e3c6';
     for (let x = 16; x < W; x += 32) { c.beginPath(); c.moveTo(x, H * .38); c.lineTo(x + 5, H * .56); c.lineTo(x, H * .74); c.lineTo(x - 5, H * .56); c.fill(); }
   });
-  carved.wrapS = THREE.RepeatWrapping;
-  function railing(len) {                                            // a run of carved screen with a rail on top, along its own x
-    const g = new THREE.Group(), pg = geo(new THREE.PlaneGeometry(len, RH - .008)), uv = pg.attributes.uv;
-    for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * len / .09);
+  carved.wrapS = carved.wrapT = THREE.RepeatWrapping;
+  function railing(len) {                                            // a run of carved screen, tiers of arches as tall as a grown-up's waist, with a rail on top, along its own x
+    const sh = RH - .008, rows = Math.max(1, Math.round(sh / .054)), tile = .09 * sh / rows / .054;   // each tier's arches at the size they always were
+    const g = new THREE.Group(), pg = geo(new THREE.PlaneGeometry(len, sh)), uv = pg.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * len / tile, uv.getY(i) * rows);
     const screen = new THREE.Mesh(pg, mat('#ffffff', { map: carved, alphaTest: .5, side: THREE.DoubleSide, roughness: .85 })); screen.position.y = (RH - .008) / 2; screen.castShadow = true;
     g.add(screen, mesh(new THREE.BoxGeometry(len + .008, .008, .012), mat('#e9d6b2', { roughness: .7 }), 0, RH - .004, 0));
     return g;
@@ -267,10 +269,14 @@
     const runs = [[BAL.z0 + .004, BAL.gap[0]], [BAL.gap[1], BAL.z1 - .01]];
     for (const [a, b] of runs) if (b - a > .01) { const r = railing(b - a); r.rotation.y = Math.PI / 2; r.position.set(BAL.x1 - .005, BAL.y, (a + b) / 2); g.add(r); }
     const post = mat('#e9d6b2', { roughness: .7 });
-    for (const [x, z, tall] of [[BAL.x0 + .006, BAL.z1 - .005, 0], [BAL.x1 - .005, BAL.z1 - .005, 0], [BAL.x1 - .005, BAL.gap[0], 1], [BAL.x1 - .005, BAL.gap[1], 1]]) {
-      const ph = tall ? .1 : RH + .012; g.add(mesh(new THREE.BoxGeometry(.012, ph, .012), post, x, BAL.y + ph / 2, z));
-      if (tall) { const l = lantern('#ffcf7a', 1.4); l.root.position.set(x, BAL.y + ph + .012, z); g.add(l.root); lamps.push(l); }   // the opening's two lantern posts
-      else g.add(mesh(new THREE.SphereGeometry(.008, 10, 8), mat(C.gold, { metalness: .5, roughness: .4 }), x, BAL.y + ph + .006, z));
+    for (const [x, z, gate] of [[BAL.x0 + .006, BAL.z1 - .005, 0], [BAL.x1 - .005, BAL.z1 - .005, 0], [BAL.x1 - .005, BAL.gap[0], 1], [BAL.x1 - .005, BAL.gap[1], 1]]) {
+      const ph = RH + .012; g.add(mesh(new THREE.BoxGeometry(.012, ph, .012), post, x, BAL.y + ph / 2, z));
+      g.add(mesh(new THREE.SphereGeometry(.008, 10, 8), mat(C.gold, { metalness: .5, roughness: .4 }), x, BAL.y + ph + .006, z));
+      if (gate) {                                                    // the opening's two lanterns, on little arms out over the city and away from it, under the hands that meet there
+        const side = z > (BAL.gap[0] + BAL.gap[1]) / 2 ? 1 : -1, arm = mesh(new THREE.BoxGeometry(.021, .003, .003), post, x + .011, BAL.y + RH - .014, z + side * .004);
+        arm.rotation.y = -side * .4; g.add(arm);
+        const l = lantern('#ffcf7a', 1.4); l.root.position.set(x + .019, BAL.y + RH - .03, z + side * .009); g.add(l.root); lamps.push(l);
+      }
     }
     const doorGlow = kit.glow({ color: 0xffb066, size: .2, opacity: .55 }); doorGlow.position.set((x0 + ux1) / 2, BAL.y + uh * .38, dz + .01); g.add(doorGlow);
     const light = new THREE.PointLight(0xffb36b, .55, .9, 1.6); light.position.set(-.3, BAL.y + .16, -.06); g.add(light);

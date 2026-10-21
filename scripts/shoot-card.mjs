@@ -106,6 +106,11 @@ export async function shootCard(template, o = {}, log = console.log) {
       throw new Error(
         `the card did not start (state "${first}")${errors.length ? `; the page said: ${[...new Set(errors)].slice(0, 3).join(" | ")}` : ""}`,
       );
+    // the player's gesture guide opens by itself with the act: put it away, the pictures are of the act
+    await page
+      .locator(".gp-guide button")
+      .click({ timeout: 4000 })
+      .catch(() => {});
     const shots = [];
     for (let i = 0; ; i++) {
       const t0 = Date.now();

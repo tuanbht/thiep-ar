@@ -258,6 +258,7 @@ export default function GiftPlayerView({
   const playOn = useCallback(
     (e: { detail: number }) => {
       setKeys(e.detail === 0);
+      setGuide(false); // playing on puts the guide away, however it is done
       flow?.tap();
     },
     [flow],

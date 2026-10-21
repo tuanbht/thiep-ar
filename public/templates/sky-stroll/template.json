@@ -14,7 +14,7 @@
     2
   ],
   "reveal": null,
-  "notes": "A walk on air over a flower town at sunset (KayKit Adventurers, CC0: the Knight without his helmet, recoloured into a young man with black hair in a long dark green coat whose tails are his cape, a white collar, bare hands, brown boots and a pink flower in his buttonhole; the Rogue without her cape, recoloured into a chestnut-haired girl in a rose dress with a white collar and a raspberry sash, carrying a flower basket built in code; weapons and the helmet dropped by scripts/pack-models.mjs). The town is built in code by scenery.js: a sky page that folds up like a pop-up card (an afternoon sky with a far town at its foot that sinks as they climb, a dusk with stars painted over it that fades in), a cobbled lane, a row of pastel gabled houses with flower boxes, a flower shop with a striped awning and a hanging sign, a house with a balcony full of flowers, bunting with paper lanterns, lamp posts, planters, a weathervane, birds, doves and clouds. Stop 1: she walks down the lane with her basket, a gust whirls the petals into a column and he steps out of it; she startles, he bows and snaps his fingers, and the flower shop's sign flies up off its bracket with the card's first words (slot note1); he offers his arm and she takes it. Stop 2: he steps up onto the air, a ring of light under his foot, and holds out his hand; they climb an unseen stair, a ring at every step, as the sun sets, the far town sinks away and clouds drift in below; she looks down and gasps, then laughs, birds circle them, and two doves bring the card's photo on ribbons with its caption (slot caption). Stop 3: she leads him across the sky as dusk comes and the windows light up; they step down onto the balcony, she twirls among petals and sparkles, they hug, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js, its town in scenery.js.",
+  "notes": "A walk on air over a flower town at sunset, played by the shared couple (templates/_models: Grab3D's Casual Man and Casual Woman, CC0, animated with Quaternius's Universal Animation Library; see docs/models/README.md); she carries a flower basket built in code. The town is built in code by scenery.js: a sky page that folds up like a pop-up card (an afternoon sky with a far town at its foot that sinks as they climb, a dusk with stars painted over it that fades in), a cobbled lane, a row of pastel gabled houses with flower boxes, a flower shop with a striped awning and a hanging sign, a house with a balcony full of flowers behind an iron railing as high as a grown-up's waist, bunting with paper lanterns, lamp posts, planters, a weathervane, birds, doves and clouds. Stop 1: she walks down the lane with her basket, a gust whirls the petals into a column and he steps out of it; she startles, he bows and snaps his fingers, and the flower shop's sign flies up off its bracket with the card's first words (slot note1); he offers his arm and she takes it. Stop 2: he steps up onto the air, a ring of light under his foot, and holds out his hand; they climb an unseen stair, a ring at every step, as the sun sets, the far town sinks away and clouds drift in below; she looks down and gasps, then laughs, birds circle them, and two doves bring the card's photo on ribbons with its caption (slot caption). Stop 3: she leads him across the sky as dusk comes and the windows light up; they step down over its railing onto the balcony, she twirls among petals and sparkles, they hug, and a banner with the last words (slot note2) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js, its town in scenery.js.",
   "categories": [
     "viral-scenes",
     "love",
@@ -31,15 +31,21 @@
     "ban công"
   ],
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
   "photos": 1

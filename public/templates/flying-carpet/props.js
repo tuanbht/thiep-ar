@@ -1,9 +1,8 @@
 /* Thảm bay đêm trăng: the things the story carries and moves, built in code (template.json "story" loads this file after
    scenery.js, before story.js): the flying rug, a woven cloth whose corners ripple, flap in the wind, bow and curl up shyly,
-   with a fringe of tassels at both ends; his black hair; the tails of her headscarf and of his sash; the three things the
-   card's words appear on (a scroll that unrolls, a night cloud the stars write on, a woven banner the sky lanterns lift);
-   and the cast's new colours.
-     NM_CARPET.props(kit) → { rug, hair, tail, flutter, scroll, cloudNote, banner, dress } */
+   with a fringe of tassels at both ends; and the three things the card's words appear on (a scroll that unrolls, a night
+   cloud the stars write on, a woven banner the sky lanterns lift).
+     NM_CARPET.props(kit) → { rug, scroll, cloudNote, banner } */
 (window.NM_CARPET = window.NM_CARPET || {}).props = kit => {
   const { THREE, ease, clamp, lerp, fitText } = kit;
   const TAU = Math.PI * 2;
@@ -100,41 +99,6 @@
     return { root, L, W, update, heightAt, face };
   }
 
-  /* ── his black hair, in his head bone's own units (the head runs x ±.54, y −.1 to .95, its face at z .53) ── */
-  function hair() {
-    const g = new THREE.Group(), m = mat('#2a2125', { roughness: .62 });
-    const cap = mesh(new THREE.SphereGeometry(1, 22, 14, 0, TAU, 0, Math.PI * .56), m, 0, .45, -.01);   // hugging the crown, low at the back
-    cap.scale.set(.59, .565, .57); cap.rotation.x = -.52; g.add(cap);
-    for (const [x, y, z, sx, rz, rx] of [[-.26, .83, .42, .9, .5, .45], [.0, .87, .43, 1, .32, .5], [.25, .84, .41, .85, .18, .47]]) {
-      const t = mesh(new THREE.SphereGeometry(.17, 12, 8), m, x, y, z); t.scale.set(sx * 1.2, .45, .7); t.rotation.set(rx, 0, rz); g.add(t);   // a fringe swept to one side
-    }
-    for (const s of [-1, 1]) { const b = mesh(new THREE.BoxGeometry(.06, .22, .14), m, s * .55, .5, .16); b.rotation.z = s * .04; g.add(b); }   // sideburns
-    return g;
-  }
-
-  /* ── cloth tails that stream in the wind: a strip on a pin, rippling down its length (her headscarf, his sash) ── */
-  function tail(color, trim, w, len, arc = 2.2) {
-    const tex = kit.canvasTexture(64, 256, (c, W, H) => { c.fillStyle = color; c.fillRect(0, 0, W, H); c.fillStyle = trim; c.fillRect(0, 0, 6, H); c.fillRect(W - 6, 0, 6, H); c.fillRect(0, H - 14, W, 8); });
-    const g = new THREE.PlaneGeometry(w, len, 6, 10).translate(0, -len / 2, 0), gp = g.attributes.position, R = w / arc;
-    for (let i = 0; i < gp.count; i++) { const x = gp.getX(i); gp.setXYZ(i, R * Math.sin(x / R), gp.getY(i), R * (1 - Math.cos(x / R))); }   // curled across, as cloth drapes: no edge-on sliver
-    g.computeVertexNormals();
-    const pin = new THREE.Group(), strip = mesh(g, mat('#ffffff', { map: tex, side: THREE.DoubleSide, roughness: .7, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .12 }));
-    pin.add(strip);
-    const p = strip.geometry.attributes.position, base = Float32Array.from({ length: p.count * 3 }, (_, i) => p.array[i]);
-    return { pin, strip, base, len };
-  }
-  /** lift: how far (radians) it streams back from hanging; amp: how much it ripples */
-  function flutter(t, lift, T, amp, ph = 0) {
-    t.pin.rotation.x = lift;
-    const p = t.strip.geometry.attributes.position, b = t.base;
-    for (let i = 0; i < p.count; i++) {
-      const s = -b[i * 3 + 1] / t.len;                               // 0 at the pin, 1 at its end
-      p.setZ(i, b[i * 3 + 2] - t.len * s * s * (amp * .09 * Math.sin(T * 11 + ph - s * 5) + lift * .1));
-      p.setX(i, b[i * 3] + t.len * s * s * amp * .03 * Math.sin(T * 7 + ph));
-    }
-    p.needsUpdate = true; t.strip.geometry.computeVertexNormals();
-  }
-
   /** a canvas-faced plane revealed from one edge without squashing: set(k) shows k of it (the texture is cut, not squeezed) */
   function wipe(tex, w, h, axis, material) {
     const g = axis === 'x' ? new THREE.PlaneGeometry(w, h).translate(w / 2, 0, 0) : new THREE.PlaneGeometry(w, h).translate(0, -h / 2, 0);
@@ -212,57 +176,5 @@
     return { root, W, H, set: cloth.set };
   }
 
-  /* ── the cast's colours: each palette is one texture of 8 x 4 flat swatches ── */
-  const cell = (cx, cy) => ({ cx, cy });
-  /** moves the triangles of `part` that sit in swatch `from` onto swatch `to`, those between heights lo and hi (model units) */
-  function remap(part, from, to, lo = -Infinity, hi = Infinity) {
-    const uv = part?.geometry?.attributes.uv, pos = part?.geometry?.attributes.position; if (!uv) return;
-    const idx = part.geometry.index, n = idx ? idx.count : uv.count, move = new Set();
-    for (let i = 0; i < n; i += 3) {                                 // find them all first: moving as we go would take a shared
-      const v = [0, 1, 2].map(k => (idx ? idx.getX(i + k) : i + k));  // corner out of the swatch before its next triangle is seen
-      const u0 = (uv.getX(v[0]) + uv.getX(v[1]) + uv.getX(v[2])) / 3, v0 = (uv.getY(v[0]) + uv.getY(v[1]) + uv.getY(v[2])) / 3;
-      const y = (pos.getY(v[0]) + pos.getY(v[1]) + pos.getY(v[2])) / 3;
-      if (Math.floor(u0 * 8) === from.cx && Math.floor(v0 * 4) === from.cy && y > lo && y < hi) v.forEach(j => move.add(j));
-    }
-    move.forEach(j => uv.setXY(j, uv.getX(j) + (to.cx - from.cx) / 8, uv.getY(j) + (to.cy - from.cy) / 4));
-    uv.needsUpdate = true;
-  }
-  /** the palette with swatches in new colours, each keeping its own light and shade */
-  function repaint(m, part, colours) {
-    const material = m.node(part)?.material, img = material?.map?.image;
-    if (!img || !img.width) return;
-    const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-    const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(img, 0, 0);
-    const w = img.width / 8, h = img.height / 4;
-    for (const [key, hex] of Object.entries(colours)) {
-      const [cx, cy] = key.split(',').map(Number), d = c.getImageData(cx * w, cy * h, w, h), p = d.data;
-      let mean = 0; for (let i = 0; i < p.length; i += 4) mean += p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11;
-      mean /= p.length / 4;
-      const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-      for (let i = 0; i < p.length; i += 4) {
-        const k = (p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11) / (mean || 1);
-        p[i] = Math.min(255, r * k); p[i + 1] = Math.min(255, g * k); p[i + 2] = Math.min(255, b * k);
-      }
-      c.putImageData(d, cx * w, cy * h);
-    }
-    const old = material.map, t = kit.keep(new THREE.CanvasTexture(cv));
-    t.colorSpace = old.colorSpace; t.flipY = old.flipY; t.wrapS = old.wrapS; t.wrapT = old.wrapT;
-    t.magFilter = old.magFilter; t.minFilter = old.minFilter; t.anisotropy = 4;
-    material.map = t; material.needsUpdate = true; old.dispose();
-  }
-  /** him: clean-shaven, a white shirt (the chest strap gone into it), a deep green sash and trousers, gold buckle;
-      her: the hood a plum headscarf, a coral outfit with a gold belt, bare hands, dark hair under the scarf */
-  function dress(boy, girl) {
-    const skin = cell(0, 0);
-    remap(boy.node('Barbarian_Head'), cell(1, 0), skin, -Infinity, 1.5);   // the beard (the brows stay, above it)
-    remap(boy.node('Barbarian_Body'), cell(6, 0), cell(0, 1), .78);
-    for (const arm of ['Barbarian_ArmLeft', 'Barbarian_ArmRight']) remap(boy.node(arm), cell(6, 0), cell(7, 2));
-    repaint(boy, 'Barbarian_Body', { '0,1': '#f4efe4', '1,1': '#f4efe4', '7,0': '#f4efe4', '7,2': '#efe8da', '2,1': '#2f8a5a', '6,0': '#1d5a3c',
-      '7,1': '#1f4a37', '3,0': '#e8b84a', '3,2': '#5a3a28', '1,0': '#241c1e' });
-    for (const arm of ['Rogue_ArmLeft', 'Rogue_ArmRight']) remap(girl.node(arm), cell(5, 2), skin);
-    repaint(girl, 'Rogue_Body', { '1,1': '#7b2f63', '0,1': '#ff6f61', '7,1': '#e85d5d', '6,0': '#e2a93b', '3,0': '#f2c35a', '5,0': '#ffe2b8',
-      '3,2': '#7b2f63', '1,0': '#4a2c22' });
-  }
-
-  return { rug, hair, tail, flutter, scroll, cloudNote, banner, dress };
+  return { rug, scroll, cloudNote, banner };
 };

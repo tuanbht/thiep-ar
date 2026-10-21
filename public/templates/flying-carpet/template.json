@@ -31,17 +31,23 @@
     "nụ hôn",
     "mây"
   ],
-  "notes": "A night ride on a flying rug over a city of domes and lanterns (KayKit Adventurers, CC0: the Barbarian bare-headed and clean-shaven, his black hair built in code, recoloured into a white shirt with a deep green sash and trousers, two short sash tails in code; the Rogue_Hooded without her cape, her hood recoloured into a plum headscarf with two knotted ends in code, a coral outfit with a gold belt and bare hands; weapons, the bear hat and the capes dropped by scripts/pack-models.mjs). The rest is built in code: a sky page that folds up like a pop-up card (a dusk, and a night painted over it that fades in, with a big moon low over a skyline of domes and towers), her house with a balcony whose carved railing opens on the city side, rooftops with domes, a tower and a pavilion, a tiled square with lamp posts, strings of lanterns, sky lanterns, clouds, doves, and the rug: a woven cloth whose corners ripple, flap in the wind, bow and curl, with tassels at both ends. Stop 1: night falls; she leans on her railing gazing at the moon; the rug rises rippling from the square with a young man on it; he stands, bows (the rug bows too) and offers his hand, and a scroll unrolls with the card's first words (slot note1); she steps back, looks back at her door, then takes his hand. Stop 2: she hops onto the rug, it spins up off the balcony and swoops round over the rooftops; she clutches his arm, then opens her arms to the wind as clouds drift by; the rug settles and the stars write the second words (slot note2) on a night cloud. Stop 3: they glide past the big moon, dark against it, doves flying alongside; she leans on his shoulder, then touches a cloud and it puffs away; the light comes back and two doves bring the card's photo in on ribbons with its caption (slot caption). Stop 4: lanterns light up along the rooftops, sky lanterns rise and fireworks bloom over the city; they turn to each other and kiss under a heart of fireworks, the rug curls a corner up shyly, and three sky lanterns lift a woven banner with the last words (slot note3). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; the city is built in scenery.js, the rug and the things the words appear on in props.js, the moves in story.js.",
+  "notes": "A night ride on a flying rug over a city of domes and lanterns, played by the shared couple (templates/_models: Grab3D's Casual Man and Casual Woman, CC0, animated with Quaternius's Universal Animation Library; see docs/models/README.md). The rest is built in code: a sky page that folds up like a pop-up card (a dusk, and a night painted over it that fades in, with a big moon low over a skyline of domes and towers), her house with a balcony whose carved railing, as high as a grown-up's waist, opens on the city side between two posts hung with lanterns, rooftops with domes, a tower and a pavilion, a tiled square with lamp posts, strings of lanterns, sky lanterns, clouds, doves, and the rug: a woven cloth whose corners ripple, flap in the wind, bow and curl, with tassels at both ends. Stop 1: night falls; she leans on her railing, hands clasped on it, gazing up at the moon; the rug rises rippling from the square with a young man on it; he stands, bows (the rug bows too) and offers his hand, and a scroll unrolls with the card's first words (slot note1); she steps back, looks back at her door, then takes his hand. Stop 2: she hops onto the rug, it spins up off the balcony and swoops round over the rooftops; she clutches his arm, then opens her arms to the wind as clouds drift by; the rug settles and the stars write the second words (slot note2) on a night cloud. Stop 3: they glide past the big moon, dark against it, doves flying alongside; she leans on his shoulder, then touches a cloud and it puffs away; the light comes back and two doves bring the card's photo in on ribbons with its caption (slot caption). Stop 4: lanterns light up along the rooftops, sky lanterns rise and fireworks bloom over the city; they sit up close, take each other's hands, turn to each other and kiss under a heart of fireworks, the rug curls a corner up shyly, and three sky lanterns lift a woven banner with the last words (slot note3). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; the city is built in scenery.js, the rug and the things the words appear on in props.js, the moves in story.js.",
   "models": {
-    "boy": "models/boy.glb",
-    "girl": "models/girl.glb"
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb"
   },
   "credits": [
     {
-      "model": "KayKit Adventurers",
-      "author": "Kay Lousberg",
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
       "license": "CC0 1.0",
-      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
     }
   ],
   "photos": 1
