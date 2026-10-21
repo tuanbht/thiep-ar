@@ -1,0 +1,323 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>One noodle for two card</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/900.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/700-italic.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<style>
+/* The printed card = the tracking image. "Chung một sợi mì" (one noodle for two): a trattoria postcard laid on a red and
+   white checked tablecloth. String lights across the top, the script title, a postage stamp and a postmark, a chalkboard
+   menu priced in kisses, a receipt for table 2 that comes to "mãi mãi", basil, tomatoes and garlic, a candle in a bottle,
+   two forks, and a big plate of spaghetti in the middle, where the 3D table stands (round x 440–640, y 250–480; the wall
+   rises at the top edge, the menu board stands round x 1050, y 530). Every shape is inked in dark brown so the tracker sees
+   edges everywhere; the checks are drawn by hand, no two alike; everything random is seeded, so every render is identical. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#c8283a}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(2010);
+const C = { ink: '#2b1712', red: '#c8283a', tomato: '#e0442f', tomato2: '#f26b4f', wine: '#7c1632', wine2: '#a32a46', cream: '#fff6e6',
+  paper: '#fbefd9', paper2: '#f6e3c3', white: '#ffffff', gold: '#e6b54a', gold2: '#f6d98a', basil: '#3f8a45', basil2: '#6fb35a', moss: '#2c6a3a',
+  noodle: '#f1d27e', noodle2: '#e3b95a', meat: '#7a3b1f', slate: '#22302a', slate2: '#2f4038', chalk: '#fbf3df', wood: '#b07a45', wood2: '#7a4e2a',
+  glass: '#2f7a52', sky: '#2c2d62', pink: '#ff9fbf', pink2: '#ffd1dc', lilac: '#c6a4ec', blue: '#3d5a8c' };
+const F = { hand: 'Dancing Script', sans: 'Be Vietnam Pro', serif: 'Playfair Display', note: 'Patrick Hand', fun: 'Pacifico' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.it ? ' font-style="italic"' : ''}${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.wine}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+const fit = (str, weight, family, size, w, it = '') => Math.min(size, n1(w / measure(str, `${it}${weight} 100px "${family}"`) * 100));
+const ink = (sw = 2) => `stroke="${C.ink}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+
+/* ---- what the scatter keeps clear of ---- */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const OVALS = [[560, 392, 200, 172], [560, 560, 230, 70]];
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m) ||
+  OVALS.some(([cx, cy, rx, ry]) => ((x - cx) / (rx + m)) ** 2 + ((y - cy) / (ry + m)) ** 2 < 1);
+
+/* ---- small shapes ---- */
+const heart = (z, fill, sw = 1.8) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw)}/>`;
+const sparkle = (x, y, z, c) => `<path transform="translate(${n1(x)} ${n1(y)})" d="M0 ${n1(-z)} Q1.6 -1.6 ${n1(z)} 0 Q1.6 1.6 0 ${n1(z)} Q-1.6 1.6 ${n1(-z)} 0 Q-1.6 -1.6 0 ${n1(-z)}Z" fill="${c}" ${ink(1.6)}/>`;
+const note = (z, fill) => `<ellipse cx="0" cy="0" rx="${n1(z * .5)}" ry="${n1(z * .36)}" transform="rotate(-24)" fill="${fill}" ${ink(1.5)}/><path d="M${n1(z * .44)} ${n1(-z * .12)} V${n1(-z * 1.5)} Q${n1(z * .9)} ${n1(-z * 1.2)} ${n1(z * 1.1)} ${n1(-z * .7)}" fill="none" ${ink(1.8)}/>`;
+const leaf = (len, w, fill = C.basil) => `<path d="M0 0 C${n1(w)} ${n1(-len * .3)} ${n1(w * .6)} ${n1(-len * .82)} 0 ${n1(-len)} C${n1(-w * .7)} ${n1(-len * .78)} ${n1(-w)} ${n1(-len * .28)} 0 0Z" fill="${fill}" ${ink(1.8)}/>` +
+  `<path d="M0 ${n1(-len * .06)} Q${n1(w * .12)} ${n1(-len * .5)} 0 ${n1(-len * .9)}" fill="none" ${ink(1.1)}/>`;
+/** a basil leaf: broad, cupped, a vein down the middle */
+const basil = (len, fill = C.basil2) => `<path d="M0 0 C${n1(len * .55)} ${n1(-len * .15)} ${n1(len * .5)} ${n1(-len * .85)} 0 ${n1(-len)} C${n1(-len * .5)} ${n1(-len * .85)} ${n1(-len * .55)} ${n1(-len * .15)} 0 0Z" fill="${fill}" ${ink(1.8)}/>` +
+  `<path d="M0 -2 Q2 ${n1(-len * .5)} 0 ${n1(-len * .92)} M0 ${n1(-len * .4)} l${n1(len * .22)} ${n1(-len * .14)} M0 ${n1(-len * .58)} l${n1(-len * .22)} ${n1(-len * .14)}" fill="none" ${ink(1.1)}/>`;
+const tomato = (R, fill = C.tomato) => `<circle r="${n1(R)}" fill="${fill}" ${ink(2)}/><path d="M${n1(-R * .45)} ${n1(-R * .35)} q${n1(R * .2)} ${n1(-R * .25)} ${n1(R * .45)} ${n1(-R * .2)}" fill="none" stroke="${C.white}" stroke-width="2" opacity=".7"/>` +
+  `<path d="M0 ${n1(-R * .95)} l${n1(R * .35)} ${n1(-R * .35)} M0 ${n1(-R * .95)} l${n1(-R * .4)} ${n1(-R * .25)} M0 ${n1(-R * .95)} l${n1(R * .05)} ${n1(-R * .45)}" ${ink(2)} stroke="${C.moss}"/>`;
+/* a noodle squiggle */
+function squiggle(len, col = C.noodle) {
+  let d = 'M0 0'; const n = 6 + ((r() * 4) | 0);
+  for (let i = 1; i <= n; i++) d += ` Q${n1(len * (i - .5) / n)} ${n1((r() - .5) * 18)} ${n1(len * i / n)} ${n1((r() - .5) * 8)}`;
+  return `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="5.4" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round"/>`;
+}
+
+/* ---- the tablecloth: hand-drawn red checks round the edge, words running on it; the postcard on top ---- */
+function sheet() {
+  let s = `<rect width="1280" height="800" fill="${C.cream}"/>`;
+  let x = 0; const cols = [];                                    // stripes of their own widths, both ways
+  while (x < 1280) { const w = 26 + r() * 16; cols.push([x, w]); x += w; }
+  let y = 0; const rows = [];
+  while (y < 800) { const h = 26 + r() * 16; rows.push([y, h]); y += h; }
+  cols.forEach(([x0, w], i) => { if (i % 2 === 0) s += `<rect x="${n1(x0)}" y="0" width="${n1(w)}" height="800" fill="${C.red}" opacity=".55"/>`; });
+  rows.forEach(([y0, h], i) => { if (i % 2 === 0) s += `<rect x="0" y="${n1(y0)}" width="1280" height="${n1(h)}" fill="${C.red}" opacity=".55"/>`; });
+  for (let i = 0; i < 260; i++) { const xx = r() * 1280, yy = r() * 800; s += `<path d="M${n1(xx)} ${n1(yy)} l${n1(4 + r() * 8)} ${n1((r() - .5) * 2)}" stroke="${C.white}" stroke-width="1.2" opacity=".5"/>`; }   // the weave
+  const words = [
+    [640, 22, 0, 'CHUNG MỘT SỢI MÌ  ·  ONE NOODLE, TWO HEARTS  ·  BÀN SỐ 2  ·  HẺM NHỎ  ·  20·10', 620],
+    [640, 791, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  QUÁN HẺM NHỎ  ·  No. 0202  ·  NIGHT MAIL AR', 650],
+    [20, 400, -90, 'MÌ Ý  ·  NỤ HÔN  ·  ÁNH NẾN', 300],
+    [1261, 400, 90, 'PHẦN NGON NHẤT  ·  DÀNH CHO EM', 330]];
+  words.forEach(([x, y, a, str, w]) => {
+    s += g(x, y, a, 1, `<rect x="${n1(-w / 2 - 10)}" y="-10" width="${n1(w + 20)}" height="20" rx="10" fill="${C.wine}" ${ink(1.6)}/>` + T(0, 4.5, str, { s: 11.5, ls: 2.6, anchor: 'middle', fill: C.cream }));
+  });
+  const L = 40, Tp = 40, R = 1240, B = 760;                      // the postcard: a deckled edge
+  let d = `M${L} ${Tp}`;
+  const edge = (from, to, along) => {
+    for (let p = from; Math.abs(to - p) > 1;) {
+      const step = Math.sign(to - p) * Math.min(Math.abs(to - p), 14 + r() * 12), q = p + step, m = (p + q) / 2, b = (r() - .4) * 6;
+      d += along(m, b, q); p = q;
+    }
+  };
+  edge(L, R, (m, b, q) => `Q${n1(m)} ${n1(Tp - b)} ${n1(q)} ${Tp}`);
+  edge(Tp, B, (m, b, q) => `Q${n1(R + b)} ${n1(m)} ${R} ${n1(q)}`);
+  edge(R, L, (m, b, q) => `Q${n1(m)} ${n1(B + b)} ${n1(q)} ${B}`);
+  edge(B, Tp, (m, b, q) => `Q${n1(L - b)} ${n1(m)} ${L} ${n1(q)}`);
+  s += `<path d="${d}Z" fill="${C.paper}" ${ink(3)}/>`;
+  for (let i = 0; i < 70; i++) { const xx = 60 + r() * 1160, yy = 60 + r() * 680; s += `<circle cx="${n1(xx)}" cy="${n1(yy)}" r="${n1(10 + r() * 40)}" fill="${C.paper2}" opacity=".35"/>`; }   // old paper
+  s += `<rect x="56" y="56" width="1168" height="688" rx="10" fill="none" stroke="${C.wine2}" stroke-width="1.6" stroke-dasharray="14 5 3 5"/>`;
+  return s;
+}
+
+/* ---- string lights across the top: swags of bulbs, every one its own colour and tilt ---- */
+function lights() {
+  keep(56, 56, 1224, 118);
+  const hooks = [[64, 64], [290, 70], [520, 62], [760, 70], [990, 64], [1216, 70]];
+  let wire = '', bulbs = '';
+  for (let i = 0; i < hooks.length - 1; i++) {
+    const [ax, ay] = hooks[i], [bx, by] = hooks[i + 1], sag = 26 + r() * 10;
+    wire += `<path d="M${ax} ${ay} Q${n1((ax + bx) / 2)} ${n1((ay + by) / 2 + sag * 2)} ${bx} ${by}" fill="none" ${ink(2.2)}/>`;
+    for (let k = 1; k <= 4; k++) {
+      const t = k / 5 + (r() - .5) * .05, x = ax + (bx - ax) * t, y = ay + (by - ay) * t + sag * 4 * t * (1 - t);
+      bulbs += g(x, y + 3, (r() - .5) * 30, 1, `<rect x="-3.5" y="-4" width="7" height="6" fill="${C.ink}"/><path d="M0 2 C-7 5 -7 16 0 19 C7 16 7 5 0 2Z" fill="${pick([C.gold2, C.pink2, C.cream, C.gold, C.tomato2, C.pink])}" ${ink(1.6)}/>` +
+        `<path d="M-2 7 q-1 4 0 7" stroke="${C.white}" stroke-width="1.6" fill="none" opacity=".8"/>`);
+    }
+  }
+  return wire + bulbs + hooks.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="${C.gold}" ${ink(1.8)}/>`).join('');
+}
+
+/* ---- the title, top left ---- */
+function title() {
+  keep(60, 118, 470, 300);
+  let s = '';
+  const f1 = fit('Chung một', 700, F.hand, 80, 330), f2 = fit('sợi mì', 700, F.hand, 92, 250);
+  s += T(72, 140, 'One noodle, two hearts', { f: F.serif, w: 700, it: true, s: 22, fill: C.wine });
+  s += `<path d="M72 148 C122 156 180 142 252 150" fill="none" ${ink(2)}/>` + g(268, 142, 14, 1, heart(12, C.tomato));
+  s += T(74, 212, 'Chung một', { f: F.hand, w: 700, s: f1, fill: C.ink }) + T(70, 208, 'Chung một', { f: F.hand, w: 700, s: f1, fill: C.tomato, stroke: C.ink, sw: 5 });
+  s += T(160, 282, 'sợi mì', { f: F.hand, w: 700, s: f2, fill: C.ink }) + T(156, 278, 'sợi mì', { f: F.hand, w: 700, s: f2, fill: C.noodle, stroke: C.ink, sw: 5 });
+  s += g(84, 244, -8, .9, squiggle(46)) + g(404, 254, 0, 1, heart(22, C.tomato)) + g(434, 226, 18, 1, heart(13, C.pink));
+  s += T(72, 300, 'MÌ Ý  ·  HẺM NHỎ  ·  BÀN SỐ 2', { s: 11.5, ls: 2.6, fill: C.wine2 });
+  s += sparkle(352, 128, 8, C.gold) + sparkle(452, 178, 6, C.lilac) + sparkle(96, 236, 6, C.gold);
+  return s;
+}
+
+/* ---- a postage stamp and a postmark, top right ---- */
+function stamp() {
+  keep(1040, 120, 1220, 300);
+  let o = '', d = '';
+  const W = 120, H = 148;
+  for (let x = 0; x <= W; x += 10) d += `${x ? 'L' : 'M'}${x} 0 ${x + 5 < W ? `a5 5 0 0 0 5 0` : ''}`;
+  o += `<rect x="-6" y="-6" width="${W + 12}" height="${H + 12}" fill="${C.white}" ${ink(2)}/>`;
+  for (let i = 0; i < 13; i++) o += `<circle cx="${n1(-6 + i * (W + 12) / 12)}" cy="-6" r="4" fill="${C.paper}"/><circle cx="${n1(-6 + i * (W + 12) / 12)}" cy="${H + 6}" r="4" fill="${C.paper}"/>`;
+  for (let i = 0; i < 15; i++) o += `<circle cx="-6" cy="${n1(-6 + i * (H + 12) / 14)}" r="4" fill="${C.paper}"/><circle cx="${W + 6}" cy="${n1(-6 + i * (H + 12) / 14)}" r="4" fill="${C.paper}"/>`;
+  o += `<rect x="4" y="4" width="${W - 8}" height="${H - 8}" fill="${C.sky}" ${ink(1.8)}/>`;
+  o += `<circle cx="${W - 26}" cy="26" r="11" fill="${C.gold2}"/><circle cx="${W - 21}" cy="22" r="10" fill="${C.sky}"/>`;
+  for (let i = 0; i < 9; i++) o += `<circle cx="${n1(10 + r() * (W - 20))}" cy="${n1(10 + r() * 40)}" r="${n1(1 + r() * 1.4)}" fill="${C.cream}"/>`;
+  o += `<ellipse cx="${W / 2}" cy="104" rx="44" ry="18" fill="${C.white}" ${ink(1.8)}/><ellipse cx="${W / 2}" cy="102" rx="30" ry="11" fill="${C.noodle}" ${ink(1.4)}/>`;
+  for (const [x, y] of [[48, 99], [62, 103], [74, 98]]) o += `<circle cx="${x}" cy="${y}" r="5" fill="${C.meat}" ${ink(1.2)}/>`;
+  o += `<path d="M${W / 2 - 18} 84 q18 -40 36 0" fill="none" stroke="${C.noodle}" stroke-width="3"/>` + g(W / 2, 70, 0, 1, heart(16, C.tomato, 1.4));
+  o += T(W / 2, 140, '2 HÔN', { s: 12, ls: 1.5, anchor: 'middle', fill: C.cream });
+  let pm = `<circle r="46" fill="none" stroke="${C.wine}" stroke-width="2.6" opacity=".85"/><circle r="36" fill="none" stroke="${C.wine}" stroke-width="1.4" opacity=".85"/>`;
+  pm += T(0, -14, 'HẺM NHỎ', { s: 11, ls: 1.6, anchor: 'middle', fill: C.wine }) + T(0, 5, '20·10', { f: F.serif, w: 900, s: 18, anchor: 'middle', fill: C.wine }) + T(0, 22, 'TỐI NAY', { s: 9, ls: 1.6, anchor: 'middle', fill: C.wine });
+  for (let i = 0; i < 4; i++) pm += `<path d="M52 ${-18 + i * 12} q22 -8 44 0 t44 0" fill="none" stroke="${C.wine}" stroke-width="2.2" opacity=".8"/>`;
+  return g(1080, 136, 4, 1, o) + g(1052, 252, -12, 1, pm);
+}
+
+/* ---- the chalkboard menu, left: today's dishes, priced in love ---- */
+function chalkboard() {
+  keep(60, 312, 350, 612);
+  let o = `<rect x="-12" y="-12" width="294" height="300" rx="8" fill="${C.wood}" ${ink(2.6)}/>`;
+  for (let k = 0; k < 8; k++) o += `<path d="M${n1(-6 + r() * 20)} ${n1(-6 + k * 37)} q${n1(80 + r() * 60)} ${n1((r() - .5) * 6)} ${n1(150 + r() * 100)} 0" fill="none" stroke="${C.wood2}" stroke-width="1.2" opacity=".5"/>`;
+  o += `<rect x="0" y="0" width="270" height="276" rx="4" fill="${C.slate}" ${ink(2.2)}/>`;
+  for (let i = 0; i < 14; i++) o += `<ellipse cx="${n1(r() * 270)}" cy="${n1(r() * 276)}" rx="${n1(20 + r() * 50)}" ry="${n1(8 + r() * 16)}" fill="${C.chalk}" opacity=".05"/>`;
+  o += T(135, 40, 'Món hôm nay', { f: F.hand, w: 700, s: 36, anchor: 'middle', fill: C.chalk });
+  o += `<path d="M70 52 C110 47 160 58 200 50" fill="none" stroke="${C.gold2}" stroke-width="3" stroke-linecap="round"/>`;
+  const items = [['Mì Ý sốt cà chua', '1 nụ hôn'], ['Viên thịt cuối', 'cho em'], ['Bánh mì bơ tỏi', '2 cái ôm'], ['Nước chanh', 'miễn phí'], ['Tráng miệng', 'nắm tay']];
+  items.forEach(([dish, price], i) => {
+    const y = 90 + i * 36, wd = measure(dish, `400 18px "${F.note}"`), wp = measure(price, `400 17px "${F.note}"`);
+    o += g(18, y - 6, (r() - .5) * 20, 1, i % 2 ? heart(10, C.pink, 1.2) : sparkle(0, 0, 6, C.gold2));
+    o += T(30, y, dish, { f: F.note, w: 400, s: 18, fill: C.chalk }) + T(256, y, price, { f: F.note, w: 400, s: 17, anchor: 'end', fill: C.gold2 });
+    o += `<path d="M${n1(34 + wd)} ${y - 2} L${n1(251 - wp)} ${y - 2}" stroke="${C.chalk}" stroke-width="1.6" stroke-dasharray="1.5 4.5" stroke-linecap="round" opacity=".7"/>`;
+  });
+  o += T(135, 268, 'Đầu bếp: anh', { f: F.hand, w: 700, s: 20, anchor: 'middle', fill: C.pink });
+  o += g(40, 258, 0, .7, `<ellipse cx="0" cy="0" rx="22" ry="7" fill="none" stroke="${C.chalk}" stroke-width="2.4"/><path d="M-14 -3 q4 -12 8 0 q4 -12 8 0 q4 -12 8 0" fill="none" stroke="${C.gold2}" stroke-width="2.2"/>`);
+  return g(74, 326, -2.5, 1, o);
+}
+
+/* ---- the receipt, right: table 2, it comes to "mãi mãi" ---- */
+function receipt() {
+  keep(930, 312, 1224, 620);
+  const W = 262, Hh = 280;
+  let edge = `M0 0 H${W} V${Hh}`;
+  for (let x = W; x > 0;) { const s = Math.min(x, 9 + r() * 6); edge += ` L${n1(x - s / 2)} ${n1(Hh + 7 + r() * 3)} L${n1(x - s)} ${Hh}`; x -= s; }
+  let o = `<path d="${edge}Z" fill="${C.white}" ${ink(2.2)}/>`;
+  o += T(W / 2, 30, 'HÓA ĐƠN', { s: 17, ls: 3, anchor: 'middle', fill: C.ink });
+  o += T(W / 2, 52, 'Bàn số 2 · Hẻm Nhỏ · 19:30', { f: F.note, w: 400, s: 17, anchor: 'middle', fill: C.wine });
+  o += `<path d="M14 64 H${W - 14}" stroke="${C.ink}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  const lines = [['Mì Ý chung × 1', '♥♥'], ['Viên thịt × 3', '♥♥♥'], ['Sợi mì dài × 1', '♥'], ['Nến trong chai', '♥'], ['Nụ hôn × ∞', 'tặng kèm']];
+  lines.forEach(([a, b], i) => {
+    const y = 88 + i * 24;
+    o += T(16, y, a, { f: F.note, w: 400, s: 18, fill: C.ink }) + T(W - 16, y, b, { f: F.note, w: 400, s: 17, anchor: 'end', fill: C.tomato });
+  });
+  o += `<path d="M14 ${88 + 5 * 24 - 10} H${W - 14}" stroke="${C.ink}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  o += T(16, 222, 'TỔNG CỘNG', { s: 14, ls: 2, fill: C.ink }) + T(W - 16, 224, 'mãi mãi', { f: F.hand, w: 700, s: 26, anchor: 'end', fill: C.wine });
+  let bars = '', x = 30;
+  while (x < W - 30) { const w = 1 + ((r() * 4) | 0); if (r() < .62) bars += `<rect x="${n1(x)}" y="234" width="${w}" height="28" fill="${C.ink}"/>`; x += w + 1 + ((r() * 2) | 0); }
+  o += bars + T(W / 2, 274, '2 0 1 0  0 2 0 2  1 4', { s: 10, ls: 1, anchor: 'middle', fill: C.ink });
+  o += g(176, 152, -12, 1, `<rect x="-70" y="-24" width="140" height="48" rx="6" fill="${C.white}" fill-opacity=".6" stroke="${C.tomato}" stroke-width="3.4"/>` +
+    `<rect x="-63" y="-17" width="126" height="34" rx="4" fill="none" stroke="${C.tomato}" stroke-width="1.4"/>` + T(0, -1, 'ĐÃ THANH TOÁN', { s: 12.5, ls: .6, anchor: 'middle', fill: C.tomato }) +
+    T(0, 12, 'BẰNG MỘT NỤ HÔN', { s: 8.5, ls: 1.4, anchor: 'middle', fill: C.tomato }));
+  return g(946, 322, 2.5, 1, o) + g(972, 318, -10, 1, `<rect x="-22" y="-9" width="44" height="18" fill="${C.gold2}" opacity=".9" ${ink(1.2)}/>`);
+}
+
+/* ---- the plate in the middle, seen from above: where the 3D table stands ---- */
+function plate(cx, cy, R) {
+  let o = '';
+  o += `<ellipse cx="${cx + 6}" cy="${cy + 10}" rx="${R}" ry="${n1(R * .86)}" fill="${C.ink}" opacity=".18"/>`;
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${R}" ry="${n1(R * .86)}" fill="${C.white}" ${ink(3)}/>`;
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(R * .93)}" ry="${n1(R * .8)}" fill="none" stroke="${C.tomato}" stroke-width="3"/>`;
+  for (let i = 0; i < 36; i++) {                                   // a rim of little painted leaves, each its own
+    const a = i / 36 * 360 + r() * 4, x = cx + Math.cos(rad(a)) * R * .965, y = cy + Math.sin(rad(a)) * R * .83;
+    o += g(x, y, a + 90 + (r() - .5) * 30, .55 + r() * .25, i % 3 ? leaf(16, 5, C.basil2) : `<circle r="4" fill="${C.tomato2}" ${ink(1.2)}/>`);
+  }
+  o += `<ellipse cx="${cx}" cy="${cy}" rx="${n1(R * .78)}" ry="${n1(R * .67)}" fill="${C.cream}" ${ink(2)}/>`;
+  for (let i = 0; i < 46; i++) {                                   // the nest of noodles
+    const a0 = r() * 360, rr = R * (.1 + r() * .55), x0 = cx + Math.cos(rad(a0)) * rr, y0 = cy + Math.sin(rad(a0)) * rr * .86;
+    let d = `M${n1(x0)} ${n1(y0)}`, a = a0 + 90, x = x0, y = y0;
+    for (let k = 0; k < 5; k++) { a += 40 + r() * 50; const nx = x + Math.cos(rad(a)) * (18 + r() * 16), ny = y + Math.sin(rad(a)) * (14 + r() * 12);
+      if (((nx - cx) / (R * .74)) ** 2 + ((ny - cy) / (R * .63)) ** 2 > 1) break; d += ` Q${n1((x + nx) / 2 + (r() - .5) * 16)} ${n1((y + ny) / 2 + (r() - .5) * 16)} ${n1(nx)} ${n1(ny)}`; x = nx; y = ny; }
+    o += `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="5.6" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${i % 4 ? C.noodle : C.noodle2}" stroke-width="3.2" stroke-linecap="round"/>`;
+  }
+  let sd = '';                                                     // the sauce: a red puddle with a wavy edge
+  for (let i = 0; i <= 24; i++) { const a = i / 24 * 360, k = R * (.3 + .05 * Math.sin(i * 1.7) + r() * .04); const [x, y] = pt(cx - 6, cy - 4, k, a); sd += `${i ? 'L' : 'M'}${x} ${n1(cy - 4 + (y - cy + 4) * .86)}`; }
+  o += `<path d="${sd}Z" fill="${C.tomato}" ${ink(2.2)}/>`;
+  for (const [dx, dy, s] of [[-34, -16, 15], [10, -30, 14], [26, 8, 16], [-14, 18, 13]]) {
+    o += `<circle cx="${cx + dx}" cy="${cy + dy}" r="${s}" fill="${C.meat}" ${ink(2)}/><path d="M${cx + dx - s * .5} ${cy + dy - s * .3} q${n1(s * .3)} ${n1(-s * .4)} ${n1(s * .7)} ${n1(-s * .3)}" fill="none" stroke="${C.gold2}" stroke-width="2" opacity=".7"/>`;
+    for (let k = 0; k < 4; k++) o += `<circle cx="${n1(cx + dx + (r() - .5) * s)}" cy="${n1(cy + dy + (r() - .5) * s)}" r="1.4" fill="${C.ink}" opacity=".6"/>`;
+  }
+  o += g(cx - 6, cy - 46, 30, 1, basil(26)) + g(cx + 8, cy - 44, -20, 1, basil(22, C.basil));
+  for (let i = 0; i < 26; i++) o += `<rect x="${n1(cx + (r() - .5) * R * .9)}" y="${n1(cy + (r() - .5) * R * .7)}" width="3" height="3" fill="${C.white}" ${ink(.8)}/>`;   // parmesan
+  /* one long noodle leaving the plate both ways: the story in a line */
+  const arms = [`M${cx - R * .5} ${cy + R * .1} C${cx - R * 1.05} ${cy + R * .1} ${cx - R * .7} ${cy + R * 1.05} ${cx - R * 1.05} ${cy + R * 1.15}`,
+    `M${cx + R * .45} ${cy + R * .15} C${cx + R * 1.0} ${cy + R * .2} ${cx + R * .75} ${cy + R * 1.1} ${cx + R * 1.1} ${cy + R * 1.2}`];
+  for (const d of arms) o += `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="6" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${C.noodle}" stroke-width="3.4" stroke-linecap="round"/>`;
+  o += g(cx - R * 1.1, cy + R * 1.2, -16, 1, heart(26, C.tomato)) + g(cx + R * 1.15, cy + R * 1.24, 14, 1, heart(26, C.pink));
+  return o;
+}
+
+/* ---- basil, cherry tomatoes on the vine and garlic, bottom left ---- */
+function garden() {
+  keep(60, 620, 380, 744);
+  let o = `<path d="M10 70 Q80 30 150 52 T290 40" fill="none" stroke="${C.moss}" stroke-width="5" stroke-linecap="round"/>`;
+  [[40, 60, 18], [78, 46, 16], [116, 50, 19], [160, 56, 15], [204, 46, 17], [246, 42, 14]].forEach(([x, y, R], i) => { o += g(x, y + R * .6, 0, 1, tomato(R, i % 2 ? C.tomato : C.tomato2)); });
+  for (let i = 0; i < 9; i++) o += g(20 + i * 34 + r() * 8, 100 + r() * 14, -70 + r() * 140, .9, basil(26 + r() * 10, i % 2 ? C.basil : C.basil2));
+  o += g(300, 88, 0, 1, `<path d="M0 -26 C20 -24 26 0 22 14 C10 26 -10 26 -22 14 C-26 0 -20 -24 0 -26Z" fill="${C.cream}" ${ink(2)}/><path d="M0 -26 V22 M-12 -18 Q-16 4 -10 22 M12 -18 Q16 4 10 22" fill="none" ${ink(1.4)}/><path d="M0 -26 l-3 -10 M0 -26 l4 -9" ${ink(1.6)}/>`);
+  return g(62, 622, 0, 1, o);
+}
+
+/* ---- a candle in an old bottle, wax of every colour, and two forks crossed, bottom right ---- */
+function candleBottle() {
+  keep(900, 622, 1224, 744);
+  let o = `<path d="M-26 0 C-28 -46 -24 -70 -10 -84 L-8 -120 L8 -120 L10 -84 C24 -70 28 -46 26 0Z" fill="${C.glass}" ${ink(2.4)}/>`;
+  o += `<path d="M-16 -10 C-18 -40 -14 -60 -6 -70" fill="none" stroke="${C.white}" stroke-width="3" opacity=".45"/>`;
+  [['#f7efe0', -9, 46], [C.tomato, -2, 30], ['#f7efe0', 6, 52], [C.basil2, 9, 22], [C.gold, 2, 40]].forEach(([c, x, len]) => {
+    o += `<path d="M${x - 4} -120 L${x - 4} ${-120 + len} q4 8 8 0 L${x + 4} -120Z" fill="${c}" ${ink(1.4)}/>`;
+  });
+  o += `<rect x="-11" y="-126" width="22" height="8" rx="3" fill="#f7efe0" ${ink(1.8)}/><rect x="-6" y="-152" width="12" height="27" fill="${C.cream}" ${ink(1.8)}/>`;
+  o += `<path d="M0 -152 v-6" ${ink(1.6)}/><path d="M0 -158 C-9 -166 -6 -182 0 -190 C6 -182 9 -166 0 -158Z" fill="${C.gold2}" ${ink(1.6)}/><path d="M0 -162 C-3 -168 -2 -174 0 -178 C2 -174 3 -168 0 -162Z" fill="${C.tomato2}"/>`;
+  const fork = `<path d="M-4 0 h8 v58 a4 4 0 0 1 -8 0Z" fill="${C.gold2}" ${ink(1.8)}/><path d="M-11 -38 v22 q0 14 11 16 q11 -2 11 -16 v-22" fill="${C.gold2}" ${ink(1.8)}/><path d="M-5.5 -38 v20 M0 -38 v22 M5.5 -38 v20" ${ink(1.6)}/>`;
+  let s = g(948, 742, -4, .6, o) + g(1030, 712, -38, .85, fork) + g(1062, 712, 38, .85, fork);
+  s += g(1046, 650, 0, 1, heart(20, C.tomato)) + g(1086, 668, 18, 1, heart(12, C.pink));
+  s += T(1160, 690, 'Ăn ngon', { f: F.fun, w: 400, s: 21, anchor: 'middle', fill: C.tomato, stroke: C.ink, sw: 3 }) + T(1166, 722, 'nhé em!', { f: F.fun, w: 400, s: 21, anchor: 'middle', fill: C.tomato, stroke: C.ink, sw: 3 });
+  s += g(1112, 650, 0, 1, note(16, C.gold2)) + g(1214, 650, 0, .8, note(16, C.pink)) + sparkle(1208, 732, 7, C.gold);
+  return s;
+}
+
+/* ---- a ribbon with the instruction, under the plate ---- */
+function banner(cx, cy, w, h, fill, text, o = {}) {
+  const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, f = 22;
+  let s = `<path d="M${n1(x0 - f)} ${n1(y0 + 7)} L${n1(x0 + 6)} ${n1(y0 + 7)} L${n1(x0 + 6)} ${n1(y1 + 7)} L${n1(x0 - f)} ${n1(y1 + 7)} L${n1(x0 - f + 10)} ${n1(cy + 7)}Z" fill="${o.dark || C.wine}" ${ink(2)}/>`;
+  s += `<path d="M${n1(x1 + f)} ${n1(y0 + 7)} L${n1(x1 - 6)} ${n1(y0 + 7)} L${n1(x1 - 6)} ${n1(y1 + 7)} L${n1(x1 + f)} ${n1(y1 + 7)} L${n1(x1 + f - 10)} ${n1(cy + 7)}Z" fill="${o.dark || C.wine}" ${ink(2)}/>`;
+  s += `<path d="M${n1(x0)} ${n1(y0)} Q${cx} ${n1(y0 - 8)} ${n1(x1)} ${n1(y0)} L${n1(x1)} ${n1(y1)} Q${cx} ${n1(y1 - 8)} ${n1(x0)} ${n1(y1)}Z" fill="${fill}" ${ink(2.4)}/>`;
+  s += T(cx, cy + (o.dy || 5), text, { f: o.f || F.sans, w: o.w || 800, s: o.s || 14, ls: o.ls, anchor: 'middle', fill: o.ink || C.cream });
+  return s;
+}
+function instruction() {
+  keep(400, 690, 860, 744);
+  return banner(630, 716, 440, 32, C.cream, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 15, w: 800, ink: C.wine, dark: C.tomato, dy: 5 });
+}
+
+/* ---- a little chef's note pinned between the title and the stamp ---- */
+function notes() {
+  keep(700, 120, 1010, 238);
+  let o = `<rect x="0" y="0" width="290" height="100" rx="6" fill="${C.cream}" ${ink(2.2)}/>`;
+  for (let y = 30; y < 96; y += 22) o += `<path d="M14 ${y} H276" stroke="${C.lilac}" stroke-width="1.2" opacity=".7"/>`;
+  o += T(145, 26, 'Bí quyết của quán', { f: F.hand, w: 700, s: 22, anchor: 'middle', fill: C.wine });
+  o += T(18, 52, '1. Mì luộc vừa chín tới', { f: F.note, w: 400, s: 17, fill: C.ink }) + T(18, 74, '2. Sốt cà chua thật đậm', { f: F.note, w: 400, s: 17, fill: C.ink });
+  o += T(18, 95, '3. Ăn chung một đĩa', { f: F.note, w: 400, s: 17, fill: C.tomato });
+  o += g(262, 84, 12, 1, heart(16, C.tomato));
+  return g(710, 128, 1.5, 1, o) + g(856, 128, -6, 1, `<rect x="-24" y="-9" width="48" height="18" fill="${C.pink}" opacity=".85" ${ink(1.2)}/>`);
+}
+
+/* ---- confetti of small things wherever there is paper left ---- */
+function scatter(count) {
+  let s = '';
+  const placed = [];
+  for (let i = 0; i < count; i++) {
+    const x = 64 + r() * 1152, y = 120 + r() * 620, k = r(), a = (r() * 360) | 0;
+    if (blocked(x, y, 9) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 24)) continue;
+    placed.push([x, y]);
+    if (k < .2) s += g(x, y, (r() - .5) * 50, 1, heart(9 + r() * 7, pick([C.tomato, C.pink, C.wine2, C.gold])));
+    else if (k < .36) s += g(x, y, (r() - .5) * 30, .8 + r() * .4, note(12, pick([C.gold2, C.pink, C.lilac, C.cream])));
+    else if (k < .5) s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(2.4 + r() * 3.4)}" fill="${pick([C.tomato, C.wine, C.gold, C.basil, C.lilac])}"/>`;
+    else if (k < .64) s += sparkle(x, y, 5 + r() * 5, pick([C.gold, C.pink, C.lilac, C.cream]));
+    else if (k < .76) s += g(x - 16, y, a, .7, squiggle(34));
+    else if (k < .88) s += g(x, y, a, 1, basil(13 + r() * 7, pick([C.basil, C.basil2])));
+    else s += g(x, y, 0, 1, `<circle r="${n1(5 + r() * 3)}" fill="${C.tomato2}" ${ink(1.4)}/>`);
+  }
+  return s;
+}
+
+const FACES = [`700 92px "${F.hand}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `900 58px "${F.serif}"`,
+  `italic 700 24px "${F.serif}"`, `400 19px "${F.note}"`, `400 26px "${F.fun}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Chung một sợi mì ĐẶT Ơ ữ ∞ ♥ Món hôm nay'))).then(() => {
+  let out = sheet();
+  const parts = [lights(), title(), stamp(), notes(), chalkboard(), receipt(), garden(), candleBottle(), instruction()];
+  const middle = plate(560, 392, 160);
+  out += scatter(620) + parts.slice(0, 8).join('') + middle + parts[8];
+  document.getElementById('card').innerHTML = out;
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

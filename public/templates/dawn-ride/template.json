@@ -1,0 +1,49 @@
+{
+  "name": "Đạp xe đón bình minh",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "scenery.js",
+    "bike.js",
+    "cast.js",
+    "story.js"
+  ],
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "reveal": null,
+  "categories": [
+    "viral-scenes",
+    "love",
+    "couple",
+    "proposal"
+  ],
+  "tags": [
+    "xe đạp",
+    "chở nhau",
+    "ngọn đồi",
+    "cầu hôn",
+    "nhẫn",
+    "mặt trời mọc",
+    "sương sớm",
+    "thành phố"
+  ],
+  "notes": "A ride out to meet the sunrise (KayKit Adventurers, CC0: the Knight without his helmet or cape, his armour recoloured into a white shirt with rolled-up sleeves, navy trousers and brown shoes, his hair black; the hooded Rogue without her cape, her hood dusty rose, a honey knit top, a red skirt with a cream sash, dark tights and brown boots, her cowl turned into a red scarf with knitted ends; weapons dropped by scripts/pack-models.mjs). Everything else is built in code: an old blue bicycle with spinning spoked wheels, a wicker basket, a bell, a back rack and a lamp; her house front with a window that lights and a door that opens; a cobbled street, its lamp and a sleeping street painted behind; a terraced hill that pops up out of the card with a road winding up it; a page that paints the sky at night, at first light and at sunrise, far mountains, the sun and its rays, and a city in mist that rises at the top; birds. Stop 1: deep blue before dawn, he rides in and rings the bell under her window; her window lights, she comes out in her rose hood and red scarf and hops sideways onto the back rack; the note tucked in the basket flutters into her hands and opens with the card's first words (slot note1). Stop 2: the street folds away and the hill pops up; they set off up the winding road, he stands on the pedals and wobbles to a stall, she hops off and pushes, laughing, while the stars fade and the sky pales; at the bend she hops back on and the road sign springs up and flips round to the second words (slot note2). Stop 3: round the bend and up to the top, where the city rises out of the mist below and the sun comes up in gold; they turn round for a photo, the flash pops and the print flies up into the card's photo with its caption (slot caption). Stop 4: he kneels and opens a ring box, she covers her mouth, two birds bring a banner with the last words (slot note3), she cheers, he jumps up and they hug and swing round among petals. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js, its world in scenery.js, the bicycle and props in bike.js, the clothes and reaches in cast.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "boy": {
+    "from": "kaykit/Barbarian",
+    "drop": ["1H_Axe_Offhand", "Barbarian_Round_Shield", "1H_Axe", "2H_Axe", "Mug", "Barbarian_Hat", "Barbarian_Cape"],
+    "clips": ["Idle", "Walking_A", "Running_A", "Jump_Idle"]
+  },
+  "girl": {
+    "from": "kaykit/Mage",
+    "drop": ["Spellbook", "Spellbook_open", "1H_Wand", "2H_Staff", "Mage_Hat"],
+    "clips": ["Idle", "Walking_A", "Sit_Chair_Down", "Sit_Chair_Idle", "Sit_Chair_StandUp"]
+  }
+}

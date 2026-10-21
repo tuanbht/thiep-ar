@@ -1,0 +1,57 @@
+{
+  "name": "Pháo hoa mùa hạ",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "scenery.js",
+    "fireworks.js",
+    "story.js"
+  ],
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "reveal": null,
+  "categories": [
+    "love",
+    "couple",
+    "viral-scenes"
+  ],
+  "tags": [
+    "lễ hội",
+    "mùa hè",
+    "cây cầu",
+    "điều ước",
+    "kẹo bông",
+    "đèn lồng",
+    "tỏ tình",
+    "quạt giấy"
+  ],
+  "notes": "A summer festival by a river at dusk, four chapters of ten seconds (KayKit Adventurers, CC0: the Barbarian bare-headed with black hair built in code, recoloured into a dark indigo pinstriped robe with a pale sash and bare hands; the Mage without her hat and cape, recoloured into a pale robe with little flowers painted on the palette, a red sash and bow, black hair; weapons, hats and capes dropped by scripts/pack-models.mjs; food on the grill stall from KayKit Restaurant Bits, CC0). The rest is built in code: a sky page that turns from dusk to night (the far bank's hills, roofs and festival lights, the river winding away), two banks with a river flowing between them, a wooden arched bridge, three stalls with striped awnings (cotton candy, a grill, goldfish scooping), strings of red and white paper lanterns, a bamboo branch hung with wish strips, and fireworks worked out by formula (chrysanthemums, peonies, a willow, a ring, glitter, a heart) that glint on the river and light the scene. Stop 1: the lanterns light one by one as they walk in hand in hand; he buys a pink cotton candy and gives it to her, she takes a bite, he steals a bigger one, she swats him with her paper fan and the fan floats up, big, with the card's first words (slot note1). Stop 2: they cross the bridge to the bamboo as night falls, he hands her a paper strip, they write their wishes and tie them on, the stars come out and her strip rises to the top, big, with the second words (slot note2). Stop 3: a rocket whistles up, the first firework blooms over the river and in it, she startles, he takes her hand and they hurry onto the bridge to watch; a golden burst gathers into a frame and becomes the card's photo with its caption (slot caption). Stop 4: a heart-shaped firework; he turns to her and confesses with a little bow, she covers her mouth, nods and hugs him, the finale fills the sky and a banner with the last words (slot note3) unrolls behind a spark. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js, its festival in scenery.js and its fireworks in fireworks.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb",
+    "pot": "models/pot.glb",
+    "bowls": "models/bowls.glb",
+    "ham": "models/ham.glb",
+    "buns": "models/buns.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    },
+    {
+      "model": "KayKit Restaurant Bits",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/restaurant-bits"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "label": "Ngàn đèn trời (3D: hai bạn nhỏ chèo thuyền trên sông, cùng thả đèn trời giữa đêm hội)",
+  "preset": {
+    "title": "Ngàn đèn trời",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Giữa ngàn ngọn đèn đêm nay, anh chỉ muốn ngồi chung một chiếc thuyền với em.",
+      "Mong điều ước mình thả lên trời sẽ thành sự thật, em nhé."
+    ],
+    "from": "Người chèo thuyền của em"
+  },
+  "groups": [
+    {
+      "title": "Bốn lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên tấm thiệp ước nở ra từ hoa đăng)", "value": "Đêm nay, sông cũng lung linh vì có em", "max": 60, "multiline": true }],
+        [{ "slot": "note2", "label": "Lời thứ hai (trên chiếc đèn trời của hai bạn)", "value": "Mình cùng thả một điều ước nhé", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (treo dưới chiếc đèn đỏ)", "value": "Đêm hội đèn của hai ta", "max": 28 }],
+        [{ "slot": "note3", "label": "Lời cuối (trên dải giấy đỏ giữa hai chiếc đèn)", "value": "Em là điều ước của anh", "max": 32 }]
+      ]
+    }
+  ]
+}

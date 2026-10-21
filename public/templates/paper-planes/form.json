@@ -1,0 +1,25 @@
+{
+  "label": "Máy bay giấy (3D: những chiếc máy bay giấy dẫn hai người xa lạ tìm đến nhau giữa phố)",
+  "preset": {
+    "title": "Máy bay giấy",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Có những cuộc gặp tưởng là tình cờ, hóa ra cơn gió đã sắp đặt từ lâu.",
+      "Cảm ơn em đã đến, để anh không phải gấp thêm chiếc máy bay nào nữa."
+    ],
+    "from": "Người gấp máy bay giấy"
+  },
+  "groups": [
+    {
+      "title": "Bốn lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời thứ nhất (trên tờ giấy có trái tim cô ấy vẽ)", "value": "Một cơn gió đưa em đến bên anh", "max": 60, "multiline": true }],
+        [{ "slot": "note2", "label": "Lời thứ hai (trên chiếc máy bay giấy mở ra giữa trời)", "value": "Bao nhiêu cánh máy bay cũng chỉ bay về em", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (đàn máy bay giấy mang tới)", "value": "Ngày định mệnh của mình", "max": 28 }],
+        [{ "slot": "note3", "label": "Lời cuối (trên dải băng)", "value": "Cuối cùng anh đã tìm thấy em", "max": 32 }]
+      ]
+    }
+  ]
+}

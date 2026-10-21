@@ -1,0 +1,25 @@
+{
+  "label": "Điệu valse đêm hội (3D: chàng mời nàng khiêu vũ dưới đèn chùm lộng lẫy)",
+  "preset": {
+    "title": "Điệu valse đêm hội",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Giữa cả vũ hội rực rỡ ánh đèn, anh chỉ thấy mỗi em.",
+      "Cảm ơn em đã đặt tay vào tay anh, cùng anh xoay qua từng nhịp."
+    ],
+    "from": "Chàng hiệp sĩ vụng về của em"
+  },
+  "groups": [
+    {
+      "title": "Bốn lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời thứ nhất (trên tấm thiệp mời)", "value": "Trân trọng mời em một điệu nhảy", "max": 60, "multiline": true }],
+        [{ "slot": "note2", "label": "Lời thứ hai (viết bằng ánh kim tuyến)", "value": "Một, hai, ba… mình xoay cùng nhau nhé", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (trong khung vàng)", "value": "Đêm vũ hội của mình", "max": 28 }],
+        [{ "slot": "note3", "label": "Lời cuối (trên dải băng)", "value": "Nhảy cùng anh trọn đời nhé", "max": 32 }]
+      ]
+    }
+  ]
+}

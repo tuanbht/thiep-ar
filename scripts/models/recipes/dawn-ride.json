@@ -1,0 +1,12 @@
+{
+  "boy": {
+    "from": "kaykit/Knight",
+    "drop": ["1H_Sword", "1H_Sword_Offhand", "2H_Sword", "Badge_Shield", "Rectangle_Shield", "Round_Shield", "Spike_Shield", "Knight_Helmet", "Knight_Cape"],
+    "clips": ["Idle", "Walking_A", "Sit_Chair_Pose", "Jump_Full_Short"]
+  },
+  "girl": {
+    "from": "kaykit/Rogue_Hooded",
+    "drop": ["Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Knife", "Throwable", "Rogue_Cape"],
+    "clips": ["Idle", "Walking_A", "Sit_Chair_Down", "Sit_Chair_Idle", "Sit_Chair_StandUp", "Cheer"]
+  }
+}

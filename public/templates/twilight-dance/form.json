@@ -1,0 +1,24 @@
+{
+  "label": "Điệu nhảy hoàng hôn (3D: hai bạn nhỏ nhảy bên cột đèn trên đồi, thành phố lên đèn phía xa)",
+  "preset": {
+    "title": "Điệu nhảy hoàng hôn",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Chỉ cần một ngọn đèn và em bên cạnh, chiều nào cũng thành một điệu nhảy.",
+      "Cảm ơn em đã luôn nhảy cùng anh, kể cả khi anh lỡ nhịp."
+    ],
+    "from": "Bạn nhảy của em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên tấm biển treo ở cột đèn)", "value": "Hoàng hôn đẹp thế này, nhảy với anh nhé?", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (trong khung bóng đèn)", "value": "Điệu nhảy của riêng mình", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải ruy băng)", "value": "Mỗi ngày bên em đều là vũ điệu", "max": 32 }]
+      ]
+    }
+  ]
+}

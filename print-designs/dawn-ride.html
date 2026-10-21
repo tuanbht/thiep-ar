@@ -1,0 +1,331 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Đạp xe đón bình minh: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/400-italic.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<style>
+/* The printed card = the tracking image. A dawn postcard: a cream sheet on a band of first-light violet; a framed sunrise
+   over a city in mist, a switchback road up the hill to an overlook, birds; the title in script with "marry me at
+   sunrise"; the old blue bicycle with flowers and a note in its basket; a hand-drawn map of the hill where the act stands
+   (x 404–876, y 430–688), its road winding from her house to the top, the instruction ribbon under it; the morning's
+   plan on a card; an open ring box; stamps and postmarks; rolling hills along the bottom; birds, little suns, hearts and
+   sparkles between them. Every shape is inked in deep indigo so the tracker finds edges everywhere. Nothing mirrored or
+   tiled; all randomness is seeded, so every render is the same picture. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#2f3577}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(530);
+const C = { ink: '#24285a', band: '#2f3577', deep: '#1e2250', sky: '#9fb8f0', ice: '#dfe8ff', lilac: '#c3b2f0', violet: '#7b6bb8',
+  cream: '#fff8ee', paper: '#fdf3e4', peach: '#ffbf9a', coral: '#ff7a6b', orange: '#ff9f43', gold: '#f7c64c', butter: '#ffe6a3',
+  pink: '#ff9fb2', blush: '#ffd6dc', rose: '#e8436d', wine: '#9e1f45', mint: '#8fe3cf', leaf: '#5aa85a', pine: '#3f8f4f', meadow: '#a9d98a',
+  blue: '#4a80c4', navy: '#2c3d6e', wicker: '#c99a5b', wood: '#a8743f', bark: '#7a4f30', stone: '#c9c3b6', white: '#ffffff', mist: '#eef0ff' };
+const F = { title: 'Pacifico', hand: 'Dancing Script', sans: 'Be Vietnam Pro', serif: 'Playfair Display', note: 'Patrick Hand' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.ink) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.style ? ` font-style="${o.style}"` : ''}${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `>${str}</text>`;
+/** big words drawn once into a picture after their font arrives: large type can rasterise a little differently from one
+    frame to the next, and a print has to hold still. Same options as T(), plus stroke and sw for an outline */
+const WORDS = [];
+const TO = (x, y, str, o) => { WORDS.push({ x, y, str, o }); return `<g id="words${WORDS.length - 1}"></g>`; };
+async function drawWords() {
+  await Promise.all(WORDS.map(async ({ x, y, str, o }, i) => {
+    const k = 2, pad = (o.sw || 0) + 6, font = `${o.style || ''} ${o.w || 800} ${o.s * k}px "${o.f}"`;
+    const cv = document.createElement('canvas'), c = cv.getContext('2d', { willReadFrequently: true }); c.font = font;
+    const w = c.measureText(str).width / k, h = o.s * 1.7;
+    cv.width = Math.ceil((w + pad * 2) * k); cv.height = Math.ceil(h * k);
+    c.font = font; c.lineJoin = 'round'; c.textBaseline = 'alphabetic';
+    const bx = pad * k, by = o.s * 1.25 * k;
+    if (o.stroke) { c.strokeStyle = o.stroke; c.lineWidth = (o.sw || 4) * k; c.strokeText(str, bx, by); }
+    c.fillStyle = o.fill || C.ink; c.fillText(str, bx, by);
+    const left = x - pad - (o.anchor === 'middle' ? w / 2 : 0), url = cv.toDataURL(), img = new Image();
+    img.src = url; await img.decode();
+    document.getElementById(`words${i}`).outerHTML = `<image x="${n1(left)}" y="${n1(y - o.s * 1.25)}" width="${n1(cv.width / k)}" height="${n1(cv.height / k)}" href="${url}"/>`;
+  }));
+  await Promise.all([...document.querySelectorAll('#card image')].map(el => (el.decode ? el.decode() : Promise.resolve()).catch(() => {})));
+}
+
+/* what the scatter keeps clear of */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m);
+
+/* small shapes */
+const heart = (z, fill, sw = 1.8, c = C.ink) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw, c)}/>`;
+const twinkle = (z, fill, sw = 1.4, c = C.ink) => `<path d="M0 ${n1(-z)} Q${n1(z * .14)} ${n1(-z * .14)} ${n1(z)} 0 Q${n1(z * .14)} ${n1(z * .14)} 0 ${n1(z)} Q${n1(-z * .14)} ${n1(z * .14)} ${n1(-z)} 0 Q${n1(-z * .14)} ${n1(-z * .14)} 0 ${n1(-z)}Z" fill="${fill}" ${ink(sw, c)}/>`;
+const bird = (z, sw = 2, c = C.ink) => `<path d="M${n1(-z)} ${n1(-z * .2)} Q${n1(-z * .5)} ${n1(-z * .65)} 0 ${n1(z * .05)} Q${n1(z * .5)} ${n1(-z * .65)} ${n1(z)} ${n1(-z * .2)}" fill="none" ${ink(sw, c)}/>`;
+const sunny = (z, fill = C.gold) => `<circle r="${n1(z)}" fill="${fill}" ${ink(1.6)}/>` + [0, 45, 90, 135, 180, 225, 270, 315].map(a => { const [ax, ay] = pt(0, 0, z * 1.3, a), [bx, by] = pt(0, 0, z * 1.75, a); return `<path d="M${ax} ${ay} L${bx} ${by}" ${ink(1.6, C.orange)}/>`; }).join('');
+const flower = (z, fill) => { let s = ''; for (let i = 0; i < 5; i++) { const [x, y] = pt(0, 0, z * .55, i * 72 - 90); s += `<circle cx="${x}" cy="${y}" r="${n1(z * .45)}" fill="${fill}" ${ink(1.1)}/>`; } return s + `<circle r="${n1(z * .32)}" fill="${C.gold}" ${ink(1)}/>`; };
+const note = (z, fill) => `<ellipse cx="${n1(-z * .3)}" cy="${n1(z * .5)}" rx="${n1(z * .32)}" ry="${n1(z * .24)}" transform="rotate(-20 ${n1(-z * .3)} ${n1(z * .5)})" fill="${fill}" ${ink(1.2)}/><path d="M0 ${n1(z * .45)} L0 ${n1(-z * .6)} Q${n1(z * .4)} ${n1(-z * .45)} ${n1(z * .45)} ${n1(-z * .1)}" fill="none" ${ink(1.6)}/>`;
+const cloud = (w, fill = C.white) => `<path d="M${n1(-w / 2)} 0 Q${n1(-w / 2)} ${n1(-w * .22)} ${n1(-w * .28)} ${n1(-w * .2)} Q${n1(-w * .2)} ${n1(-w * .42)} 0 ${n1(-w * .34)} Q${n1(w * .2)} ${n1(-w * .44)} ${n1(w * .28)} ${n1(-w * .2)} Q${n1(w / 2)} ${n1(-w * .2)} ${n1(w / 2)} 0Z" fill="${fill}" ${ink(1.8)}/>`;
+/** a sky drawn in thin flat bands (an SVG gradient got dithered differently from one load to the next) */
+function bands(x, y, w, h, stops) {
+  let s = '';
+  for (let yy = y; yy < y + h; yy += 2) {
+    const t = (yy - y) / h, i = Math.max(1, stops.findIndex(([k]) => k >= t)), [k0, c0] = stops[i - 1], [k1, c1] = stops[i], f = (t - k0) / (k1 - k0 || 1);
+    s += `<rect x="${x}" y="${yy}" width="${w}" height="2.6" fill="rgb(${c0.map((v, j) => Math.round(v + (c1[j] - v) * f)).join(',')})"/>`;
+  }
+  return s;
+}
+
+/* ── the sheet: a band of first light with stars and running words, a scalloped cream sheet on it ── */
+function sheet() {
+  let s = `<rect width="1280" height="800" fill="${C.band}"/>`;
+  const words = [
+    [640, 21, 0, 'ĐẠP XE ĐÓN BÌNH MINH  ·  MARRY ME AT SUNRISE  ·  CHỞ EM LÊN ĐỒI  ·  SỚM MAI CÓ EM', 660],
+    [640, 790, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  KEEP IT IN VIEW  ·  No. 0542  ·  BƯU CỤC BÌNH MINH', 700],
+    [19, 400, -90, 'DẬY ĐI EM  ·  RISE AND SHINE', 280],
+    [1262, 400, 90, 'MỘT BÌNH MINH  ·  MỘT LỜI HỨA', 290]];
+  const inWords = (x, y) => words.some(([wx, wy, a, , w]) => a ? Math.abs(x - wx) < 15 && Math.abs(y - wy) < w / 2 + 12 : Math.abs(y - wy + 4) < 15 && Math.abs(x - wx) < w / 2 + 12);
+  for (let i = 0; i < 1300; i++) {
+    const x = r() * 1280, y = r() * 800;
+    if (x > 30 && x < 1250 && y > 30 && y < 770) continue;
+    if (inWords(x, y)) continue;
+    const z = 1.2 + r() * 3.2, k = r();
+    s += k < .14 ? g(x, y, r() * 90, 1, twinkle(z * 1.5, pick([C.gold, C.butter, C.white]), .8, C.deep))
+      : k < .24 ? g(x, y, r() * 40 - 20, 1, bird(z * 1.4, 1.2, pick([C.ice, C.lilac])))
+      : `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(z)}" fill="${pick([C.cream, C.ice, C.sky, C.lilac, C.peach, C.butter])}"/>`;
+  }
+  words.forEach(([x, y, a, str]) => { s += g(x, y, a, 1, T(0, a ? 4 : 0, str, { s: 11.5, ls: 3, anchor: 'middle', fill: C.cream })); });
+  const L = 30, Tp = 30, R = 1250, B = 770;
+  let d = `M${L} ${Tp}`;
+  const edge = (from, to, fixed, horizontal, out) => {           // scallops along one edge, each its own width
+    for (let p = from; Math.abs(to - p) > 1;) {
+      const step = Math.sign(to - p) * Math.min(Math.abs(to - p), 15 + r() * 10), q = p + step, m = (p + q) / 2, b = (6 + r() * 4) * out;
+      d += horizontal ? ` Q${n1(m)} ${n1(fixed + b)} ${n1(q)} ${n1(fixed)}` : ` Q${n1(fixed + b)} ${n1(m)} ${n1(fixed)} ${n1(q)}`;
+      p = q;
+    }
+  };
+  edge(L, R, Tp, true, -1); edge(Tp, B, R, false, 1); edge(R, L, B, true, 1); edge(B, Tp, L, false, -1);
+  s += `<path d="${d}Z" fill="${C.cream}" ${ink(2.4)}/>`;
+  s += `<rect x="44" y="44" width="1192" height="712" rx="10" fill="none" stroke="${C.violet}" stroke-width="1.4" stroke-dasharray="7 6"/>`;
+  return s;
+}
+
+/* ── the sunrise window: the sun over far hills, rays, the city in mist, the winding road up to an overlook, birds ── */
+function dawnWindow() {
+  const x0 = 744, y0 = 60, w = 466, h = 300, hz = y0 + 150;
+  keep(x0 - 14, y0 - 14, x0 + w + 14, y0 + h + 30);
+  let s = `<clipPath id="win"><rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="22"/></clipPath><g clip-path="url(#win)">`;
+  s += bands(x0, y0, w, h, [[0, [111, 150, 224]], [.25, [169, 160, 222]], [.42, [246, 176, 184]], [.52, [255, 211, 154]], [1, [255, 236, 196]]]);
+  for (let i = 0; i < 18; i++) s += g(x0 + r() * w, y0 + 6 + r() * 50, 0, 1, twinkle(2 + r() * 3, C.white, .8));   // the last stars
+  const sx = x0 + 300;
+  for (let i = 0; i < 22; i++) { const a = 182 + i * 8 + (r() - .5) * 3, [ax, ay] = pt(sx, hz, 56, a), [bx, by] = pt(sx, hz, 90 + r() * 70, a); s += `<path d="M${ax} ${ay} L${bx} ${by}" ${ink(i % 2 ? 2 : 3.4, C.butter)}/>`; }
+  s += `<path d="M${sx - 48} ${hz} A48 48 0 0 1 ${sx + 48} ${hz}Z" fill="${C.gold}" ${ink(2.6)}/>`;
+  s += `<path d="M${sx - 32} ${hz - 16} q32 -11 64 0" fill="none" ${ink(1.6, C.orange)}/>`;
+  for (const [cx, cy, wd] of [[x0 + 110, y0 + 70, 120], [x0 + 400, y0 + 52, 90], [x0 + 220, y0 + 92, 70]]) s += g(cx, cy, 0, 1, cloud(wd, pick([C.blush, C.white, C.butter])));
+  for (const [base, top, col] of [[hz + 2, 34, C.lilac], [hz + 12, 22, C.violet]]) {   // far hills on the horizon
+    let d = `M${x0} ${base}`; for (let x = 0; x <= w; x += 12) d += ` L${n1(x0 + x)} ${n1(base - top * (.5 + .5 * Math.sin(x * .021 + top)) - r() * 3)}`;
+    s += `<path d="${d} L${x0 + w} ${y0 + h} L${x0} ${y0 + h}Z" fill="${col}" ${ink(1.6)}/>`;
+  }
+  for (let row = 0; row < 4; row++) {                                // the city below, roofs and windows, rows fading into the mist
+    const y = hz + 34 + row * 22;
+    for (let x = x0 + 120 + (row % 2) * 8; x < x0 + w - 6;) {
+      const bw = 12 + r() * 16, bh = 10 + r() * 22 * (r() < .1 ? 2.4 : 1);
+      s += `<rect x="${n1(x)}" y="${n1(y - bh)}" width="${n1(bw)}" height="${n1(bh + 8)}" fill="${pick([C.ice, C.mist, C.lilac, C.white])}" ${ink(1.2)}/>`;
+      for (let wy = y - bh + 4; wy < y - 2; wy += 6) s += `<rect x="${n1(x + 3)}" y="${n1(wy)}" width="2.6" height="2.6" fill="${r() < .2 ? C.gold : C.violet}"/>`;
+      x += bw + 2 + r() * 5;
+    }
+    s += `<path d="M${x0 + 110} ${y - 3} q60 -8 120 0 t120 0 t120 0" fill="none" stroke="${C.white}" stroke-width="${9 - row}" stroke-linecap="round" opacity=".75"/>`;   // mist
+  }
+  /* the hill on the left with its switchback road and the overlook rail at the top */
+  s += `<path d="M${x0} ${y0 + h} L${x0} ${hz - 6} Q${x0 + 60} ${hz - 44} ${x0 + 120} ${hz - 30} Q${x0 + 170} ${hz + 10} ${x0 + 205} ${y0 + h}Z" fill="${C.leaf}" ${ink(2.2)}/>`;
+  s += `<path d="M${x0 + 196} ${y0 + h - 4} L${x0 + 40} ${y0 + h - 34} L${x0 + 150} ${y0 + h - 70} L${x0 + 50} ${y0 + h - 104} L${x0 + 110} ${hz - 28}" fill="none" ${ink(9, C.stone)}/>`;
+  s += `<path d="M${x0 + 196} ${y0 + h - 4} L${x0 + 40} ${y0 + h - 34} L${x0 + 150} ${y0 + h - 70} L${x0 + 50} ${y0 + h - 104} L${x0 + 110} ${hz - 28}" fill="none" stroke="${C.white}" stroke-width="1.4" stroke-dasharray="5 6"/>`;
+  for (let i = 0; i < 6; i++) s += `<path d="M${x0 + 70 + i * 9} ${hz - 34} l0 -10" ${ink(1.6)}/>`;
+  s += `<path d="M${x0 + 66} ${hz - 40} l50 0" ${ink(1.8)}/>`;
+  for (const [tx, ty, z] of [[x0 + 24, hz + 30, 1], [x0 + 176, hz + 66, .8], [x0 + 20, hz + 100, .9]]) s += g(tx, ty, 0, z, `<path d="M0 10 L0 22" ${ink(2.4, C.bark)}/><circle r="11" fill="${C.pine}" ${ink(1.8)}/>`);
+  for (const [bx, by, z] of [[x0 + 330, y0 + 120, 12], [x0 + 356, y0 + 104, 9], [x0 + 380, y0 + 126, 8], [x0 + 190, y0 + 130, 10], [x0 + 420, y0 + 96, 7]]) s += g(bx, by, (r() - .5) * 20, 1, bird(z, 2.2));
+  s += '</g>';
+  s += `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="22" fill="none" ${ink(3.4)}/>`;
+  s += `<rect x="${x0 + 10}" y="${y0 + 10}" width="${w - 20}" height="${h - 20}" rx="16" fill="none" stroke="${C.cream}" stroke-width="1.2" stroke-dasharray="3 7" opacity=".8"/>`;
+  s += `<rect x="${x0 + w - 196}" y="${y0 + h - 38}" width="176" height="24" rx="12" fill="${C.ink}"/>` + T(x0 + w - 108, y0 + h - 21, 'BÌNH MINH · 05:42', { s: 12, ls: 2.4, anchor: 'middle', fill: C.butter });
+  s += T(x0 + 12, y0 + h + 26, 'chỗ ngắm của mình', { f: F.hand, w: 700, s: 21, fill: C.ink });
+  return s;
+}
+
+/* ── the title ── */
+function title() {
+  keep(56, 56, 726, 312);
+  let s = TO(66, 140, 'Đạp xe', { f: F.title, w: 400, s: 86, fill: C.ink, stroke: C.sky, sw: 10 });
+  s += TO(150, 234, 'đón bình minh', { f: F.hand, w: 700, s: 92, fill: C.coral, stroke: C.cream, sw: 8 });
+  s += g(440, 96, 0, 1, sunny(20));
+  s += TO(70, 274, 'marry me', { f: F.serif, w: 400, style: 'italic', s: 26, fill: C.violet }) + TO(178, 298, 'at sunrise', { f: F.serif, w: 400, style: 'italic', s: 26, fill: C.violet });
+  s += `<path d="M300 258 C420 276 520 246 650 262" fill="none" ${ink(2.4, C.coral)}/>`;
+  s += `<rect x="388" y="274" width="232" height="26" rx="13" fill="${C.ink}"/>` + T(504, 292, 'CHỞ EM LÊN ĐỒI · 05:30', { s: 11.5, ls: 2.2, anchor: 'middle', fill: C.cream });
+  s += g(520, 120, -10, 1, bird(16, 2.6)) + g(566, 96, 8, 1, bird(11, 2.2)) + g(612, 130, -6, 1, bird(9, 2));
+  s += g(672, 74, -8, 1, `<circle r="13" fill="${C.butter}" ${ink(2)}/><path d="M-13 0 a13 13 0 0 1 26 0" fill="${C.gold}" ${ink(2)}/><rect x="-3" y="-17" width="6" height="5" fill="${C.stone}" ${ink(1.4)}/>` +
+    `<path d="M18 -10 q6 6 0 14 M24 -15 q10 11 0 24" fill="none" ${ink(1.8, C.rose)}/>` + T(0, 34, 'kính coong!', { f: F.note, w: 400, s: 17, anchor: 'middle', fill: C.rose }));   // the bell
+  return s;
+}
+
+/* ── the old blue bicycle: wicker basket of flowers with the note in it, a rack with a cushion ── */
+function bicycle() {
+  const x = 210, y = 452;
+  keep(56, 316, 392, 612);
+  let s = `<g transform="${tf(x, y, -3)}">`;
+  const wheel = (cx) => {
+    let w = `<circle cx="${cx}" cy="70" r="62" fill="${C.ice}" ${ink(3)}/><circle cx="${cx}" cy="70" r="54" fill="none" ${ink(2.2, C.stone)}/>`;
+    for (let i = 0; i < 16; i++) { const [ax, ay] = pt(cx, 70, 6, i * 22.5 + 8), [bx, by] = pt(cx, 70, 53, i * 22.5); w += `<path d="M${ax} ${ay} L${bx} ${by}" ${ink(1, C.ink)}/>`; }
+    return w + `<circle cx="${cx}" cy="70" r="7" fill="${C.stone}" ${ink(1.8)}/>`;
+  };
+  s += wheel(-100) + wheel(100);
+  s += `<path d="M-108 0 A66 66 0 0 1 -40 -6" fill="none" ${ink(7, C.cream)}/><path d="M-108 0 A66 66 0 0 1 -40 -6" fill="none" ${ink(1.6)}/>`;   // mudguards
+  s += `<path d="M30 -10 A66 66 0 0 1 120 10" fill="none" ${ink(7, C.cream)}/><path d="M30 -10 A66 66 0 0 1 120 10" fill="none" ${ink(1.6)}/>`;
+  const frame = `M-100 70 L-10 74 L-30 -10 Z M-10 74 Q40 40 66 -24 M-30 -10 L58 -30 M66 -24 L100 70`;
+  s += `<path d="${frame}" fill="none" ${ink(11)}/><path d="${frame}" fill="none" ${ink(7, C.blue)}/>`;
+  s += `<path d="M-10 74 m-16 0 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0" fill="${C.stone}" ${ink(2)}/><path d="M-10 74 L-26 100 M-10 74 L8 50" ${ink(3)}/>`;
+  s += `<rect x="-36" y="96" width="20" height="7" rx="2" fill="${C.ink}"/><rect x="0" y="44" width="20" height="7" rx="2" fill="${C.ink}"/>`;
+  s += `<path d="M-50 -22 Q-30 -32 -8 -24 Q-14 -14 -34 -14 Q-50 -14 -50 -22Z" fill="${C.bark}" ${ink(2)}/><path d="M-30 -14 L-30 -6" ${ink(3)}/>`;   // saddle
+  s += `<path d="M-60 -10 L-150 -10 L-158 6" fill="none" ${ink(4, C.stone)}/><rect x="-150" y="-22" width="88" height="12" rx="5" fill="${C.peach}" ${ink(2)}/>`;   // the rack and its cushion
+  for (let i = 0; i < 5; i++) s += `<path d="M${-144 + i * 18} -22 l0 12" ${ink(1.2, C.rose)}/>`;
+  s += `<path d="M66 -24 L60 -52 Q86 -66 104 -50" fill="none" ${ink(4.5, C.stone)}/><circle cx="102" cy="-50" r="5" fill="${C.cream}" ${ink(1.6)}/>`;   // bars and a grip
+  s += `<path d="M48 -52 a8 8 0 0 1 16 0z" fill="${C.gold}" ${ink(1.6)}/>`;   // the bell
+  s += `<path d="M76 -46 L146 -46 L138 -6 L84 -6Z" fill="${C.wicker}" ${ink(2.4)}/>`;   // the basket
+  for (let i = 0; i < 6; i++) s += `<path d="M${80 + i * 1.3} ${-40 + i * 6.4} L${143 - i * 1.3} ${-40 + i * 6.4}" ${ink(1.2, C.bark)}/>`;
+  for (let i = 0; i < 7; i++) s += `<path d="M${86 + i * 9} -46 L${88 + i * 8} -6" ${ink(1, C.bark)}/>`;
+  s += g(96, -54, -14, 1, `<rect x="-14" y="-12" width="28" height="22" rx="2" fill="${C.white}" ${ink(1.8)}/><path d="M-10 -4 l20 0 M-10 2 l16 0" ${ink(1, C.sky)}/>` + g(8, -14, 0, 1, heart(8, C.rose, 1)));
+  for (const [fx, fy, c] of [[118, -56, C.pink], [134, -62, C.white], [128, -50, C.coral], [108, -64, C.butter]]) s += g(fx, fy, r() * 60, 1, flower(9, c));
+  s += `<circle cx="150" cy="-24" r="7" fill="${C.butter}" ${ink(1.6)}/>`;   // the lamp
+  s += '</g>';
+  s += TO(176, 606, 'chiếc xe đạp cũ', { f: F.hand, w: 700, s: 26, fill: C.blue, stroke: C.cream, sw: 6 });
+  for (const [nx, ny, z] of [[372, 324, 16], [394, 302, 12], [346, 304, 10]]) s += g(nx, ny, (r() - .5) * 20, 1, note(z, pick([C.gold, C.pink, C.mint])));
+  return s;
+}
+
+/* ── the map of the hill, where the act stands: contour lines, the road winding from her house to the top ── */
+function hillMap() {
+  const x0 = 404, y0 = 430, w = 472, h = 258;
+  keep(x0 - 8, y0 - 8, x0 + w + 8, y0 + h + 52);
+  let s = `<g transform="${tf(0, 0, 0)}"><rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="18" fill="${C.meadow}" ${ink(3)}/>`;
+  s += `<clipPath id="map"><rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="18"/></clipPath><g clip-path="url(#map)">`;
+  const cx = x0 + 300, cy = y0 + 70;
+  for (let i = 9; i >= 1; i--) {                                     // contour lines round the top, each a little wobbly
+    let d = ''; const rx = i * 34, ry = i * 20;
+    for (let k = 0; k <= 48; k++) { const a = k / 48 * Math.PI * 2, wob = 1 + .06 * Math.sin(a * 5 + i) + .04 * Math.sin(a * 9 + i * 2); d += `${k ? 'L' : 'M'}${n1(cx + Math.cos(a) * rx * wob)} ${n1(cy + Math.sin(a) * ry * wob)}`; }
+    s += `<path d="${d}Z" fill="${i % 2 ? '#bfe3a0' : '#a9d98a'}" ${ink(1.4, C.pine)}/>`;
+  }
+  const road = `M${x0 + 30} ${y0 + h - 20} L${x0 + 250} ${y0 + h - 46} Q${x0 + 380} ${y0 + h - 60} ${x0 + 300} ${y0 + h - 104} L${x0 + 120} ${y0 + 130} Q${x0 + 70} ${y0 + 110} ${x0 + 150} ${y0 + 86} L${cx - 10} ${cy + 10}`;
+  s += `<path d="${road}" fill="none" ${ink(18)}/><path d="${road}" fill="none" ${ink(13, C.stone)}/><path d="${road}" fill="none" stroke="${C.white}" stroke-width="1.8" stroke-dasharray="7 7"/>`;
+  for (let i = 0; i < 22; i++) {                                     // little trees on the slopes
+    const tx = x0 + 20 + r() * (w - 40), ty = y0 + 20 + r() * (h - 40);
+    if (Math.hypot(tx - cx, (ty - cy) * 1.7) < 46) continue;
+    s += g(tx, ty, 0, .6 + r() * .4, `<path d="M0 6 L0 14" ${ink(2, C.bark)}/><circle r="7" fill="${pick([C.leaf, C.pine])}" ${ink(1.4)}/>`);
+  }
+  s += '</g>';
+  s += g(x0 + 36, y0 + h - 44, 0, 1, `<rect x="-16" y="-14" width="32" height="26" fill="${C.cream}" ${ink(2)}/><path d="M-20 -14 L0 -30 L20 -14Z" fill="${C.coral}" ${ink(2)}/><rect x="-5" y="0" width="10" height="12" fill="${C.wood}" ${ink(1.4)}/><rect x="6" y="-8" width="7" height="7" fill="${C.gold}" ${ink(1.2)}/>`);
+  s += T(x0 + 62, y0 + h - 52, 'nhà em', { f: F.hand, w: 700, s: 20, fill: C.ink });
+  s += g(cx - 6, cy - 4, 0, 1, `<path d="M0 0 L0 -40" ${ink(2.6)}/><path d="M0 -40 L28 -32 L0 -24Z" fill="${C.rose}" ${ink(2)}/>` + g(-14, -10, 0, 1, heart(14, C.pink, 1.4)));
+  s += T(cx + 30, cy - 26, 'đỉnh đồi', { f: F.hand, w: 700, s: 22, fill: C.ink });
+  s += g(x0 + 214, y0 + h - 70, 0, .34, `<circle cx="-40" cy="20" r="22" fill="${C.ice}" ${ink(5)}/><circle cx="40" cy="20" r="22" fill="${C.ice}" ${ink(5)}/><path d="M-40 20 L0 22 L-10 -10Z M0 22 L24 -8 M-10 -10 L24 -14 M24 -8 L40 20" fill="none" ${ink(9, C.blue)}/>`);
+  s += g(x0 + w - 40, y0 + h - 40, 0, 1, `<circle r="20" fill="${C.cream}" ${ink(2)}/><path d="M0 -16 L5 0 L0 16 L-5 0Z" fill="${C.rose}" ${ink(1.4)}/>` + T(0, -24, 'B', { s: 12, anchor: 'middle' }));   // a compass
+  s += '</g>';
+  s += `<g transform="${tf(x0 + w / 2, y0 + h + 30, 0)}"><path d="M-226 -16 L226 -16 L212 0 L226 16 L-226 16 L-212 0Z" fill="${C.ink}"/>` + T(0, 5, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 15, w: 600, anchor: 'middle', fill: C.cream }) + '</g>';
+  return s;
+}
+
+/* ── the morning's plan, on a card ── */
+function plan() {
+  const x = 906, y = 396;
+  keep(x - 14, y - 14, x + 222, y + 170);
+  let s = `<g transform="${tf(x, y, -2)}"><rect x="0" y="0" width="206" height="156" rx="10" fill="${C.white}" ${ink(2)}/>`;
+  s += `<rect x="0" y="0" width="206" height="34" rx="10" fill="${C.lilac}" ${ink(2)}/>` + T(103, 22, 'SỚM MAI CỦA HAI ĐỨA', { s: 11.5, ls: 1.6, anchor: 'middle', fill: C.ink });
+  [['05:00', 'Rung chuông'], ['05:15', 'Lên dốc'], ['05:42', 'Đón nắng'], ['05:45', 'Ngỏ lời']].forEach(([k, v], i) => {
+    const ly = 56 + i * 24;
+    s += T(12, ly, k, { s: 12, w: 800, fill: C.violet }) + T(194, ly, v, { f: F.note, w: 400, s: 18, anchor: 'end', fill: C.ink });
+    s += `<line x1="12" y1="${ly + 6}" x2="194" y2="${ly + 6}" stroke="${C.ink}" stroke-width=".8" opacity=".35"/>`;
+    s += g(70, ly - 5, 0, 1, i === 3 ? heart(10, C.rose, 1.1) : i === 2 ? sunny(4) : twinkle(5, C.gold, 1));
+  });
+  return s + '</g>';
+}
+
+/* ── an open ring box on a doily ── */
+function ringBox() {
+  const x = 1128, y = 618;
+  keep(x - 80, y - 90, x + 96, y + 72);
+  let s = '';
+  for (let i = 0; i < 20; i++) { const [px, py] = pt(x, y + 18, 66, i * 18); s += `<circle cx="${px}" cy="${n1(py * .5 + (y + 18) * .5)}" r="11" fill="${C.white}" ${ink(1.4)}/>`; }   // a lace doily
+  s += `<ellipse cx="${x}" cy="${y + 18}" rx="66" ry="30" fill="${C.white}" ${ink(1.6)}/>`;
+  s += `<path d="M${x - 40} ${y + 18} L${x - 40} ${y - 6} L${x + 40} ${y - 6} L${x + 40} ${y + 18} Q${x} ${y + 30} ${x - 40} ${y + 18}Z" fill="${C.rose}" ${ink(2.4)}/>`;
+  s += `<path d="M${x - 40} ${y - 6} L${x - 34} ${y - 64} L${x + 34} ${y - 64} L${x + 40} ${y - 6}Z" fill="${C.wine}" ${ink(2.4)}/><path d="M${x - 30} ${y - 12} L${x - 26} ${y - 56} L${x + 26} ${y - 56} L${x + 30} ${y - 12}Z" fill="${C.blush}" ${ink(1.4)}/>`;
+  s += `<ellipse cx="${x}" cy="${y - 4}" rx="34" ry="8" fill="${C.cream}" ${ink(1.8)}/>`;
+  s += `<circle cx="${x}" cy="${y - 20}" r="16" fill="none" ${ink(6)}/><circle cx="${x}" cy="${y - 20}" r="16" fill="none" ${ink(3.6, C.gold)}/>`;
+  s += `<path d="M${x - 9} ${y - 40} L${x} ${y - 50} L${x + 9} ${y - 40} L${x} ${y - 30}Z" fill="${C.ice}" ${ink(1.8)}/>`;
+  for (const [dx, dy, z] of [[-30, -70, 8], [32, -76, 6], [44, -46, 5], [-48, -40, 5]]) s += g(x + dx, y + dy, 0, 1, twinkle(z, C.butter, 1.2));
+  s += TO(x + 2, y + 62, 'marry me?', { f: F.serif, w: 400, style: 'italic', s: 24, fill: C.wine, anchor: 'middle' });
+  return s;
+}
+
+/* ── a stamp and postmarks ── */
+function stamps() {
+  keep(56, 596, 250, 730);
+  let s = `<g transform="${tf(70, 604, -4)}"><rect x="0" y="0" width="92" height="110" fill="${C.white}" ${ink(2)}/>`;
+  for (let i = 0; i < 9; i++) s += `<circle cx="${4 + i * 10.5}" cy="0" r="3" fill="${C.cream}"/><circle cx="${4 + i * 10.5}" cy="110" r="3" fill="${C.cream}"/>`;
+  s += bands(8, 8, 76, 64, [[0, [159, 184, 240]], [.6, [255, 191, 154]], [1, [255, 230, 163]]]);
+  s += `<path d="M24 72 A22 22 0 0 1 68 72Z" fill="${C.gold}" ${ink(1.6)}/><path d="M8 72 Q30 58 46 70 Q64 60 84 72Z" fill="${C.leaf}" ${ink(1.4)}/>`;
+  s += `<rect x="8" y="8" width="76" height="64" fill="none" ${ink(1.6)}/>` + T(46, 88, 'BÌNH MINH', { s: 10, ls: 1, anchor: 'middle', fill: C.rose }) + T(46, 102, '0542đ', { f: F.note, w: 400, s: 15, anchor: 'middle' }) + '</g>';
+  s += g(196, 670, -12, 1, `<circle r="40" fill="none" ${ink(2, C.rose)}/><circle r="31" fill="none" ${ink(1.2, C.rose)}/>` + T(0, -10, 'BƯU CỤC ĐỒI', { s: 8.5, ls: 1, anchor: 'middle', fill: C.rose }) +
+    T(0, 6, '05·30', { f: F.note, w: 400, s: 16, anchor: 'middle', fill: C.rose }) + T(0, 20, 'SỚM MAI', { s: 8.5, ls: 1, anchor: 'middle', fill: C.rose }));
+  for (let i = 0; i < 3; i++) s += `<path d="M150 ${700 + i * 8} q20 -6 40 0 t40 0 t40 0" fill="none" ${ink(1.6, C.rose)}/>`;
+  return s;
+}
+
+/* ── a verse on a slip of ruled paper ── */
+function verse() {
+  keep(250, 300, 400, 392);
+  let s = `<g transform="${tf(272, 350, -4)}"><rect x="-18" y="-30" width="128" height="62" rx="5" fill="${C.paper}" ${ink(1.8)}/>`;
+  [-8, 14].forEach(ly => { s += `<line x1="-10" y1="${ly + 2}" x2="102" y2="${ly + 2}" stroke="${C.sky}" stroke-width="1.2"/>`; });
+  s += T(-8, -12, 'Ngồi sau', { f: F.hand, w: 700, s: 19 }) + T(-8, 12, 'ôm anh nhé', { f: F.hand, w: 700, s: 19 });
+  return s + g(96, 20, 10, 1, heart(13, C.rose, 1.3)) + '</g>';
+}
+
+/* ── rolling hills along the bottom of the sheet, a little road through them ── */
+function hills() {
+  let s = '';
+  for (const [y, c] of [[732, C.meadow], [744, C.leaf]]) {
+    let d = `M44 ${y + 14}`;
+    for (let x = 44; x < 1236;) { const w = 60 + r() * 50; d += ` q${n1(w * .5)} ${n1(-16 - r() * 10)} ${n1(w)} 0`; x += w; }
+    s += `<path d="${d} L1236 760 L44 760Z" fill="${c}" ${ink(1.6)}/>`;
+  }
+  for (let i = 0; i < 40; i++) s += g(50 + r() * 1180, 748 + r() * 8, 0, 1, `<circle r="${n1(1.6 + r() * 1.6)}" fill="${pick([C.white, C.butter, C.pink])}"/>`);
+  return s;
+}
+
+/* ── the scatter: birds, little suns, hearts, sparkles, flowers and notes where nothing else is ── */
+function scatter() {
+  let s = '';
+  for (let i = 0, placed = 0; i < 6000 && placed < 150; i++) {
+    const x = 52 + r() * 1176, y = 52 + r() * 676;
+    if (blocked(x, y, 14)) continue;
+    keep(x - 9, y - 9, x + 9, y + 9); placed++;
+    const k = r();
+    s += g(x, y, r() * 70 - 35, 1, k < .18 ? bird(7 + r() * 7, 1.8) : k < .28 ? sunny(4 + r() * 3, pick([C.gold, C.butter])) : k < .44 ? heart(9 + r() * 9, pick([C.pink, C.coral, C.blush]))
+      : k < .6 ? twinkle(5 + r() * 6, pick([C.gold, C.butter, C.mint, C.lilac])) : k < .72 ? flower(6 + r() * 4, pick([C.pink, C.white, C.butter, C.lilac]))
+      : k < .8 ? note(9 + r() * 5, pick([C.gold, C.pink, C.mint])) : k < .88 ? cloud(18 + r() * 12, pick([C.white, C.ice, C.blush])) : `<circle r="${n1(2 + r() * 3)}" fill="${pick([C.ink, C.coral, C.violet])}"/>`);
+  }
+  return s;
+}
+
+/* every face first (Vietnamese marks included), then the drawing, the big words as pictures, and only then ready */
+const FACES = [`400 86px "${F.title}"`, `700 92px "${F.hand}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `italic 400 26px "${F.serif}"`, `400 17px "${F.note}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Đạp xe đón bình minh ĐẶT Sớm mai của hai đứa ữ Ơ ’ marry me at sunrise 0542'))).then(async () => {
+  let body = sheet() + dawnWindow() + title() + bicycle() + hillMap() + plan() + ringBox() + stamps() + verse();
+  body += hills() + scatter();
+  document.getElementById('card').innerHTML = body;
+  await drawWords();
+  await document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

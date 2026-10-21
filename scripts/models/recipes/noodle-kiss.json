@@ -1,0 +1,13 @@
+{
+  "boy": {
+    "from": "kaykit/Barbarian",
+    "drop": ["1H_Axe_Offhand", "Barbarian_Round_Shield", "1H_Axe", "2H_Axe", "Mug", "Barbarian_Hat", "Barbarian_Cape"],
+    "clips": ["Idle", "Walking_A", "Interact", "Sit_Chair_Down", "Sit_Chair_Idle"]
+  },
+  "girl": {
+    "from": "kaykit/Rogue",
+    "drop": ["Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Knife", "Throwable", "Rogue_Cape"],
+    "clips": ["Idle", "Walking_A", "Sit_Chair_Down", "Sit_Chair_Idle"]
+  },
+  "chair": { "from": "restaurant/chair_A" }
+}

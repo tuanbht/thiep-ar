@@ -1,0 +1,24 @@
+{
+  "label": "Chung một sợi mì (3D: bữa tối mì Ý trong hẻm nhỏ, một sợi mì thành nụ hôn)",
+  "preset": {
+    "title": "Chung một sợi mì",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Một con hẻm nhỏ, một đĩa mì Ý và em ngồi đối diện: thế là đủ cho một tối thật đẹp.",
+      "Cảm ơn em đã cùng anh chia từng sợi mì, từng niềm vui nhỏ mỗi ngày."
+    ],
+    "from": "Người nhường em viên thịt cuối"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên bảng thực đơn)", "value": "Tối nay mình ăn mì Ý nhé, anh mời!", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (khung ảnh trên tường)", "value": "Nụ hôn vị cà chua", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải ruy băng)", "value": "Phần ngon nhất luôn dành cho em", "max": 32 }]
+      ]
+    }
+  ]
+}

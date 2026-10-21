@@ -1,0 +1,25 @@
+{
+  "label": "Đạp xe đón bình minh (3D: chàng chở nàng lên đồi ngắm mặt trời mọc và ngỏ lời cầu hôn)",
+  "preset": {
+    "title": "Đạp xe đón bình minh",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Có em ngồi sau, con dốc nào anh cũng muốn đạp lên.",
+      "Mình cùng đón thật nhiều bình minh nữa, em nhé."
+    ],
+    "from": "Người chở em mỗi sớm mai"
+  },
+  "groups": [
+    {
+      "title": "Bốn lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (mẩu giấy trong giỏ xe)", "value": "Dậy đi em, mình đi đón bình minh", "max": 60, "multiline": true }],
+        [{ "slot": "note2", "label": "Lời thứ hai (trên tấm biển gỗ ở khúc cua)", "value": "Dốc cao mấy cũng có em cùng đẩy", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Bình minh đầu tiên của mình", "max": 28 }],
+        [{ "slot": "note3", "label": "Lời cuối (trên dải băng)", "value": "Lấy anh nhé, em yêu?", "max": 32 }]
+      ]
+    }
+  ]
+}

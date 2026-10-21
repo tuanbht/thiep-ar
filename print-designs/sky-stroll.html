@@ -1,0 +1,346 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Dạo bước trên không: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/700-italic.css">
+<style>
+/* The printed card = the tracking image. "Dạo bước trên không" (walking on air) as a postcard from a flower town: a
+   lilac frame with words on plaques, an afternoon sky with inked clouds, a low sun and birds, the title with an English
+   line, a stamp and its postmark, a row of pastel gabled houses with flower boxes, shutters, a flower shop under a striped
+   awning and its hanging sign, a balcony full of flowers and a weathervane, bunting from gable to gable, a cobbled street
+   (every stone its own size and shade), rings of light stepping up off the street into the sky, a ticket for a walk in
+   the sky, a note card, the instruction on a ribbon, and petals, hearts and sparkles wherever there is paper left. The
+   street's middle is where the act stands. Every shape is inked so the tracker finds edges everywhere; nothing is mirrored
+   or tiled, and all randomness is seeded, so every render is the same picture. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#fff8ef}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(1020);
+const C = { ink: '#2f2344', paper: '#fff8ef', cream: '#fffdf7', frame: '#b9a6e6', frame2: '#8f78cf', sky1: '#a9cff2', sky2: '#d5e8fa', sky3: '#ffe2d2',
+  sun: '#ffe08a', gold: '#f2b84b', rose: '#e8648a', rose2: '#c9406a', pink: '#ffb3c6', blush: '#ffe1ea', mint: '#cdeedf', teal: '#5fb8a8',
+  leaf: '#6fbf73', moss: '#3f8a52', lilac: '#d6c8f5', lav: '#a993e0', butter: '#fff0b3', blue: '#6f9fd8', coral: '#ff8f7a', terra: '#e9855a',
+  plum: '#7a3f6b', green: '#3f8f62', stone1: '#ece2d6', stone2: '#e0d3c6', stone3: '#e9d9d9', stone4: '#dcd7e6', stone5: '#f1e6d2', grout: '#b9a9a8' };
+const WALLS = ['#ffd6df', '#fff0d9', '#e4dbff', '#fff0b3', '#d2efe2', '#d8ecff', '#ffe3cc', '#f6d6f0'];
+const ROOFS = ['#6f9fd8', '#e8707f', '#5fb8a8', '#c9789e', '#e9855a', '#8a7fd0', '#f0a35e'];
+const SHUT = ['#7fbfb0', '#8fb3e8', '#f29bb0', '#f0b860', '#b9a2e8'];
+const F = { hand: 'Dancing Script', sans: 'Be Vietnam Pro', round: 'Pacifico', note: 'Patrick Hand', serif: 'Playfair Display' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.ink) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.italic ? ' font-style="italic"' : ''}${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+
+/* what the scatter keeps clear of */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m);
+
+/* ---- small shapes ---- */
+const heart = (z, fill, sw = 1.8) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw)}/>`;
+const sparkle = (z, fill, sw = 1.4) => `<path d="M0 ${n1(-z)} Q${n1(z * .14)} ${n1(-z * .14)} ${n1(z)} 0 Q${n1(z * .14)} ${n1(z * .14)} 0 ${n1(z)} Q${n1(-z * .14)} ${n1(z * .14)} ${n1(-z)} 0 Q${n1(-z * .14)} ${n1(-z * .14)} 0 ${n1(-z)}Z" fill="${fill}" ${ink(sw)}/>`;
+const flower = (z, fill, mid = C.gold, sw = 1.3) => {                // five petals of their own sizes, a heart of gold
+  let s = ''; const a0 = r() * 72;
+  for (let i = 0; i < 5; i++) { const a = rad(a0 + i * 72), k = z * (.9 + r() * .2); s += `<ellipse cx="${n1(Math.cos(a) * k * .55)}" cy="${n1(Math.sin(a) * k * .55)}" rx="${n1(k * .42)}" ry="${n1(k * .3)}" transform="rotate(${n1(a0 + i * 72)} ${n1(Math.cos(a) * k * .55)} ${n1(Math.sin(a) * k * .55)})" fill="${fill}" ${ink(sw)}/>`; }
+  return s + `<circle r="${n1(z * .24)}" fill="${mid}" ${ink(sw * .8)}/>`;
+};
+const petal = (z, fill) => `<path d="M0 ${n1(-z)} C${n1(z * .7)} ${n1(-z * .5)} ${n1(z * .6)} ${n1(z * .6)} 0 ${n1(z)} C${n1(-z * .6)} ${n1(z * .6)} ${n1(-z * .7)} ${n1(-z * .5)} 0 ${n1(-z)}Z" fill="${fill}" ${ink(1.2)}/>`;
+const leaf = (len, w, fill = C.leaf) => `<path d="M0 0 C${n1(w)} ${n1(-len * .3)} ${n1(w * .6)} ${n1(-len * .82)} 0 ${n1(-len)} C${n1(-w * .7)} ${n1(-len * .78)} ${n1(-w)} ${n1(-len * .28)} 0 0Z" fill="${fill}" ${ink(1.4)}/>`;
+const vbird = (z, sw = 2) => `<path d="M${n1(-z)} ${n1(-z * .1)} Q${n1(-z * .5)} ${n1(-z * .62)} 0 0 Q${n1(z * .48)} ${n1(-z * .6)} ${n1(z * 1.05)} ${n1(-z * .16)}" fill="none" ${ink(sw)}/>`;
+/** a little round bird, wings up or folded, facing right (flip with a negative scale) */
+const bird = (body, wing, up) => `<ellipse cx="0" cy="0" rx="13" ry="9" fill="${body}" ${ink(1.8)}/><circle cx="10" cy="-6" r="6.5" fill="${body}" ${ink(1.8)}/>` +
+  `<path d="M15.5 -6.5 L21 -5 L15.5 -3.5Z" fill="${C.gold}" ${ink(1.2)}/><circle cx="11.5" cy="-7.5" r="1.4" fill="${C.ink}"/>` +
+  `<path d="M-12 -2 L-22 -7 L-20 2Z" fill="${wing}" ${ink(1.5)}/>` +
+  (up ? `<path d="M-4 -4 C-8 -22 4 -26 8 -14 C5 -9 1 -6 -4 -4Z" fill="${wing}" ${ink(1.6)}/>` : `<path d="M-8 -3 C-2 -7 8 -4 6 3 C0 5 -6 3 -8 -3Z" fill="${wing}" ${ink(1.6)}/>`);
+/** a cloud: puffs inked round their outside only (the inner lines painted over) */
+function cloud(x, y, s, puffs, fill = '#ffffff') {
+  const list = puffs.map(([px, py, pr]) => [x + px * s, y + py * s, pr * s]);
+  let out = list.map(([cx, cy, cr]) => `<circle cx="${n1(cx)}" cy="${n1(cy)}" r="${n1(cr)}" fill="${fill}" ${ink(2.4)}/>`).join('');
+  out += list.map(([cx, cy, cr]) => `<circle cx="${n1(cx)}" cy="${n1(cy)}" r="${n1(cr - 1.3)}" fill="${fill}"/>`).join('');
+  out += list.slice(0, 2).map(([cx, cy, cr]) => `<path d="M${n1(cx - cr * .5)} ${n1(cy + cr * .45)} q${n1(cr * .5)} ${n1(cr * .18)} ${n1(cr)} 0" fill="none" ${ink(1.4, '#f2b9c4')}/>`).join('');
+  return out;
+}
+
+/* ---- the frame: lilac with a stitched edge, words on cream plaques, the paper inside ---- */
+function sheet() {
+  let s = `<rect width="1280" height="800" fill="${C.frame}"/>`;
+  for (let i = 0; i < 90; i++) {                                     // the frame's own little flowers and dots, none alike
+    const side = i % 4, t = r(), x = side < 2 ? 40 + t * 1200 : side === 2 ? 14 + r() * 12 : 1254 + r() * 12, y = side === 0 ? 10 + r() * 12 : side === 1 ? 778 + r() * 12 : 40 + t * 720;
+    s += r() < .5 ? `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(1.8 + r() * 2.4)}" fill="${pick([C.cream, C.pink, C.butter, C.mint])}"/>` : g(x, y, r() * 90, 1, sparkle(3 + r() * 3, pick([C.cream, C.butter]), 1));
+  }
+  s += `<rect x="30" y="30" width="1220" height="740" rx="14" fill="${C.paper}" ${ink(2.6)}/>`;
+  s += `<rect x="40" y="40" width="1200" height="720" rx="10" fill="none" stroke="${C.frame2}" stroke-width="1.6" stroke-dasharray="14 5 3 5"/>`;
+  const plaque = (x, y, a, str, size = 11) => {
+    const w = measure(str, `800 ${size}px "${F.sans}"`) + str.length * 2.2 + 26;
+    return g(x, y, a, 1, `<rect x="${n1(-w / 2)}" y="-11" width="${n1(w)}" height="22" rx="11" fill="${C.cream}" ${ink(1.8)}/>` + T(0, 4, str, { s: size, ls: 2.2, anchor: 'middle' }));
+  };
+  s += plaque(640, 16, 0, 'BƯU THIẾP PHỐ HOA  ·  POSTCARD  ·  DẠO BƯỚC TRÊN KHÔNG  ·  WALKING ON AIR');
+  s += plaque(640, 784, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  HOÀNG HÔN  ·  No. 2010  ·  CHO HAI NGƯỜI');
+  s += plaque(16, 410, -90, 'NẮM TAY NHAU  ·  HAND IN HAND');
+  s += plaque(1264, 390, 90, 'TRÊN NHỮNG MÁI NHÀ  ·  OVER THE ROOFS');
+  return s;
+}
+
+/* ---- the sky: an afternoon blue going to peach over the roofs, a low sun, inked clouds, birds ---- */
+const ROOF_LINE = 300;
+function sky() {
+  let s = `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.sky1}"/><stop offset=".55" stop-color="${C.sky2}"/>` +
+    `<stop offset="1" stop-color="${C.sky3}"/></linearGradient><clipPath id="inner"><rect x="31" y="31" width="1218" height="738" rx="13"/></clipPath></defs>`;
+  s += `<g clip-path="url(#inner)"><rect x="31" y="31" width="1218" height="${ROOF_LINE + 40}" fill="url(#sky)"/>`;
+  for (let i = 0; i < 26; i++) {                                     // the sun's rays, each its own length
+    const a = rad(i * 360 / 26 + r() * 4), l0 = 58, l1 = 74 + r() * 30;
+    s += `<path d="M${n1(1000 + Math.cos(a) * l0)} ${n1(150 + Math.sin(a) * l0)} L${n1(1000 + Math.cos(a) * l1)} ${n1(150 + Math.sin(a) * l1)}" ${ink(2.2, i % 2 ? C.gold : '#ffcf7a')}/>`;
+  }
+  s += `<circle cx="1000" cy="150" r="46" fill="${C.sun}" ${ink(2.6)}/><circle cx="986" cy="136" r="12" fill="#fff6d0"/>`;
+  const shapes = [[[0, 0, 30], [32, -10, 38], [70, 0, 30], [96, 10, 20], [-26, 10, 20], [40, 16, 26]], [[0, 0, 22], [26, -12, 28], [56, -2, 24], [78, 8, 16], [-18, 8, 16]],
+    [[0, 0, 26], [30, -16, 30], [62, -6, 26], [-22, 6, 18], [86, 6, 18]]];
+  [[620, 96, 1, 0], [800, 220, .8, 1], [180, 270, .75, 2], [1150, 250, .7, 1], [470, 210, .62, 2], [1120, 80, .55, 0], [330, 70, .5, 1]].forEach(([x, y, k, i]) => { s += cloud(x, y, k, shapes[i]); });
+  [[560, 160, 16, -6], [600, 186, 11, 8], [880, 70, 13, -8], [912, 92, 9, 6], [240, 200, 12, 10], [1196, 186, 10, -4], [700, 250, 9, 4]].forEach(([x, y, z, a]) => { s += g(x, y, a, 1, vbird(z)); });
+  return s + '</g>';
+}
+
+/* ---- the title, top left: the words in big script, the English line, a dotted underline with a heart ---- */
+function title() {
+  keep(56, 46, 560, 252);
+  let s = g(60, 50, -2, 1, `<path d="M0 26 Q120 6 250 20 T480 18 L486 196 Q360 212 240 200 T4 206Z" fill="${C.cream}" ${ink(2.4)}/>` +
+    `<path d="M12 34 Q130 16 252 30 T472 28" fill="none" stroke="${C.pink}" stroke-width="2" stroke-dasharray="6 6"/>`);
+  s += T(80, 128, 'Dạo bước', { f: F.hand, w: 700, s: 82, fill: C.rose, stroke: C.ink, sw: 5 });
+  s += T(150, 196, 'trên không', { f: F.hand, w: 700, s: 66, fill: C.rose2, stroke: C.ink, sw: 4.5 });
+  s += T(318, 236, 'Walking on air', { f: F.serif, w: 700, s: 26, italic: true, anchor: 'middle', fill: C.plum });
+  s += `<path d="M180 246 Q318 256 456 244" fill="none" stroke="${C.ink}" stroke-width="1.6" stroke-dasharray="2 5"/>` + g(470, 240, 12, 1, heart(16, C.rose));
+  s += g(470, 76, 0, 1, T(0, 0, 'bưu thiếp từ phố hoa', { f: F.note, w: 400, s: 17, anchor: 'end', fill: C.green }));
+  s += g(520, 84, 14, 1, sparkle(12, C.butter)) + g(500, 186, -10, 1, sparkle(8, C.pink)) + g(64, 96, 0, 1, sparkle(9, C.mint));
+  return s;
+}
+
+/* ---- the stamp and its postmark, top right ---- */
+function stamp() {
+  const x = 1104, y = 50, w = 118, h = 140;
+  keep(x - 70, y - 6, x + w + 10, y + h + 34);
+  let s = `<g transform="${tf(x, y, 4)}"><rect width="${w}" height="${h}" fill="${C.cream}" ${ink(1.8)}/>`;
+  for (let i = 0; i <= 10; i++) for (const [px, py] of [[i * w / 10, 0], [i * w / 10, h], [0, i * h / 10], [w, i * h / 10]]) s += `<circle cx="${n1(px)}" cy="${n1(py)}" r="4.2" fill="${C.paper}"/>`;
+  s += `<rect x="10" y="10" width="${w - 20}" height="${h - 40}" fill="${C.sky2}" ${ink(1.6)}/>`;
+  s += `<path d="M10 ${h - 50} L30 ${h - 70} L50 ${h - 50} L50 ${h - 30} L10 ${h - 30}Z" fill="#ffd6df" ${ink(1.4)}/><path d="M6 ${h - 48} L30 ${h - 74} L54 ${h - 48}" fill="none" ${ink(2.4, C.rose)}/>`;
+  s += `<path d="M58 ${h - 44} L76 ${h - 60} L94 ${h - 44} L94 ${h - 30} L58 ${h - 30}Z" fill="${C.butter}" ${ink(1.4)}/><path d="M54 ${h - 42} L76 ${h - 64} L98 ${h - 42}" fill="none" ${ink(2.4, C.teal)}/>`;
+  [[30, 72, 9, 4], [44, 58, 8, 3.2], [60, 44, 7, 2.6], [78, 32, 6, 2.2]].forEach(([cx, cy, rx, ry]) => { s += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" ${ink(1.6, C.gold)}/>`; });
+  s += g(86, 24, 0, 1, heart(12, C.rose, 1.2)) + T(w / 2, h - 12, '20·10', { s: 12, ls: 1, anchor: 'middle', fill: C.plum });
+  s += '</g>';
+  const pm = 42, cx = 1078, cy = 158, say = 'PHỐ HOA · DẠO BƯỚC · ';
+  let ring = `<circle r="${pm}" fill="none" stroke="${C.rose2}" stroke-width="2.4"/><circle r="${pm - 14}" fill="none" stroke="${C.rose2}" stroke-width="1.6"/>`;
+  for (let i = 0; i < say.length; i++) ring += g(0, 0, i / say.length * 360, 1, T(0, -pm + 11, say[i], { s: 9, anchor: 'middle', fill: C.rose2 }));
+  ring += T(0, 4, '20·10', { s: 12, anchor: 'middle', fill: C.rose2 }) + `<path d="M${pm + 4} -12 q20 -7 40 0 t40 0 M${pm + 4} 0 q20 -7 40 0 t40 0 M${pm + 4} 12 q20 -7 40 0" fill="none" stroke="${C.rose2}" stroke-width="1.8"/>`;
+  return s + g(cx, cy, -14, 1, ring);
+}
+
+/* ---- the row of houses along the street, gables up: shutters, flower boxes, doors, a shop, a balcony, a weathervane ---- */
+const BASE = 432;
+const ROW = [];
+function houses() {
+  let s = '', x = 44;
+  const specs = [[96, 150, 52], [118, 198, 56], [84, 132, 46], [150, 176, 60, 'balcony'], [92, 220, 58, 'vane'], [128, 160, 54, 'shop'], [88, 140, 48], [112, 188, 58],
+    [80, 128, 44], [124, 170, 56], [96, 150, 50]];
+  for (const [w0, h, rh, kind] of specs) {
+    const w = w0 * 1.07, wall = pick(WALLS), roof = pick(ROOFS), shut = pick(SHUT), top = BASE - h;
+    ROW.push({ x, w, top, rh, kind });
+    s += `<rect x="${n1(x)}" y="${n1(top)}" width="${n1(w)}" height="${h}" fill="${wall}" ${ink(2.4)}/>`;
+    for (let i = 0; i < 6; i++) s += `<path d="M${n1(x + 6 + r() * (w - 20))} ${n1(top + 10 + r() * (h - 20))} q4 -3 9 0" fill="none" ${ink(1, 'rgba(120,80,90,.35)')}/>`;   // plaster
+    s += `<path d="M${n1(x - 8)} ${n1(top + 2)} L${n1(x + w / 2)} ${n1(top - rh)} L${n1(x + w + 8)} ${n1(top + 2)}Z" fill="${roof}" ${ink(2.6)}/>`;
+    for (let k = 1; k < 4; k++) {                                    // rows of scalloped tiles on the roof, of their own lengths
+      const yy = top - rh + rh * k / 4 + 3, half = (w / 2 + 8) * k / 4;
+      let d = `M${n1(x + w / 2 - half + 4)} ${n1(yy)}`;
+      for (let xx = x + w / 2 - half + 4; xx < x + w / 2 + half - 12; xx += 9 + r() * 3) d += ` q4.5 5 9 0`;
+      s += `<path d="${d}" fill="none" ${ink(1.2, 'rgba(47,35,68,.55)')}/>`;
+    }
+    s += `<circle cx="${n1(x + w / 2)}" cy="${n1(top - rh * .38)}" r="${n1(rh * .17)}" fill="#4d5f8f" ${ink(1.8)}/><circle cx="${n1(x + w / 2 - 2)}" cy="${n1(top - rh * .4)}" r="${n1(rh * .05)}" fill="#fff"/>`;
+    if (r() < .5 && kind !== 'vane') s += `<rect x="${n1(x + w * .7)}" y="${n1(top - rh * .75)}" width="12" height="${n1(rh * .5)}" fill="#c98a76" ${ink(1.8)}/>`;   // a chimney
+    const floors = Math.max(2, Math.round(h / 66)), fh = (h - 8) / floors;
+    for (let f = 0; f < floors; f++) {
+      const wy = top + 10 + f * fh, ground = f === floors - 1, cols = w > 110 ? 3 : 2;
+      for (let c = 0; c < cols; c++) {
+        const wx = x + w * (c + .5) / cols, ww = Math.min(22, w / cols * .42), wh = fh * .52;
+        if (ground && kind === 'shop' && c < 2) continue;
+        if (ground && c === (cols === 3 ? 1 : 0) && kind !== 'shop') {   // the door
+          s += `<path d="M${n1(wx - 11)} ${BASE} V${n1(BASE - 34)} A11 11 0 0 1 ${n1(wx + 11)} ${n1(BASE - 34)} V${BASE}Z" fill="${shut}" ${ink(2)}/><circle cx="${n1(wx + 6)}" cy="${n1(BASE - 16)}" r="1.8" fill="${C.gold}"/>`;
+          continue;
+        }
+        s += `<rect x="${n1(wx - ww / 2 - ww * .45)}" y="${n1(wy)}" width="${n1(ww * .4)}" height="${n1(wh)}" fill="${shut}" ${ink(1.5)}/><rect x="${n1(wx + ww / 2 + ww * .05)}" y="${n1(wy)}" width="${n1(ww * .4)}" height="${n1(wh)}" fill="${shut}" ${ink(1.5)}/>`;
+        s += `<rect x="${n1(wx - ww / 2)}" y="${n1(wy)}" width="${n1(ww)}" height="${n1(wh)}" fill="#5d70a0" ${ink(1.8)}/><path d="M${n1(wx)} ${n1(wy)} V${n1(wy + wh)} M${n1(wx - ww / 2)} ${n1(wy + wh / 2)} H${n1(wx + ww / 2)}" ${ink(1.4, C.cream)}/>`;
+        s += `<path d="M${n1(wx - ww / 2 + 2)} ${n1(wy + 2)} l${n1(ww * .3)} 0 l${n1(-ww * .3)} ${n1(wh * .45)}Z" fill="${C.blush}"/>`;
+        if (r() < .7) {                                              // a flower box, every bloom its own
+          s += `<rect x="${n1(wx - ww * .7)}" y="${n1(wy + wh)}" width="${n1(ww * 1.4)}" height="6" fill="#b07a54" ${ink(1.4)}/>`;
+          for (let k = 0; k < 5; k++) s += `<circle cx="${n1(wx - ww * .6 + r() * ww * 1.2)}" cy="${n1(wy + wh - 1 - r() * 3)}" r="${n1(2.4 + r() * 1.8)}" fill="${pick([C.rose, C.pink, '#fff', C.butter, C.coral, C.lav])}" ${ink(1)}/>`;
+        }
+      }
+    }
+    if (kind === 'shop') s += shop(x, w);
+    if (kind === 'balcony') s += balcony(x, w, top + fh + 4);
+    if (kind === 'vane') s += vane(x + w / 2, top - rh);
+    x += w + 4 + r() * 6;
+  }
+  s += bunting();
+  return s;
+}
+function shop(x, w) {                                                // a striped awning with a scalloped hem, buckets of flowers, its sign
+  const y = BASE - 70, aw = w * .72, ax = x + 6;
+  let s = `<rect x="${n1(ax + 4)}" y="${n1(y + 14)}" width="${n1(aw - 8)}" height="${n1(BASE - y - 14)}" fill="#7d9cc9" ${ink(2)}/>`;
+  for (let i = 0; i < 9; i++) s += `<circle cx="${n1(ax + 10 + r() * (aw - 20))}" cy="${n1(y + 30 + r() * 24)}" r="${n1(3 + r() * 3)}" fill="${pick([C.rose, '#fff', C.butter, C.leaf, C.coral])}" ${ink(1)}/>`;
+  let d = `M${n1(ax - 6)} ${n1(y)} L${n1(ax + aw + 6)} ${n1(y)} L${n1(ax + aw + 12)} ${n1(y + 18)}`;
+  for (let i = 8; i >= 0; i--) d += ` A${n1((aw + 18) / 18)} 6 0 0 1 ${n1(ax - 6 + i * (aw + 18) / 9)} ${n1(y + 18)}`;
+  s += `<path d="${d}Z" fill="${C.cream}" ${ink(2)}/>`;
+  for (let i = 0; i < 9; i += 2) s += `<path d="M${n1(ax - 6 + i * (aw + 12) / 9)} ${n1(y)} L${n1(ax - 6 + (i + 1) * (aw + 12) / 9)} ${n1(y)} L${n1(ax - 6 + (i + 1) * (aw + 18) / 9)} ${n1(y + 18)} L${n1(ax - 6 + i * (aw + 18) / 9)} ${n1(y + 18)}Z" fill="${C.rose}" ${ink(1)}/>`;
+  s += `<rect x="${n1(ax)}" y="${n1(y - 22)}" width="${n1(aw)}" height="18" rx="3" fill="${C.green}" ${ink(1.8)}/>` + T(ax + aw / 2, y - 8, 'Tiệm hoa', { f: F.hand, w: 700, s: 16, anchor: 'middle', fill: C.cream });
+  for (const bx of [ax + 10, ax + 34, ax + aw - 20]) {
+    s += `<path d="M${n1(bx - 9)} ${BASE - 18} L${n1(bx + 9)} ${BASE - 18} L${n1(bx + 7)} ${BASE} L${n1(bx - 7)} ${BASE}Z" fill="#b8c4cc" ${ink(1.6)}/>`;
+    for (let k = 0; k < 6; k++) s += `<circle cx="${n1(bx - 9 + r() * 18)}" cy="${n1(BASE - 22 - r() * 10)}" r="${n1(3 + r() * 2)}" fill="${pick([C.rose, C.pink, '#fff', C.butter, C.lav])}" ${ink(1.1)}/>`;
+  }
+  const sx = x + w - 6, sy = BASE - 96;                              // the hanging sign on its curled bracket
+  s += `<path d="M${n1(sx)} ${n1(sy)} H${n1(sx + 40)} M${n1(sx + 8)} ${n1(sy)} q-6 12 6 14" fill="none" ${ink(2.4)}/>`;
+  s += `<path d="M${n1(sx + 14)} ${n1(sy)} V${n1(sy + 8)} M${n1(sx + 36)} ${n1(sy)} V${n1(sy + 8)}" ${ink(1.4)}/>`;
+  s += `<rect x="${n1(sx + 8)}" y="${n1(sy + 8)}" width="34" height="24" rx="4" fill="${C.green}" ${ink(1.8)}/>` + g(sx + 25, sy + 20, 0, 1, flower(7, C.pink));
+  return s;
+}
+function balcony(x, w, y) {                                          // a stone ledge, an iron railing, pots spilling over with flowers
+  let s = `<rect x="${n1(x - 6)}" y="${n1(y + 26)}" width="${n1(w + 12)}" height="8" fill="${C.cream}" ${ink(2)}/>`;
+  for (let k = 0; k <= 12; k++) s += `<path d="M${n1(x - 2 + k * (w + 4) / 12)} ${n1(y + 26)} V${n1(y + 4)}" ${ink(1.6, C.green)}/>`;
+  s += `<path d="M${n1(x - 4)} ${n1(y + 4)} H${n1(x + w + 4)}" ${ink(2.4, C.green)}/>`;
+  for (let k = 0; k < 16; k++) s += `<circle cx="${n1(x + r() * w)}" cy="${n1(y + 2 - r() * 6)}" r="${n1(3 + r() * 2.6)}" fill="${pick([C.rose, C.pink, '#fff', C.butter, C.coral, C.lav, C.leaf])}" ${ink(1.1)}/>`;
+  for (let k = 0; k < 7; k++) s += g(x + 4 + r() * (w - 8), y + 36 + r() * 8, r() * 40 - 20, 1, leaf(10 + r() * 6, 4, pick([C.leaf, C.moss])));
+  return s;
+}
+function vane(x, y) {
+  return `<path d="M${n1(x)} ${n1(y)} V${n1(y - 40)} M${n1(x - 14)} ${n1(y - 26)} H${n1(x + 14)}" ${ink(2.2)}/>` +
+    `<path d="M${n1(x - 22)} ${n1(y - 38)} H${n1(x + 18)}" ${ink(2.6, C.gold)}/><path d="M${n1(x + 16)} ${n1(y - 44)} L${n1(x + 28)} ${n1(y - 38)} L${n1(x + 16)} ${n1(y - 32)}Z" fill="${C.gold}" ${ink(1.6)}/>` +
+    g(x - 24, y - 38, -90, 1, heart(13, C.rose, 1.4)) + T(x - 20, y - 18, 'T', { s: 9, anchor: 'middle' }) + T(x + 20, y - 18, 'Đ', { s: 9, anchor: 'middle' });
+}
+function bunting() {                                                 // from gable to gable, every pennant its own colour and tilt
+  let s = '';
+  for (let i = 0; i < ROW.length - 1; i++) {
+    const a = ROW[i], b = ROW[i + 1], x0 = a.x + a.w / 2, y0 = a.top - a.rh + 6, x1 = b.x + b.w / 2, y1 = b.top - b.rh + 6, sag = 26 + r() * 18;
+    const mx = (x0 + x1) / 2, my = Math.max(y0, y1) + sag;
+    s += `<path d="M${n1(x0)} ${n1(y0)} Q${n1(mx)} ${n1(my)} ${n1(x1)} ${n1(y1)}" fill="none" ${ink(1.4)}/>`;
+    const n = Math.round((x1 - x0) / 17);
+    for (let k = 1; k < n; k++) {
+      const t = k / n, px = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * mx + t * t * x1, py = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * my + t * t * y1;
+      s += g(px, py, r() * 16 - 8, 1, `<path d="M-6 0 L6 0 L0 13Z" fill="${pick([C.rose, C.butter, C.blue, '#fff', C.leaf, C.lav, C.coral])}" ${ink(1.2)}/>`);
+    }
+  }
+  return s;
+}
+
+/* ---- the street: cobbles, each its own size and shade; planters of flowers at its sides ---- */
+function street() {
+  let s = `<rect x="31" y="${BASE}" width="1218" height="${800 - BASE - 31}" fill="${C.grout}"/>`;
+  s += `<rect x="31" y="${BASE}" width="1218" height="16" fill="${C.stone5}" ${ink(1.8)}/>`;
+  for (let x = 40; x < 1240; x += 30 + r() * 26) s += `<path d="M${n1(x)} ${BASE} V${BASE + 16}" ${ink(1.2, '#b9a9a8')}/>`;
+  for (let y = BASE + 24; y < 780; ) {                               // round cobbles, smaller far off, bigger near you, none alike
+    const k = .75 + .65 * (y - BASE) / 340, step = 15 * k;
+    for (let x = 30 + r() * 12 * k; x < 1256; ) {
+      const rx = (7.5 + r() * 2.6) * k, ry = (5.4 + r() * 1.8) * k;
+      s += `<ellipse cx="${n1(x + (r() - .5) * 3)}" cy="${n1(y + (r() - .5) * 3)}" rx="${n1(rx)}" ry="${n1(ry)}" transform="rotate(${n1(r() * 30 - 15)} ${n1(x)} ${n1(y)})"` +
+        ` fill="${pick([C.stone1, C.stone2, C.stone3, C.stone4, C.stone5, '#f4dede'])}" ${ink(1.1, '#8d7c86')}/>`;
+      if (r() < .35) s += `<path d="M${n1(x - rx * .45)} ${n1(y - ry * .3)} q${n1(rx * .4)} ${n1(-ry * .4)} ${n1(rx * .8)} 0" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".85"/>`;
+      x += rx * 2 + 1 + r() * 3;
+    }
+    y += step;
+  }
+  const planter = (x, y) => { let p = `<path d="M-30 -24 L30 -24 L24 0 L-24 0Z" fill="${C.cream}" ${ink(2)}/><rect x="-33" y="-29" width="66" height="7" rx="3" fill="${C.cream}" ${ink(1.8)}/>`;
+    for (let k = 0; k < 14; k++) p += g(-28 + r() * 56, -34 - r() * 16, r() * 70, 1, flower(5 + r() * 3, pick([C.rose, C.pink, '#fff', C.butter, C.lav, C.coral])));
+    for (let k = 0; k < 6; k++) p += g(-30 + r() * 60, -28, r() * 60 - 30, 1, leaf(10 + r() * 6, 4, pick([C.leaf, C.moss])));
+    return g(x, y, 0, 1, p); };
+  s += planter(150, 560) + planter(1180, 560);
+  keep(100, 500, 200, 570); keep(1130, 500, 1230, 570);
+  return s;
+}
+
+/* ---- rings of light stepping up off the street, over the roofs, into the sky ---- */
+function rings() {
+  let s = '';
+  const path = t => [600 + 440 * t + 40 * Math.sin(t * 3), 610 - 430 * t - 30 * Math.sin(t * Math.PI)];
+  for (let i = 0; i < 10; i++) {
+    const t = i / 9, [x, y] = path(t), rx = 30 - 12 * t, ry = 9.5 - 3.5 * t, sx = i % 2 ? 9 : -9;
+    keep(x + sx - rx - 6, y - 26, x + sx + rx + 6, y + ry + 4);
+    s += `<ellipse cx="${n1(x + sx)}" cy="${n1(y)}" rx="${n1(rx + 7)}" ry="${n1(ry + 4)}" fill="${C.butter}" opacity=".55"/>`;
+    s += `<ellipse cx="${n1(x + sx)}" cy="${n1(y)}" rx="${n1(rx)}" ry="${n1(ry)}" fill="#fffaf0" ${ink(2.4, C.gold)}/><ellipse cx="${n1(x + sx)}" cy="${n1(y)}" rx="${n1(rx * .62)}" ry="${n1(ry * .55)}" fill="none" ${ink(1.6, C.rose)}/>`;
+    for (let k = 0; k < 3; k++) s += g(x + sx + (r() - .5) * rx * 2.4, y - 8 - r() * 16, r() * 45, 1, sparkle(3.5 + r() * 3.5, pick([C.butter, C.pink, '#fff'])));
+  }
+  return s;
+}
+
+/* ---- a ticket for a walk in the sky, bottom left; a note card, bottom right; the instruction on a ribbon ---- */
+function ticket() {
+  const x = 214, y = 566, w = 292, h = 150;
+  keep(x - 8, y - 14, x + w + 12, y + h + 14);
+  let s = `<g transform="${tf(x, y, -3)}"><path d="M0 0 H${w} V${h * .38} a14 14 0 0 0 0 28 V${h} H0 V${h * .38 + 28} a14 14 0 0 0 0 -28Z" fill="${C.butter}" ${ink(2.2)}/>`;
+  s += `<path d="M${w - 74} 8 V${h - 8}" stroke="${C.ink}" stroke-width="1.6" stroke-dasharray="4 5"/>`;
+  s += `<rect x="12" y="12" width="${w - 98}" height="30" rx="4" fill="${C.plum}"/>` + T(22, 33, 'VÉ DẠO TRỜI', { s: 15, ls: 2.4, fill: C.cream });
+  [['Khởi hành:', 'lúc hoàng hôn'], ['Lối đi:', 'trên những mái nhà'], ['Dành cho:', 'hai người']].forEach(([k, v], i) => {
+    const ly = 66 + i * 26;
+    s += T(14, ly, k, { s: 11 }) + T(88, ly + 1, v, { f: F.hand, w: 700, s: 19, fill: C.rose2 }) + `<path d="M86 ${ly + 6} H${w - 86}" stroke="${C.ink}" stroke-width="1" stroke-dasharray="2 4"/>`;
+  });
+  s += g(w - 37, 40, 0, 1, heart(26, C.rose)) + T(w - 37, 84, 'SKY', { s: 11, ls: 2, anchor: 'middle' }) + T(w - 37, 100, 'STROLL', { s: 11, ls: 2, anchor: 'middle' });
+  let bars = '';
+  for (let xx = w - 64, i = 0; xx < w - 12; i++) { const bw = 1 + (r() * 3 | 0); if (i % 2 === 0) bars += `<rect x="${n1(xx)}" y="${h - 38}" width="${bw}" height="24" fill="${C.ink}"/>`; xx += bw + 1; }
+  return s + bars + T(w - 37, h - 6, 'No. 2010', { s: 8, ls: 1, anchor: 'middle' }) + '</g>';
+}
+function note() {
+  const x = 852, y = 574, w = 290, h = 138;
+  keep(x - 10, y - 16, x + w + 10, y + h + 16);
+  let s = `<g transform="${tf(x, y, 2.5)}"><rect width="${w}" height="${h}" rx="6" fill="${C.cream}" ${ink(2.2)}/>`;
+  s += `<rect x="${w / 2 - 34}" y="-10" width="68" height="20" fill="${C.pink}" opacity=".85" transform="rotate(-4 ${w / 2} 0)"/>`;
+  for (let k = 0; k < 4; k++) s += `<path d="M16 ${46 + k * 24} H${w - 16}" stroke="${C.lilac}" stroke-width="1.4"/>`;
+  s += T(18, 34, 'GỬI EM,', { s: 12, ls: 2.4, fill: C.green });
+  s += T(18, 64, 'Nắm tay anh, mình đi trên mây,', { f: F.hand, w: 700, s: 21, fill: C.plum }) + T(18, 89, 'qua những mái nhà phố hoa.', { f: F.hand, w: 700, s: 21, fill: C.plum });
+  s += T(w - 18, 122, 'người dắt em đi ♥', { f: F.hand, w: 700, s: 19, anchor: 'end', fill: C.rose2 });
+  return s + g(28, 118, -10, 1, flower(10, C.pink)) + '</g>';
+}
+function ribbon() {
+  const cx = 640, cy = 745, w = 446, h = 32;
+  keep(cx - w / 2 - 30, cy - h / 2 - 6, cx + w / 2 + 30, cy + h / 2 + 10);
+  const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, f = 22;
+  let s = `<path d="M${x0 - f} ${y0 + 7} L${x0 + 6} ${y0 + 7} L${x0 + 6} ${y1 + 7} L${x0 - f} ${y1 + 7} L${x0 - f + 10} ${cy + 7}Z" fill="${C.rose}" ${ink(2)}/>`;
+  s += `<path d="M${x1 + f} ${y0 + 7} L${x1 - 6} ${y0 + 7} L${x1 - 6} ${y1 + 7} L${x1 + f} ${y1 + 7} L${x1 + f - 10} ${cy + 7}Z" fill="${C.lav}" ${ink(2)}/>`;
+  s += `<path d="M${x0} ${y0} Q${cx} ${y0 - 8} ${x1} ${y0} L${x1} ${y1} Q${cx} ${y1 - 8} ${x0} ${y1}Z" fill="${C.cream}" ${ink(2.4)}/>`;
+  return s + T(cx, cy + 5, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 15, anchor: 'middle' });
+}
+
+/* ---- birds on the roofs and in the air; petals, flowers, hearts and sparkles wherever there is paper left ---- */
+function scatter() {
+  let s = '';
+  [[120, 340, .8, 1, 0], [300, 248, .7, -1, 1], [748, 300, .75, 1, 0], [930, 320, .7, -1, 1], [1180, 320, .72, 1, 0], [560, 120, .8, 1, 1], [700, 160, .66, -1, 1]].forEach(([x, y, k, f, up]) => {
+    s += g(x, y, 0, k, `<g transform="scale(${f} 1)">${bird(pick(['#ffffff', '#ffc7a8', '#a9d4f5', '#d6c2f5', '#ffe08a']), '#fffaf2', up)}</g>`);
+  });
+  const placed = [];
+  for (let i = 0; i < 4000 && placed.length < 170; i++) {
+    const x = 50 + r() * 1180, y = 46 + r() * 700;
+    if (blocked(x, y, 10) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 25)) continue;
+    if (y > 200 && y < BASE + 4) continue;                          // not over the houses
+    placed.push([x, y]);
+    const k = r(), a = (r() * 70 - 35) | 0;
+    if (k < .26) s += g(x, y, a, 1, petal(5 + r() * 4, pick([C.pink, C.blush, '#fff', C.rose])));
+    else if (k < .44) s += g(x, y, a, 1, flower(6 + r() * 5, pick([C.pink, '#fff', C.butter, C.lav, C.coral])));
+    else if (k < .58) s += g(x, y, a, 1, heart(9 + r() * 7, pick([C.rose, C.pink, C.coral])));
+    else if (k < .74) s += g(x, y, a, 1, sparkle(5 + r() * 5, pick([C.butter, C.mint, C.pink, C.cream])));
+    else if (k < .86) s += g(x, y, a * 4, 1, leaf(11 + r() * 7, 4 + r() * 2, pick([C.leaf, C.moss])));
+    else s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(2.2 + r() * 2.6)}" fill="${pick([C.rose, C.blue, C.gold, C.teal, C.lav])}" ${ink(1)}/>`;
+  }
+  return s;
+}
+
+const FACES = [`700 82px "${F.hand}"`, `400 22px "${F.round}"`, `400 17px "${F.note}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `italic 700 26px "${F.serif}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Dạo bước trên không Walking on air ĐẶT Vé ữ Ơ ’'))).then(() => {
+  const out = sheet() + sky() + `<g clip-path="url(#inner)">${street() + houses()}</g>` + rings() + title() + stamp() + ticket() + note() + ribbon() + scatter();
+  document.getElementById('card').innerHTML = out;
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

@@ -1,0 +1,35 @@
+{
+  "name": "Điệu valse đêm hội",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "ballroom.js",
+    "wardrobe.js",
+    "keepsakes.js",
+    "story.js"
+  ],
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "reveal": null,
+  "notes": "A waltz at the ball (KayKit Adventurers, CC0: the Knight bare-headed with his cape, recoloured into an ivory coat with gold trim, a wine sash and cape, a white cravat, dark trousers, black boots and dark brown hair; the Mage without her hat, recoloured into a rose bodice with lace cuffs, a gold sash and dark brown hair, wearing a ball gown's skirt built in code, her cape turned into a sheer blush wrap draped over it; weapons and the hat dropped by scripts/pack-models.mjs). The ballroom is built in code (ballroom.js): marble tiles that flip in from the middle, a wall that folds up with tall arched windows on a moonlit night, wine drapes and gold mouldings, two columns twined with roses, two gilded urns of roses, a chandelier of gold rings, candles and crystals, moonbeams, and a faint mirror image of the dancers in the polished floor. Stop 1: the room builds itself round him, the chandelier comes down and its candles light one by one; she comes in, he bows, she curtsies, and an invitation flies up from his hand and turns over to show “Thư mời” and the card's first words (slot note1). Stop 2: she holds the card to her heart; he offers his hand and they waltz round the floor in three-four time, her gown swirling, gold sparkles left on the floor behind them; the sparkles rise and write the card's second words (slot note2) in gold above them. Stop 3: the words fall as glitter; she twirls twice under his raised hand, he dips her, the chandelier flares, rose petals rain and swirl into a gold frame holding the card's photo and its caption (slot caption). Stop 4: the candles go out and the chandelier rises; moonlight through the windows; a slow dance, he kisses her hand, they stand close, and a banner with the last words (slot note3) rises. The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in story.js, its clothes in wardrobe.js and what the stops show in keepsakes.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ],
+  "categories": ["viral-scenes", "love", "couple"],
+  "tags": ["khiêu vũ", "dạ hội", "vũ hội", "đèn chùm", "hoa hồng", "lâu đài", "hoàng tử", "ánh trăng"]
+}

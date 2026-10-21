@@ -1,0 +1,24 @@
+{
+  "label": "Dạo bước trên không (3D: chàng nắm tay nàng bước lên trời, dạo qua những mái nhà phố hoa)",
+  "preset": {
+    "title": "Dạo bước trên không",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Từ ngày có em, mỗi bước anh đi đều nhẹ tênh như trên mây.",
+      "Cứ nắm tay anh thật chặt nhé, mình sẽ cùng đi thật xa."
+    ],
+    "from": "Người dắt em đi trên mây"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời thứ nhất (trên tấm biển của tiệm hoa)", "value": "Đi cùng anh nhé, đừng nhìn xuống", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (đôi bồ câu mang tới)", "value": "Mình bước trên mây", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng ở ban công)", "value": "Ở bên em, anh như đang bay", "max": 32 }]
+      ]
+    }
+  ]
+}

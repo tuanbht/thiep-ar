@@ -1,0 +1,25 @@
+{
+  "label": "Pháo hoa mùa hạ (3D: hai bạn nhỏ dạo lễ hội mùa hè và cùng xem pháo hoa trên cầu)",
+  "preset": {
+    "title": "Pháo hoa mùa hạ",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Mùa hè năm ấy, chỉ một que kẹo bông và một bầu trời pháo hoa mà anh nhớ mãi.",
+      "Mùa hè nào cũng muốn được nắm tay em đi hết con phố lễ hội."
+    ],
+    "from": "Người nắm tay em xem pháo hoa"
+  },
+  "groups": [
+    {
+      "title": "Bốn lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời thứ nhất (trên chiếc quạt giấy)", "value": "Mùa hè này có em là đủ ngọt", "max": 60, "multiline": true }],
+        [{ "slot": "note2", "label": "Lời thứ hai (trên mảnh giấy ước nguyện)", "value": "Điều ước của em là gì thế?", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh", "value": "Đêm pháo hoa của hai ta", "max": 28 }],
+        [{ "slot": "note3", "label": "Lời cuối (trên dải băng)", "value": "Anh thích em nhiều lắm!", "max": 32 }]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,773 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Máy bay giấy: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/dancing-script/700.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/playfair-display/400-italic.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<style>
+/* The printed card = the tracking image. "Máy bay giấy" (paper planes) as a sketched city postcard: cream paper, ink and
+   pencil greys only, shade done with pencil hatching. Airmail bars round the edge; the title on a postcard label top
+   left; a windy grey street of office blocks (window grids with blinds, plants, curtains, and one open window on each
+   side of the street where a plane sets off), rooftops with water tanks and aerials, a tangle of wires on a pole, a
+   lamp post with a note taped to it; the stamp and the postmark top right; the address side of the postcard bottom
+   right; the zebra crossing in the lower middle, drawn light, is where the act stands (x 427–853, y 400–800), with the
+   instruction ribbon under it. Paper planes everywhere, each with its own dashed flight path, and five of the paths end
+   at the one coloured thing on the card: a coral heart. Hatching and window grids are jittered line by line, nothing
+   is mirrored or tiled, and all randomness is seeded, so every render is the same picture. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#f4eee0}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(912);
+const C = { paper: '#f4eee0', sheet: '#fbf8f1', wash: '#ebe5d8', wash2: '#dfd9cd', wash3: '#cfcac1', ink: '#232a35', ink2: '#38404d',
+  pen: '#59616d', pencil: '#848b94', pencil2: '#a6abb1', pencil3: '#c8cacb', coral: '#f26b5b' };
+const F = { title: 'Pacifico', hand: 'Dancing Script', sans: 'Be Vietnam Pro', serif: 'Playfair Display', note: 'Patrick Hand' };
+const GY = 548, CURB = 562, NEAR = 686;                               // where the houses stand, the far curb, the near curb
+const n1 = v => Math.round(v * 10) / 10;
+const J = a => (r() - .5) * 2 * a;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.ink) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.style ? ` font-style="${o.style}"` : ''}${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.ink}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const hand = (x, y, str, o = {}) => T(x, y, str, { f: F.note, w: 400, s: 15, fill: C.ink2, stroke: C.paper, sw: 4, ...o });
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+const R = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+const poly = P => P.map(p => `${n1(p[0])} ${n1(p[1])}`).join(' L');
+let CID = 0;
+const clip = (d, inner) => { const id = `k${CID++}`; return `<clipPath id="${id}"><path d="${d}"/></clipPath><g clip-path="url(#${id})">${inner}</g>`; };
+
+/* what the scatter keeps clear of */
+const BOX = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m);
+
+/* ── the pen: lines that wobble, overshoot their ends a little, and now and then skip ── */
+function wline(x1, y1, x2, y2, w = .8, o = 2, br = 0) {
+  const len = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / len, uy = (y2 - y1) / len, nx = -uy, ny = ux;
+  if (br && len > 24 && r() < br) {
+    const m = .3 + r() * .4, gp = 1.5 + r() * 2.5, mx = x1 + (x2 - x1) * m, my = y1 + (y2 - y1) * m;
+    return wline(x1, y1, mx - ux * gp, my - uy * gp, w, o) + wline(mx + ux * gp, my + uy * gp, x2, y2, w, o);
+  }
+  const n = Math.max(1, Math.round(len / 80)), s0 = o * r(), s1 = o * r();
+  let d = `M${n1(x1 - ux * s0 + nx * J(w * .3))} ${n1(y1 - uy * s0 + ny * J(w * .3))}`;
+  for (let i = 1; i <= n; i++) {
+    const tm = (i - .5) / n, te = i / n, off = J(w);
+    const ex = i === n ? x2 + ux * s1 : x1 + (x2 - x1) * te + nx * J(w * .4), ey = i === n ? y2 + uy * s1 : y1 + (y2 - y1) * te + ny * J(w * .4);
+    d += `Q${n1(x1 + (x2 - x1) * tm + nx * off)} ${n1(y1 + (y2 - y1) * tm + ny * off)} ${n1(ex)} ${n1(ey)}`;
+  }
+  return d;
+}
+const wpoly = (P, w, o, br) => P.map((p, i) => { const q = P[(i + 1) % P.length]; return wline(p[0], p[1], q[0], q[1], w, o, br); }).join('');
+function srect(x, y, w, h, o = {}) {
+  const { fill = 'none', sw = 1.4, c = C.ink, wob = .7, os = 2.2, br = .12 } = o;
+  return (fill !== 'none' ? `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(w)}" height="${n1(h)}" fill="${fill}"/>` : '') +
+    `<path d="${wpoly(R(x, y, w, h), wob, os, br)}" fill="none" ${ink(sw, c)}/>`;
+}
+function spoly(P, o = {}) {
+  const { fill = 'none', sw = 1.4, c = C.ink, wob = .7, os = 2, br = .1 } = o;
+  return (fill !== 'none' ? `<path d="M${poly(P)}Z" fill="${fill}"/>` : '') + `<path d="${wpoly(P, wob, os, br)}" fill="none" ${ink(sw, c)}/>`;
+}
+
+/* ── the pencil: hatching inside a convex polygon, every stroke its own spacing, tilt, length and skips ── */
+function clipLine(P, px, py, dx, dy) {
+  let area = 0; for (let i = 0; i < P.length; i++) { const [a, b] = P[i], [c, d] = P[(i + 1) % P.length]; area += a * d - c * b; }
+  const sg = area > 0 ? 1 : -1; let t0 = -1e9, t1 = 1e9;
+  for (let i = 0; i < P.length; i++) {
+    const [x1, y1] = P[i], [x2, y2] = P[(i + 1) % P.length], nx = -(y2 - y1) * sg, ny = (x2 - x1) * sg;
+    const num = nx * (px - x1) + ny * (py - y1), den = nx * dx + ny * dy;
+    if (Math.abs(den) < 1e-9) { if (num < 0) return null; continue; }
+    const t = -num / den;
+    if (den > 0) t0 = Math.max(t0, t); else t1 = Math.min(t1, t);
+  }
+  return t0 < t1 ? [t0, t1] : null;
+}
+function hatch(P, ang, sp, o = {}) {
+  const { c = C.pencil, sw = .8, jit = .3, br = .18, skip = .05, aj = 2.5, inset = 1.4, wob = .5 } = o;
+  const nx = -Math.sin(rad(ang)), ny = Math.cos(rad(ang));
+  const cx = P.reduce((a, p) => a + p[0], 0) / P.length, cy = P.reduce((a, p) => a + p[1], 0) / P.length, c0 = cx * nx + cy * ny;
+  const offs = P.map(([x, y]) => x * nx + y * ny), hi = Math.max(...offs);
+  let d = '';
+  for (let off = Math.min(...offs) + sp * (.2 + .8 * r()); off < hi; off += sp * (1 - jit + 2 * jit * r())) {
+    if (r() < skip) continue;
+    const a = rad(ang + J(aj)), dx = Math.cos(a), dy = Math.sin(a), px = cx + nx * (off - c0), py = cy + ny * (off - c0);
+    const tt = clipLine(P, px, py, dx, dy); if (!tt) continue;
+    const t0 = tt[0] + inset * r() * 1.6, t1 = tt[1] - inset * r() * 1.6;
+    if (t1 - t0 < 1.5) continue;
+    let parts = [[t0, t1]];
+    if (br && t1 - t0 > 18 && r() < br) { const m = t0 + (t1 - t0) * (.25 + .5 * r()), gp = 1.5 + r() * 4; parts = [[t0, m - gp], [m + gp, t1]]; }
+    for (const [a0, a1] of parts) {
+      const x0 = px + dx * a0, y0 = py + dy * a0, x1 = px + dx * a1, y1 = py + dy * a1;
+      d += wob && a1 - a0 > 16 ? `M${n1(x0)} ${n1(y0)}Q${n1((x0 + x1) / 2 + nx * J(wob))} ${n1((y0 + y1) / 2 + ny * J(wob))} ${n1(x1)} ${n1(y1)}` : `M${n1(x0)} ${n1(y0)}L${n1(x1)} ${n1(y1)}`;
+    }
+  }
+  return d ? `<path d="${d}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linecap="round"/>` : '';
+}
+const xhatch = (P, ang, sp, o = {}) => hatch(P, ang, sp, o) + hatch(P, ang + 72 + J(14), sp * (1.05 + r() * .3), o);
+
+/* ── curves: a smooth line through points, loops and spirals to put in it ── */
+function spline(pts) {
+  let d = `M${n1(pts[0][0])} ${n1(pts[0][1])}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C${n1(p1[0] + (p2[0] - p0[0]) / 6)} ${n1(p1[1] + (p2[1] - p0[1]) / 6)} ${n1(p2[0] - (p3[0] - p1[0]) / 6)} ${n1(p2[1] - (p3[1] - p1[1]) / 6)} ${n1(p2[0])} ${n1(p2[1])}`;
+  }
+  return d;
+}
+/** a loop-the-loop that starts at p heading `dir`°; side −1 loops up and over when heading right */
+function loop(p, dir, rr, side = -1, adv = .7) {
+  const ux = Math.cos(rad(dir)), uy = Math.sin(rad(dir)), cx = p[0] - uy * side * rr, cy = p[1] + ux * side * rr, a0 = Math.atan2(p[1] - cy, p[0] - cx), out = [];
+  for (let k = 1; k <= 8; k++) { const a = a0 + side * k / 8 * Math.PI * 2, f = k / 8; out.push([cx + Math.cos(a) * rr + ux * f * rr * adv, cy + Math.sin(a) * rr + uy * f * rr * adv]); }
+  return out;
+}
+function spiral(cx, cy, r0, r1, a0, turns, sg = 1) {
+  const out = [], N = Math.round(turns * 10);
+  for (let k = 0; k <= N; k++) { const f = k / N, a = rad(a0) + sg * f * turns * Math.PI * 2, rr = r0 + (r1 - r0) * f; out.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); }
+  return out;
+}
+
+/* ── small things ── */
+/** a folded paper dart, its nose at (0,0) pointing along +x, z long; bank (−1…1) tips it */
+function plane(z, o = {}) {
+  const { bank = 0, light = false } = o, sw = Math.max(1, Math.min(2.2, z * .045)), c = light ? C.pencil : C.ink;
+  const A = [-z, -z * (.44 + .16 * bank)], B = [-z * .76, z * .02], D = [-z * .92, z * (.34 - .14 * bank)], M = [-z * .3, z * .01], K = [-z * .64, z * (.2 + .06 * bank)];
+  let s = `<path d="M0 0 L${poly([B, D])}Z" fill="${light ? C.wash2 : C.wash3}" ${ink(sw, c)}/>`;
+  if (z > 22) s += hatch([[0, 0], B, D], -58 + J(10), Math.max(1.5, z * .045), { c: light ? C.pencil2 : C.ink2, sw: .65, inset: 1, br: 0 });
+  s += `<path d="M${poly([M, B, K])}Z" fill="${light ? C.wash : C.ink2}" ${ink(sw * .9, c)}/>`;
+  s += `<path d="M0 0 L${poly([A, B])}Z" fill="${C.sheet}" ${ink(sw, c)}/>`;
+  if (z > 16) s += `<path d="M${n1(-z * .1)} ${n1(-z * .04)} L${n1(-z * .84)} ${n1(-z * .3)}" ${ink(sw * .45, c)}/>`;
+  return s;
+}
+const DASH = ['7 6', '3 6', '10 5 2 5', '5 4', '2 6', '12 6', '4 4 1 4', '8 4'];
+/** a plane at the end of its dashed flight path */
+function flight(pts, z, o = {}) {
+  const { dash = pick(DASH), sw = 1.5, c = C.ink, halo = true, bank = J(.6), light = false } = o;
+  const d = spline(pts), [x2, y2] = pts[pts.length - 1], [x1, y1] = pts[pts.length - 2];
+  let s = halo ? `<path d="${d}" fill="none" stroke="${C.paper}" stroke-width="${n1(sw + 4)}" stroke-linecap="round"/>` : '';
+  s += `<path d="${d}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-dasharray="${dash}" stroke-linecap="round"/>`;
+  return s + g(x2, y2, Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI, 1, plane(z, { bank, light }));
+}
+const heartD = z => `M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z`;
+/** a gust: a tail that curls up into a spiral */
+function swirl(z, o = {}) {
+  const { turns = 1.15 + r() * .5, c = C.ink, sw = 1.7, flip = false, tail = 3 } = o;
+  const pts = [[-z * tail, z * (1.16 + J(.1))], [-z * tail * .58, z * (1.02 + J(.08))], [-z * .7, z * 1.01]];
+  const N = Math.round(turns * 12);
+  for (let k = 0; k <= N; k++) { const f = k / N, a = Math.PI / 2 - f * turns * Math.PI * 2, rr = z * (1 - .74 * f); pts.push([Math.cos(a) * rr, Math.sin(a) * rr]); }
+  return `<path d="${spline(flip ? pts.map(([x, y]) => [-x, y]) : pts)}" fill="none" ${ink(sw, c)}/>`;
+}
+const bird = (z, c = C.ink) => `<path d="M${n1(-z)} 0 Q${n1(-z * .5)} ${n1(-z * .6)} 0 ${n1(z * .05)} Q${n1(z * .45)} ${n1(-z * .62)} ${n1(z * 1.05)} ${n1(-z * .12)}" fill="none" ${ink(1.3, c)}/>`;
+/** a cloud sketched in pencil, its underside hatched */
+function cloud(w, o = {}) {
+  const { c = C.pen, sw = 1.5 } = o, n = 4 + (r() * 3 | 0), pts = [];
+  for (let i = 0; i <= n; i++) { const t = i / n; pts.push([-w / 2 + w * t + (i && i < n ? J(w * .03) : 0), i && i < n ? -Math.sin(Math.PI * t) * w * (.1 + .07 * r()) - w * .04 : 0]); }
+  let d = `M${n1(pts[0][0])} ${n1(pts[0][1])}`;
+  for (let i = 1; i <= n; i++) { const [x, y] = pts[i], [px, py] = pts[i - 1], dd = Math.hypot(x - px, y - py) / 2; d += ` A${n1(dd * (1 + r() * .2))} ${n1(dd * (.95 + r() * .25))} 0 0 1 ${n1(x)} ${n1(y)}`; }
+  d += ` C${n1(w * .3)} ${n1(w * .07)} ${n1(-w * .3)} ${n1(w * .05)} ${n1(pts[0][0])} ${n1(pts[0][1])}Z`;
+  return `<path d="${d}" fill="${C.sheet}"/>` + clip(d, hatch(R(-w / 2, -w * .06, w, w * .15), 24 + J(8), 2.2, { c: C.pencil, sw: .75 }) + hatch(R(-w / 2, w * .01, w, w * .1), -30 + J(8), 2.4, { c: C.pen, sw: .7 })) + `<path d="${d}" fill="none" ${ink(sw, c)}/>`;
+}
+/** a loose sheet in the wind: bent, ruled, one corner folded over */
+function paper(w, h, o = {}) {
+  const { word = null, scrib = r() < .6 } = o;
+  const P = [[-w / 2 + J(2), -h / 2 + J(2)], [w / 2 + J(2), -h / 2 + J(2)], [w / 2 + J(2), h / 2 + J(2)], [-w / 2 + J(2), h / 2 + J(2)]];
+  const f = Math.min(w, h) * (.2 + r() * .12), A = [P[2][0] - f, P[2][1]], B = [P[2][0], P[2][1] - f], Tp = [P[2][0] - f * .95, P[2][1] - f * .95];
+  const body = [P[0], P[1], B, A, P[3]], bd = `M${poly(body)}Z`;
+  let lines = '';
+  for (let y = -h / 2 + 5 + r() * 3; y < h / 2 - 3; y += 4.2 + r() * 2.6) lines += `M${n1(-w / 2 + 2)} ${n1(y)}L${n1(w / 2 - 2)} ${n1(y + J(.5))}`;
+  let s = `<path d="${bd}" fill="${C.sheet}"/>` + clip(bd, `<path d="${lines}" stroke="${C.pencil2}" stroke-width=".7"/>`);
+  if (scrib) { let q = ''; for (let k = 0; k < 2 + (r() * 3 | 0); k++) { const y = -h / 2 + 7 + k * 6.5, x0 = -w / 2 + 4, l = (w - 12) * (.4 + r() * .5); q += `M${n1(x0)} ${n1(y)}`; for (let x = 0; x < l; x += 4) q += ` q2 ${n1(-2.5 + J(.8))} 4 0`; } s += clip(bd, `<path d="${q}" fill="none" ${ink(.75, C.ink2)}/>`); }
+  if (word) s += T(-w / 2 + 4, -h / 2 + 13, word, { f: F.note, w: 400, s: 11.5, fill: C.ink2 });
+  return s + `<path d="${wpoly(body, 1.4, 1.2, 0)}" fill="none" ${ink(1.3)}/>` + spoly([A, B, Tp], { fill: C.wash2, sw: 1.1, os: .6, br: 0 });
+}
+
+/* ── the card: airmail bars in ink and pencil round the edge, words on plaques, the cream sheet inside ── */
+function sheet() {
+  let s = `<defs><clipPath id="frame"><path d="M0 0H1280V800H0Z M32 32V768H1248V32Z" clip-rule="evenodd"/></clipPath></defs>`;
+  s += `<rect width="1280" height="800" fill="${C.sheet}"/>`;
+  let st = '';
+  for (let x = -820, i = 0; x < 1300; i++) {
+    const w = 11 + r() * 17, col = [C.ink, null, C.pencil, null][i % 4];
+    if (col) st += `<path d="M${n1(x)} 0 L${n1(x + w)} 0 L${n1(x + w + 800)} 800 L${n1(x + 800)} 800Z" fill="${col}"/>`;
+    x += w;
+  }
+  s += `<g clip-path="url(#frame)">${st}</g><rect x="32" y="32" width="1216" height="736" fill="${C.paper}" ${ink(2.4)}/>`;
+  const plaque = (x, y, a, str, size = 11) => {
+    const w = measure(str, `800 ${size}px "${F.sans}"`) + str.length * 2.2 + 26;
+    return g(x, y, a, 1, `<rect x="${n1(-w / 2)}" y="-11" width="${n1(w)}" height="22" rx="11" fill="${C.sheet}" ${ink(1.8)}/>` + T(0, 4, str, { s: size, ls: 2.2, anchor: 'middle' }));
+  };
+  s += plaque(660, 16, 0, 'BƯU THIẾP  ·  MÁY BAY GIẤY  ·  AIR MAIL  ·  PHỐ GIÓ');
+  s += plaque(610, 784, 0, 'GẤP MỘT CHIẾC  ·  GỬI MỘT LỜI  ·  BY WIND  ·  No. 0912');
+  s += plaque(16, 430, -90, 'GIÓ ĐƯA ĐƯỜNG  ·  THE WIND KNOWS');
+  s += plaque(1264, 372, 90, 'TẦNG 9  ·  PHỐ BÊN KIA');
+  return s;
+}
+
+/* ── the sky: pencil clouds, birds ── */
+function sky() {
+  let s = g(578, 104, -2, 1, cloud(150)) + g(818, 168, 4, 1, cloud(92)) + g(508, 384, 0, 1, cloud(64, { c: C.pencil }));
+  [[690, 64, 7], [712, 80, 5], [664, 84, 4.5], [470, 214, 6], [1004, 222, 5.5], [776, 220, 4]].forEach(([x, y, z]) => { s += g(x, y, J(10), 1, bird(z)); });
+  return s;
+}
+
+/* ── the far skyline in the middle, low and light, behind the street ── */
+function distant() {
+  let s = '';
+  for (let x = 488; x < 852;) {
+    const w = 30 + r() * 44, top = 384 + r() * 70;
+    s += srect(x, top, w, GY - top, { fill: pick([C.wash, '#e8e2d5', C.paper]), sw: 1.1, c: C.pencil, wob: .6, br: .2 });
+    const cols = Math.max(2, Math.round(w / 13)), rows = Math.floor((GY - top - 14) / 15);
+    let d = '';
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      if (r() < .22) continue;
+      const cw = (w - 8) / cols, wx = x + 4 + i * cw + J(.7), wy = top + 7 + j * 15 + J(.7), ww = cw * (.45 + r() * .2), wh = 6 + r() * 3;
+      d += `M${n1(wx)} ${n1(wy)}h${n1(ww)}v${n1(wh)}h${n1(-ww)}z`;
+    }
+    s += `<path d="${d}" fill="none" stroke="${C.pencil2}" stroke-width=".8"/>`;
+    if (r() < .5) s += hatch(R(x + w * .62, top + 2, w * .36, GY - top - 4), 58 + J(10), 3.4 + r(), { c: C.pencil3, sw: .8 });
+    if (r() < .45) s += antenna(x + w * (.25 + r() * .5), top, 16 + r() * 14, C.pencil);
+    x += w + (r() < .35 ? 4 + r() * 10 : -1);
+  }
+  return s;
+}
+
+/* ── rooftop things ── */
+function tank(x, base, w = 40, h = 34, legs = 24) {               // a water tank on stilts: planks, hoops, a pointed lid, a ladder
+  const top = base - legs, x0 = x - w / 2, x1 = x + w / 2, y0 = top - h;
+  let s = `<path d="${wline(x0 + 5, top, x0 + 2, base, .3, 1)}${wline(x1 - 5, top, x1 - 2, base, .3, 1)}${wline(x - 2, top, x - 1, base, .3, 1)}" fill="none" ${ink(1.7)}/>`;
+  s += `<path d="M${n1(x0 + 4)} ${n1(top + 3)} L${n1(x - 2)} ${n1(base - 2)} M${n1(x - 2)} ${n1(top + 3)} L${n1(x0 + 3)} ${n1(base - 3)} M${n1(x - 1)} ${n1(top + 4)} L${n1(x1 - 3)} ${n1(base - 2)} M${n1(x1 - 4)} ${n1(top + 4)} L${n1(x - 1)} ${n1(base - 3)}" ${ink(.8, C.pen)}/>`;
+  s += `<path d="${wline(x0 - 3, top, x1 + 3, top, .3, 1)}" fill="none" ${ink(2.2)}/>`;
+  s += spoly([[x0, top - .5], [x0 + 1.5, y0], [x1 - 1.5, y0], [x1, top - .5]], { fill: C.wash, sw: 1.8, br: 0 });
+  let d = ''; for (let px = x0 + 3 + r() * 2; px < x1 - 2; px += 3.2 + r() * 2.6) d += `M${n1(px)} ${n1(y0 + 1.5)}L${n1(px + J(.4))} ${n1(top - 1.5)}`;
+  s += `<path d="${d}" stroke="${C.pencil}" stroke-width=".7"/>`;
+  s += hatch([[x + w * .12, y0 + 1], [x1 - 1.6, y0 + 1], [x1 - .4, top - 1], [x + w * .12, top - 1]], 64 + J(6), 2.1, { c: C.ink2, sw: .6, br: .2 });
+  s += `<path d="M${n1(x0 + .6)} ${n1(y0 + h * .28)} Q${n1(x)} ${n1(y0 + h * .28 + 3)} ${n1(x1 - .6)} ${n1(y0 + h * .28)} M${n1(x0 + .3)} ${n1(y0 + h * .74)} Q${n1(x)} ${n1(y0 + h * .74 + 3)} ${n1(x1 - .3)} ${n1(y0 + h * .74)}" fill="none" ${ink(1.3)}/>`;
+  const lid = [[x0 - 3, y0 + 1], [x + J(1), y0 - h * .45], [x1 + 3, y0 + 1]];
+  s += spoly(lid, { fill: C.wash2, sw: 1.8, br: 0 }) + hatch([[lid[1][0], lid[1][1] + 3], [x1 + 1, y0], [lid[1][0], y0]], 72, 2.2, { c: C.pen, sw: .6 });
+  s += `<path d="M${n1(lid[1][0])} ${n1(lid[1][1])} v-6" ${ink(1.3)}/><circle cx="${n1(lid[1][0])}" cy="${n1(lid[1][1] - 7)}" r="1.8" fill="${C.ink}"/>`;
+  let lad = `M${n1(x0 - 5)} ${n1(base)} L${n1(x0 - 4)} ${n1(y0 + 6)} M${n1(x0 - 10)} ${n1(base)} L${n1(x0 - 9)} ${n1(y0 + 6)}`;
+  for (let yy = base - 4; yy > y0 + 8; yy -= 4.5 + r() * 1.5) lad += `M${n1(x0 - 10)} ${n1(yy)}H${n1(x0 - 4)}`;
+  return s + `<path d="${lad}" ${ink(.8, C.ink2)}/>`;
+}
+function inox(x, base, len = 46, dia = 18) {                     // the steel tank lying on its stand, as on every roof in town
+  const y = base - 8 - dia / 2, x0 = x - len / 2, x1 = x + len / 2, rr = dia / 2;
+  const cap = `M${n1(x0 + rr)} ${n1(y - rr)} H${n1(x1 - rr)} A${n1(rr)} ${n1(rr)} 0 0 1 ${n1(x1 - rr)} ${n1(y + rr)} H${n1(x0 + rr)} A${n1(rr)} ${n1(rr)} 0 0 1 ${n1(x0 + rr)} ${n1(y - rr)}Z`;
+  let s = `<path d="M${n1(x - len * .32)} ${n1(base)} l4 -8 l4 8 M${n1(x + len * .32 - 8)} ${n1(base)} l4 -8 l4 8" fill="none" ${ink(1.3)}/>`;
+  s += `<path d="${cap}" fill="${C.sheet}"/>` + clip(cap, hatch(R(x0, y + dia * .05, len, dia * .5), 80 + J(6), 2, { c: C.pen, sw: .6 }));
+  s += `<path d="${cap}" fill="none" ${ink(1.6)}/><path d="M${n1(x - len * .24)} ${n1(y - rr)} v${dia} M${n1(x + len * .22)} ${n1(y - rr)} v${dia}" ${ink(1)}/>`;
+  s += `<path d="M${n1(x - len * .36)} ${n1(y - dia * .26)} H${n1(x + len * .3)}" stroke="${C.sheet}" stroke-width="1.6"/><ellipse cx="${n1(x1 - dia * .32)}" cy="${n1(y)}" rx="${n1(dia * .18)}" ry="${n1(dia * .44)}" fill="none" ${ink(.9)}/>`;
+  return s + `<path d="M${n1(x0 + 6)} ${n1(y + rr)} q-2 6 2 ${n1(base - y - rr)}" fill="none" ${ink(1.1)}/>`;
+}
+function antenna(x, base, h, c = C.ink) {                         // a fishbone TV aerial and its guy wire
+  let s = `<path d="${wline(x, base, x + J(1.5), base - h, .4, 0)}" fill="none" ${ink(c === C.ink ? 1.5 : 1, c)}/>`;
+  const n = 4 + (r() * 3 | 0); let d = '';
+  for (let i = 0; i < n; i++) { const yy = base - h + 3 + i * h * .5 / n, l = h * .3 * (1 - i / (n + 1.5)) + J(1.5); d += `M${n1(x - l * (.7 + r() * .5))} ${n1(yy + J(1))}L${n1(x + l)} ${n1(yy + J(1))}`; }
+  return s + `<path d="${d}" ${ink(c === C.ink ? 1.1 : .8, c)}/><path d="M${n1(x)} ${n1(base - h * .55)} L${n1(x + h * .42)} ${n1(base)}" ${ink(.6, C.pencil)}/>`;
+}
+const dish = (x, base, z = 13, a = -30) => `<path d="M${n1(x)} ${n1(base - z * .5)} V${n1(base)}" ${ink(1.4)}/>` +
+  g(x, base - z * .8, a, 1, `<path d="M${-z} 0 A${z} ${n1(z * .42)} 0 0 0 ${z} 0Z" fill="${C.sheet}" ${ink(1.3)}/>` + hatch([[-z * .7, z * .05], [z * .7, z * .05], [z * .3, z * .36], [-z * .3, z * .36]], 75, 1.9, { c: C.pen, sw: .55 }) +
+    `<path d="M0 ${n1(z * .1)} L${n1(z * .1)} ${n1(-z * .7)}" ${ink(1)}/><circle cx="${n1(z * .1)}" cy="${n1(-z * .75)}" r="1.6" fill="${C.ink}"/>`);
+function rail(x0, x1, base, h = 9) { let d = `M${n1(x0)} ${n1(base - h)} L${n1(x1)} ${n1(base - h + J(.6))}`; for (let x = x0 + r() * 3; x < x1; x += 6 + r() * 5) d += `M${n1(x)} ${n1(base)} v${n1(-h)}`; return `<path d="${d}" fill="none" ${ink(1, C.ink2)}/>`; }
+const vent = (x, base, h = 12) => srect(x - 3, base - h, 6, h, { fill: C.wash2, sw: 1.1, os: .5, br: 0 }) + `<path d="M${n1(x - 5.5)} ${n1(base - h)} H${n1(x + 5.5)} M${n1(x - 4)} ${n1(base - h - 3)} H${n1(x + 4)}" ${ink(1.3)}/>`;
+function laundry(x0, x1, base, h = 26) {                          // a washing line, everything on it blowing the same way
+  let s = `<path d="M${n1(x0)} ${n1(base)} v${-h} M${n1(x1)} ${n1(base)} v${-h}" ${ink(1.5)}/><path d="M${n1(x0)} ${n1(base - h)} Q${n1((x0 + x1) / 2)} ${n1(base - h + 7)} ${n1(x1)} ${n1(base - h)}" fill="none" ${ink(.9)}/>`;
+  const n = Math.max(2, Math.round((x1 - x0) / 17));
+  for (let i = 0; i < n; i++) {
+    const px = x0 + (i + .6) * (x1 - x0) / (n + .3), py = base - h + 6.3 * Math.sin(Math.PI * (px - x0) / (x1 - x0)) + 1, k = r();
+    const item = k < .4 ? `<path d="M-5 0 L-8 3 L-6 6 L-4 5 V13 H4 V5 L6 6 L8 3 L5 0 Q0 2 -5 0Z" fill="${pick([C.sheet, C.wash2])}" ${ink(.9)}/>`
+      : k < .7 ? `<path d="M-4 0 H4 L5 12 H-5Z" fill="${C.sheet}" ${ink(.9)}/>` + hatch([[-4, 0], [4, 0], [5, 12], [-5, 12]], 70, 2, { c: C.pen, sw: .5, br: 0 })
+      : `<path d="M-2 0 V7 Q-2 10 2 10 H4 V7 H1 V0Z" fill="${C.wash}" ${ink(.8)}/>`;
+    s += g(px, py, 14 + J(6), 1, item);
+  }
+  return s;
+}
+
+/* ── windows, each its own: plain glass, blinds part-way down, a plant, curtains, a cat, dark, or flung open ── */
+function win(x, y, w, h, type) {
+  const box = R(x, y, w, h);
+  let s = '';
+  if (type === 'dark' || type === 'open') {
+    s += `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(w)}" height="${n1(h)}" fill="${C.ink2}"/>` + hatch(box, 50 + J(12), 2.6 + r(), { c: C.ink, sw: .8, inset: .5, br: .1, skip: .3 });
+    if (type === 'dark' && r() < .8) { const gx = x + w * (.15 + r() * .3), gl = Math.min(w, h) * (.3 + r() * .2); s += `<path d="M${n1(gx)} ${n1(y + h * .7)} L${n1(gx + gl)} ${n1(y + h * .7 - gl)}" ${ink(1, C.pencil)}/>`; }
+  } else {
+    const k = r();
+    s += `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(w)}" height="${n1(h)}" fill="${type === 'plain' && k < .3 ? C.wash3 : k < .8 ? C.sheet : C.wash}"/>`;
+    if (type === 'plain' && k < .3) s += hatch(box, 45 + J(10), 2.4 + r(), { c: C.pen, sw: .6, inset: .5, br: .1 });
+  }
+  if (type === 'plain' || type === 'plant' || type === 'cat') {
+    const vx = x + w * (.42 + J(.08)), hy = y + h * (.36 + J(.1));
+    s += `<path d="${wline(vx, y + .5, vx, y + h - .5, .3, 0)}${r() < .65 ? wline(x + .5, hy, x + w - .5, hy, .3, 0) : ''}" fill="none" ${ink(.85, C.ink2)}/>`;
+    if (r() < .75) { const gx = x + w * (.12 + r() * .3), gy = y + h * (.15 + r() * .35), gl = Math.min(w, h) * (.22 + r() * .14); s += `<path d="M${n1(gx)} ${n1(gy + gl)} L${n1(gx + gl)} ${n1(gy)} M${n1(gx + 2.6)} ${n1(gy + gl + 1.8)} L${n1(gx + gl * .7 + 2.6)} ${n1(gy + gl * .3 + 1.8)}" ${ink(.7, C.pencil)}/>`; }
+  }
+  if (type === 'blind') {
+    const k = .28 + r() * .72, n = Math.max(3, Math.round(h * k / (2.3 + r() * 1.3)));
+    let d = ''; for (let i = 1; i <= n; i++) { const yy = y + i * h * k / n - .6; d += `M${n1(x + .6)} ${n1(yy + J(.25))}L${n1(x + w - .6)} ${n1(yy + J(.25))}`; }
+    if (k < .75 && r() < .55) s += `<rect x="${n1(x)}" y="${n1(y + h * k)}" width="${n1(w)}" height="${n1(h * (1 - k))}" fill="${C.ink2}"/>`;
+    s += `<path d="${d}" stroke="${C.pen}" stroke-width=".7"/><path d="M${n1(x)} ${n1(y + h * k)} H${n1(x + w)}" ${ink(1.3)}/>`;
+    if (r() < .55) s += `<path d="M${n1(x + w * (.15 + r() * .7))} ${n1(y + h * k)} v${n1(3 + r() * 6)}" ${ink(.7, C.pen)}/>`;
+  }
+  if (type === 'curtain') {
+    const t = .5 + r() * .25, lw = w * (.28 + r() * .12), rw = w * (.24 + r() * .14);
+    s += `<path d="M${n1(x)} ${n1(y)} H${n1(x + lw)} Q${n1(x + lw * .45)} ${n1(y + h * t * .7)} ${n1(x + lw * .55)} ${n1(y + h * t)} Q${n1(x + lw * .2)} ${n1(y + h * .9)} ${n1(x)} ${n1(y + h)}Z" fill="${C.wash2}" ${ink(.8, C.ink2)}/>`;
+    s += `<path d="M${n1(x + w)} ${n1(y)} H${n1(x + w - rw)} Q${n1(x + w - rw * .45)} ${n1(y + h * t * .7)} ${n1(x + w - rw * .55)} ${n1(y + h * t)} Q${n1(x + w - rw * .2)} ${n1(y + h * .9)} ${n1(x + w)} ${n1(y + h)}Z" fill="${C.wash2}" ${ink(.8, C.ink2)}/>`;
+    s += `<path d="M${n1(x + lw * .3)} ${n1(y + 1)} Q${n1(x + lw * .2)} ${n1(y + h * .5)} ${n1(x + lw * .25)} ${n1(y + h * .85)} M${n1(x + w - rw * .35)} ${n1(y + 1)} Q${n1(x + w - rw * .25)} ${n1(y + h * .5)} ${n1(x + w - rw * .3)} ${n1(y + h * .85)}" fill="none" ${ink(.6, C.pen)}/>`;
+  }
+  if (type === 'plant') {
+    const px = x + w * (.3 + r() * .4), pw = Math.min(9, w * .36), ph = Math.min(7, h * .22), py = y + h - ph, nl = 3 + (r() * 3 | 0);
+    for (let i = 0; i < nl; i++) {
+      const a = -150 + i * 120 / (nl - 1) + J(10), l = h * (.22 + r() * .14), [ex, ey] = pt(px, py, l, a);
+      s += `<path d="M${n1(px)} ${n1(py)} Q${n1((px + ex) / 2 + J(3))} ${n1((py + ey) / 2 - 2)} ${n1(ex)} ${n1(ey)} Q${n1((px + ex) / 2 + 2)} ${n1((py + ey) / 2 + 2)} ${n1(px)} ${n1(py)}Z" fill="${C.wash}" ${ink(.75, C.ink2)}/>`;
+    }
+    s += `<path d="M${n1(px - pw / 2)} ${n1(py)} L${n1(px + pw / 2)} ${n1(py)} L${n1(px + pw * .36)} ${n1(y + h)} L${n1(px - pw * .36)} ${n1(y + h)}Z" fill="${C.wash3}" ${ink(.9)}/>`;
+  }
+  if (type === 'cat') {
+    const cx = x + w * (.3 + r() * .4), cy = y + h;
+    s += `<path d="M${n1(cx - 4)} ${n1(cy)} Q${n1(cx - 5)} ${n1(cy - 8)} ${n1(cx - 1)} ${n1(cy - 9)} L${n1(cx - 2)} ${n1(cy - 12)} L${n1(cx)} ${n1(cy - 10.5)} L${n1(cx + 2)} ${n1(cy - 12)} L${n1(cx + 1.6)} ${n1(cy - 9)} Q${n1(cx + 5)} ${n1(cy - 8)} ${n1(cx + 4)} ${n1(cy)}Z" fill="${C.ink}" ${ink(.8)}/><path d="M${n1(cx + 4)} ${n1(cy - 1)} q5 1 4 -6" fill="none" ${ink(1.1)}/>`;
+  }
+  if (type === 'open') {
+    const pw = w * (.34 + r() * .1);
+    s += `<path d="M${n1(x)} ${n1(y)} L${n1(x - pw)} ${n1(y + h * .08)} L${n1(x - pw)} ${n1(y + h * .94)} L${n1(x)} ${n1(y + h)}Z" fill="${C.sheet}" ${ink(1.1)}/><path d="M${n1(x - pw * .3)} ${n1(y + h * .32)} L${n1(x - pw * .72)} ${n1(y + h * .24)}" ${ink(.6, C.pencil)}/>`;
+    s += `<path d="M${n1(x + w)} ${n1(y + 1)} C${n1(x + w + 8)} ${n1(y + h * .2)} ${n1(x + w + 3)} ${n1(y + h * .5)} ${n1(x + w + 12)} ${n1(y + h * .72)} L${n1(x + w - 3)} ${n1(y + h * .56)}Z" fill="${C.sheet}" ${ink(.9)}/>`;
+  }
+  s += srect(x, y, w, h, { sw: 1.25, wob: .45, os: 1.6, br: .15 });
+  return s + `<path d="${wline(x - 2.5, y + h + 1.6, x + w + 2.5, y + h + 1.6, .3, 1)}" fill="none" ${ink(1.7)}/>`;
+}
+function choose(mix) { let t = r() * Object.values(mix).reduce((a, b) => a + b, 0); for (const [k, v] of Object.entries(mix)) { t -= v; if (t <= 0) return k; } return 'plain'; }
+/** a facade's window grid: per-building spacing and sizes, every window nudged and filled its own way */
+function grid(x, w, y0, y1, cols, rows, ww, wh, mix, force = {}, ledges = true) {
+  let s = '';
+  const cw = w / cols, rh = (y1 - y0) / rows;
+  for (let j = 0; j < rows; j++) {
+    if (ledges && j) s += `<path d="${wline(x + 3, y0 + j * rh - 1, x + w - 3, y0 + j * rh - 1, .5, 0, .3)}" fill="none" ${ink(.9, C.pen)}/>`;
+    for (let i = 0; i < cols; i++) {
+      const type = force[`${i},${j}`] || choose(mix);
+      if (type === 'none') continue;
+      const a = ww + J(1.4), b = wh + J(1.6), cx = x + (i + .5) * cw + J(1.2), cy = y0 + (j + .5) * rh + J(1);
+      s += win(cx - a / 2, cy - b / 2, a, b, type);
+      if (type !== 'open' && r() < .1) s += srect(cx - a * .4, cy + b / 2 + 4, a * .8, 8, { fill: C.wash2, sw: 1, br: 0, os: .5 }) + `<circle cx="${n1(cx - a * .1)}" cy="${n1(cy + b / 2 + 8)}" r="2.6" fill="none" ${ink(.7)}/>` + hatch(R(cx + a * .05, cy + b / 2 + 5, a * .3, 6), 0, 1.6, { c: C.ink2, sw: .5, jit: .1, br: 0, aj: 0 });
+    }
+  }
+  return s;
+}
+/** a striped awning with a scalloped hem, each stripe its own width */
+function awning(x, w, y, h) {
+  let hat = '', d = '', sc = `M${n1(x)} ${n1(y + h)}`;
+  for (let xs = x, i = 0; xs < x + w - 1; i++) {
+    const sw2 = Math.min(x + w - xs, 6 + r() * 9);
+    if (i % 2 === 0) hat += hatch(R(xs, y, sw2, h + 7), 62 + J(10), 1.7 + r() * .8, { c: C.ink2, sw: .7, inset: .3, br: 0 });
+    d += `M${n1(xs)} ${n1(y)}L${n1(xs + J(.5))} ${n1(y + h)}`;
+    sc += ` q${n1(sw2 / 2)} ${n1(4 + r() * 2.5)} ${n1(sw2)} 0`;
+    xs += sw2;
+  }
+  const fill = `${sc} V${n1(y)} H${n1(x)}Z`;
+  return `<path d="${fill}" fill="${C.sheet}"/>` + clip(fill, hat) + `<path d="${d}" stroke="${C.ink}" stroke-width=".8"/><path d="${sc}" fill="none" ${ink(1.3)}/>` +
+    `<path d="${wline(x - 3, y, x + w + 3, y, .4, 1)}" fill="none" ${ink(2)}/>`;
+}
+const signboard = (cx, cy, w, h, str, s = 10, inv = false) => srect(cx - w / 2, cy - h / 2, w, h, { fill: inv ? C.ink : C.sheet, sw: 1.6, br: 0 }) + T(cx, cy + s * .36, str, { s, ls: 1.6, anchor: 'middle', fill: inv ? C.sheet : C.ink });
+function darkGlass(x, y, w, h) {
+  let s = `<rect x="${n1(x)}" y="${n1(y)}" width="${n1(w)}" height="${n1(h)}" fill="${C.ink2}"/>` + hatch(R(x, y, w, h), 48 + J(6), 2.4, { c: C.ink, sw: .8, inset: .4, skip: .25 });
+  for (let i = 0; i < 1 + (w > 30) + (w > 55); i++) { const sx = x + w * (.12 + r() * .6), l = Math.min(h * .7, 8 + r() * 10); s += `<path d="M${n1(sx)} ${n1(y + h - 3)} L${n1(sx + l * .6)} ${n1(y + h - 3 - l)} M${n1(sx + 3)} ${n1(y + h - 2)} L${n1(sx + 3 + l * .4)} ${n1(y + h - 2 - l * .66)}" ${ink(1, C.pencil2)}/>`; }
+  return s;
+}
+function door(x, y, w, h) { return srect(x, y, w, h, { fill: C.wash2, sw: 1.5, br: 0 }) + darkGlass(x + 3, y + 3, w - 6, h * .45) + srect(x + 3, y + 3, w - 6, h * .45, { sw: .9, br: 0, os: .5 }) + `<circle cx="${n1(x + w - 5)}" cy="${n1(y + h * .62)}" r="1.4" fill="${C.ink}"/>`; }
+/** a side wall seen in perspective, falling away toward the middle of the street, cross-hatched in shade */
+function sideWall(xa, xb, top, slope) {
+  const ya = top, yb = top + slope * Math.abs(xb - xa), bot = GY - (GY - 470) * Math.abs(xb - xa) / 212;
+  const P = [[xa, ya], [xb, yb], [xb, bot], [xa, GY]];
+  let s = spoly(P, { fill: '#b9b6af', sw: 2, br: 0 }) + xhatch(P, 66 + J(4), 2.1, { c: C.ink2, sw: .8, br: .25 });
+  let d = '';
+  for (let y = ya + 30; y < GY - 20; y += 36 + r() * 10) { const f = (y - ya) / (GY - ya), y2 = yb + (bot - yb) * f; d += `M${n1(xa)} ${n1(y)} L${n1(xb)} ${n1(y2)}`; }
+  return s + `<path d="${d}" fill="none" ${ink(.9, C.ink2)}/>`;
+}
+
+/* ── the left side of the street: an office block with his open window, a narrow shophouse, a taller block ── */
+function leftSide() {
+  let s = '';
+  keep(36, 290, 300, GY); keep(300, 232, 492, GY);
+  // L3: taller, ribbon windows split by mullions at odd spacings, its side wall toward the middle
+  const x3 = 300, w3 = 170, t3 = 236;
+  s += sideWall(x3 + w3, x3 + w3 + 24, t3, 1.15);
+  s += srect(x3, t3, w3, GY - t3, { fill: C.wash, sw: 2.3, wob: 1, os: 3 }) + srect(x3 - 4, t3 - 7, w3 + 8, 8, { fill: C.wash2, sw: 1.8, br: 0 });
+  for (let j = 0; j < 6; j++) {
+    const y = 250 + j * 40.5 + J(1), h = 21 + J(1.5);
+    let x = x3 + 9; const end = x3 + w3 - 9;
+    while (x < end - 8) {
+      const ww = Math.min(end - x, 18 + r() * 22);
+      s += win(x, y, ww - 3, h, j === 2 && x > x3 + 60 && x < x3 + 90 ? 'cat' : choose({ plain: 4, blind: 4, dark: 2, plant: 1.2, curtain: 1 }));
+      x += ww;
+    }
+    s += `<path d="${wline(x3 + 3, y + h + 9, x3 + w3 - 3, y + h + 9, .5, 0, .3)}" fill="none" ${ink(.9, C.pen)}/>` + hatch(R(x3 + 4, y + h + 10, w3 - 8, 4), 30, 2.4, { c: C.pencil, sw: .6, br: 0 });
+  }
+  s += awning(x3 + 30, 110, 498, 12) + darkGlass(x3 + 36, 516, 44, 30) + srect(x3 + 36, 516, 44, 30, { sw: 1.4, br: 0 }) + door(x3 + 92, 514, 34, 34);
+  s += signboard(x3 + 62, 489, 88, 13, 'VĂN PHÒNG', 8.5) + darkGlass(x3 + 138, 516, 24, 30) + srect(x3 + 138, 516, 24, 30, { sw: 1.3, br: 0 });
+  s += rail(x3 + 4, x3 + w3 - 30, t3 - 7, 8) + vent(x3 + 20, t3 - 7) + vent(x3 + 34, t3 - 7, 9);
+  s += antenna(x3 + w3 + 6, t3 - 2, 74) + dish(x3 + w3 - 18, t3 - 7, 12, -40);
+  // L2: a narrow shophouse with balconies; a water tank on stilts and a steel tank on its roof
+  const x2 = 180, w2 = 120, t2 = 344;
+  s += srect(x2, t2, w2, GY - t2, { fill: '#e6e0d3', sw: 2.2, wob: .9, os: 3 });
+  s += spoly([[x2 - 3, t2], [x2 + 20, t2 - 12], [x2 + w2 - 20, t2 - 12], [x2 + w2 + 3, t2]], { fill: C.wash2, sw: 1.8, br: 0 }) + hatch([[x2 + 22, t2 - 10], [x2 + w2 - 22, t2 - 10], [x2 + w2 - 4, t2 - 1], [x2 + 6, t2 - 1]], 20, 2.4, { c: C.pencil, sw: .6 });
+  for (let j = 0; j < 3; j++) {
+    const fy = 354 + j * 45, k = r();
+    s += win(x2 + 14, fy, 22, 32, k < .4 ? 'curtain' : 'blind') + win(x2 + 40, fy, 22, 32, choose({ plain: 2, dark: 2, curtain: 1, blind: 1 }));
+    s += srect(x2 + 74, fy, 30, 32, { fill: C.wash2, sw: 1.3, br: .1 }) + hatch(R(x2 + 75, fy + 1, 28, 30), 0, 2.6 + r() * .6, { c: C.ink2, sw: .7, jit: .12, aj: 0, br: .05 });   // louvred shutters
+    s += `<path d="M${x2 + 89} ${fy} v32" ${ink(1)}/>`;
+    const by = fy + 34; let bal = `M${x2 + 6} ${by} H${x2 + w2 - 6} M${x2 + 6} ${by - 12} H${x2 + w2 - 6}`;
+    for (let bx = x2 + 8; bx < x2 + w2 - 6; bx += 4.5 + r() * 2) bal += `M${n1(bx)} ${by - 12} v12`;
+    s += `<path d="${bal}" fill="none" ${ink(1, C.ink2)}/><path d="${wline(x2 + 4, by + 1, x2 + w2 - 4, by + 1, .3, 1)}" fill="none" ${ink(2)}/>`;
+    if (j !== 1) s += g(x2 + 20 + r() * 70, by - 12, 0, 1, `<path d="M-5 0 L5 0 L4 -7 H-4Z" fill="${C.wash3}" ${ink(.9)}/>` + [0, 1, 2, 3].map(q => `<ellipse cx="${n1(-4 + q * 2.8)}" cy="${n1(-11 - r() * 3)}" rx="3.2" ry="1.6" transform="rotate(${n1(-40 + q * 28)} ${n1(-4 + q * 2.8)} -11)" fill="${C.wash}" ${ink(.7)}/>`).join(''));
+  }
+  s += laundry(x2 + 66, x2 + 112, 444, 24);
+  s += awning(x2 + 2, w2 - 4, 504, 12) + signboard(x2 + 60, 492, 84, 15, 'TIỆM GIẤY', 9.5);
+  s += darkGlass(x2 + 8, 520, 62, 28) + srect(x2 + 8, 520, 62, 28, { sw: 1.5, br: 0 }) + door(x2 + 80, 518, 30, 30);
+  for (let i = 0; i < 5; i++) { const sx = x2 + 12 + i * 11.5 + J(1), sh = 6 + r() * 12; s += srect(sx, 548 - sh - 1, 9, sh, { fill: C.sheet, sw: .9, br: 0, os: .4 }) + `<path d="M${n1(sx + 1)} ${n1(548 - sh + 2)} h7 M${n1(sx + 1)} ${n1(548 - sh + 5)} h7" ${ink(.5, C.pen)}/>`; }   // reams of paper in the window
+  s += tank(x2 + 70, t2 - 12, 38, 30, 22) + inox(x2 + 22, t2 - 12, 34, 14);
+  // L1: an office block; his window is open on the second row
+  const x1 = 36, w1 = 144, t1 = 302;
+  s += srect(x1, t1, w1, GY - t1, { fill: C.wash, sw: 2.3, wob: 1, os: 3 }) + srect(x1 - 4, t1 - 7, w1 + 8, 8, { fill: C.wash2, sw: 1.8, br: 0 });
+  s += grid(x1 + 4, w1 - 8, 312, 494, 4, 5, 21, 25, { plain: 3.5, blind: 3, dark: 1.6, plant: 1.3, curtain: 1.2, cat: .15 }, { '1,1': 'open' });
+  s += hatch([[x1 + 2, 420], [x1 + 2, GY - 2], [x1 + 70, GY - 2]], 52, 3, { c: C.pencil, sw: .7, br: .3 });   // a shadow falling across its foot
+  s += door(x1 + 60, 506, 40, 42) + signboard(x1 + 80, 498, 58, 13, 'SỐ 9', 9, true) + darkGlass(x1 + 10, 510, 38, 30) + srect(x1 + 10, 510, 38, 30, { sw: 1.4, br: 0 }) + darkGlass(x1 + 110, 510, 26, 30) + srect(x1 + 110, 510, 26, 30, { sw: 1.4, br: 0 });
+  s += rail(x1 + 6, x1 + 80, t1 - 7, 8) + inox(x1 + 110, t1 - 7, 40, 16) + vent(x1 + 16, t1 - 7, 10);
+  s += hand(116, 420, 'ô cửa bên này', { s: 15 });
+  return s;
+}
+
+/* ── the right side: a tall block with her open window on the top floor, an apartment block, the post office ── */
+function rightSide() {
+  let s = '';
+  keep(846, 118, 1032, GY); keep(1032, 290, 1246, GY);
+  // R1, its side wall toward the middle
+  const x1 = 872, w1 = 160, t1 = 128;
+  s += sideWall(x1, x1 - 26, t1, 1.6);
+  s += srect(x1, t1, w1, GY - t1, { fill: C.wash, sw: 2.3, wob: 1, os: 3 }) + srect(x1 - 4, t1 - 7, w1 + 8, 8, { fill: C.wash2, sw: 1.8, br: 0 });
+  let pil = ''; for (const px of [x1 + 40, x1 + 80, x1 + 120]) pil += wline(px + J(1), t1 + 2, px + J(1), 478, .5, 0, .25);
+  s += `<path d="${pil}" fill="none" ${ink(.8, C.pencil)}/>`;
+  s += grid(x1 + 2, w1 - 4, 138, 478, 4, 8, 24, 27, { plain: 3.4, blind: 3.2, dark: 1.8, plant: 1.1, curtain: 1.3, cat: .12 }, { '1,0': 'open' });
+  s += awning(x1 + 4, w1 - 8, 500, 12) + signboard(x1 + 80, 488, 96, 15, 'CÀ PHÊ GIÓ', 9.5, true);
+  s += darkGlass(x1 + 10, 518, 70, 30) + srect(x1 + 10, 518, 70, 30, { sw: 1.5, br: 0 }) + door(x1 + 96, 516, 32, 32) + darkGlass(x1 + 136, 518, 18, 30) + srect(x1 + 136, 518, 18, 30, { sw: 1.3, br: 0 });
+  for (let i = 0; i < 3; i++) s += g(x1 + 26 + i * 14, 538, 0, 1, `<path d="M-4 0 v-5 M4 0 v-5" ${ink(.8, C.sheet)}/><ellipse cx="0" cy="-6" rx="4.5" ry="1.6" fill="${C.sheet}" ${ink(.8)}/>`);   // cups in the café window
+  s += rail(x1 + 40, x1 + w1 - 4, t1 - 7, 8) + tank(x1 + 30, t1 - 7, 36, 30, 20) + dish(x1 + 84, t1 - 7, 12, -28) + antenna(x1 + 140, t1 - 7, 58);
+  s += hand(842, 199, 'ô cửa bên kia', { s: 15, anchor: 'end' }) + hand(842, 217, 'tầng 9', { s: 14, anchor: 'end', fill: C.pen });
+  // R2: balconies, AC units, the post office downstairs
+  const x2 = 1032, w2 = 214, t2 = 304;
+  s += srect(x2, t2, w2, GY - t2, { fill: '#e6e0d3', sw: 2.3, wob: 1, os: 3 }) + srect(x2 - 3, t2 - 6, w2 + 4, 7, { fill: C.wash2, sw: 1.7, br: 0 });
+  s += grid(x2 + 6, w2 - 12, 314, 474, 5, 4, 22, 25, { plain: 3, blind: 2.6, dark: 1.6, plant: 1.6, curtain: 1.6, cat: .2 }, { '3,2': 'cat' }, false);
+  for (const by of [356, 436]) {
+    let bal = `M${x2 + 4} ${by} H${x2 + w2 - 4} M${x2 + 4} ${by - 13} H${x2 + w2 - 4}`;
+    for (let bx = x2 + 6; bx < x2 + w2 - 4; bx += 5 + r() * 3) bal += `M${n1(bx)} ${by - 13} v13`;
+    s += `<path d="${bal}" fill="none" ${ink(.9, C.ink2)}/><path d="${wline(x2 + 2, by + 1, x2 + w2 - 2, by + 1, .3, 1)}" fill="none" ${ink(2)}/>` + hatch(R(x2 + 3, by + 2, w2 - 6, 5), 25, 2.2, { c: C.pencil, sw: .6, br: 0 });
+  }
+  s += laundry(x2 + 120, x2 + 196, 436 - 13, 18);
+  s += awning(x2 + 10, 120, 500, 12) + signboard(x2 + 70, 488, 112, 15, 'BƯU CỤC PHỐ GIÓ', 8.5);
+  s += door(x2 + 22, 516, 34, 32) + darkGlass(x2 + 66, 518, 56, 28) + srect(x2 + 66, 518, 56, 28, { sw: 1.4, br: 0 });
+  s += g(x2 + 94, 532, -4, 1, srect(-16, -9, 32, 18, { fill: C.sheet, sw: 1, br: 0 }) + `<path d="M-16 -9 L0 2 L16 -9" fill="none" ${ink(.9)}/>`);   // a letter in the window
+  s += darkGlass(x2 + 140, 512, 62, 34) + srect(x2 + 140, 512, 62, 34, { sw: 1.5, br: 0 });
+  s += rail(x2 + 4, x2 + 104, t2 - 6, 8) + inox(x2 + 40, t2 - 6, 44, 17) + inox(x2 + 92, t2 - 6, 36, 14) + laundry(x2 + 128, x2 + 204, t2 - 6, 26) + vent(x2 + 116, t2 - 6, 11);
+  return s;
+}
+
+/* ── the pole with its tangle of wires, the lamp post with a note on it, a bicycle, stools, the post box ── */
+function wires() {
+  const x = 858, top = 326;
+  let d = '';
+  [[x - 25, top + 9, 494, 300, 34], [x - 13, top + 9, 494, 312, 42], [x + 17, top + 9, 494, 288, 52], [x - 21, top + 29, 494, 336, 28], [x + 9, top + 29, 494, 352, 24],
+    [x - 25, top + 9, 872, 210, -6], [x + 17, top + 29, 872, 262, 4]].forEach(([x0, y0, x1, y1, sag]) => { d += `M${x0} ${y0} Q${n1((x0 + x1) / 2 + J(10))} ${n1((y0 + y1) / 2 + sag * 2)} ${x1} ${y1}`; });
+  let s = `<path d="${d}" fill="none" ${ink(1, C.ink2)}/>`;
+  let coil = ''; for (let i = 0; i < 4; i++) coil += `M${n1(x - 30 + i * 3)} ${top + 50} a${n1(9 + i)} ${n1(6 + i * .6)} ${n1(J(10))} 1 0 ${n1(4)} 2`;
+  return s + `<path d="${coil}" fill="none" ${ink(1, C.ink2)}/>`;
+}
+function pole() {
+  const x = 858, base = 566, top = 326;
+  let s = spoly([[x - 5, base], [x - 3.5, top], [x + 3.5, top], [x + 5, base]], { fill: C.pen, sw: 1.6, br: 0 }) + hatch([[x, top + 2], [x + 3.5, top + 2], [x + 5, base - 2], [x, base - 2]], 75, 2, { c: C.ink, sw: .7, br: 0 });
+  [[top + 12, 30, 26], [top + 32, 24, 22]].forEach(([y, l, rr]) => {
+    s += srect(x - l, y - 2.5, l + rr, 5, { fill: C.wash3, sw: 1.3, br: 0 });
+    for (const dx of [-l + 5, -l / 2, rr / 2, rr - 5]) s += `<circle cx="${n1(x + dx)}" cy="${y - 5}" r="2.4" fill="${C.sheet}" ${ink(1)}/>`;
+  });
+  s += srect(x + 5, top + 62, 18, 30, { fill: C.wash, sw: 1.5, br: 0 }) + hatch(R(x + 14, top + 63, 8, 28), 70, 2, { c: C.ink2, sw: .6, br: 0 });
+  s += g(x - 2, top + 150, -3, 1, srect(-32, -10, 64, 20, { fill: C.ink, sw: 1.5, br: 0 }) + `<rect x="-29" y="-7" width="58" height="14" fill="none" stroke="${C.sheet}" stroke-width=".8"/>` + T(0, 4.5, 'PHỐ GIÓ', { s: 10.5, ls: 2, anchor: 'middle', fill: C.sheet }));
+  return s;
+}
+function lampPost() {
+  const x = 412, base = 736, top = 432;
+  keep(x - 44, top - 24, x + 52, base + 4);
+  let s = hatch([[x - 2, base - 1], [x + 40, base - 4], [x + 44, base + 4], [x, base + 4]], 10, 2.4, { c: C.pencil, sw: .7, br: 0 });   // its shadow
+  s += srect(x - 10, base - 16, 20, 16, { fill: C.wash2, sw: 1.7, br: 0 }) + hatch(R(x + 1, base - 15, 8, 14), 70, 2, { c: C.ink2, sw: .6, br: 0 });
+  s += `<path d="M${x - 5} ${base - 16} L${x - 3.2} ${top} L${x + 3.2} ${top} L${x + 5} ${base - 16}Z" fill="${C.ink2}" ${ink(1.4)}/><path d="M${x - 1.3} ${base - 22} L${x - .8} ${top + 8}" stroke="${C.pencil2}" stroke-width="1.1"/>`;
+  s += srect(x - 6, base - 74, 12, 6, { fill: C.wash2, sw: 1.2, br: 0 }) + srect(x - 5, top + 22, 10, 5, { fill: C.wash2, sw: 1.1, br: 0 });
+  s += `<path d="M${x} ${top + 4} C${x + 4} ${top - 22} ${x + 30} ${top - 24} ${x + 40} ${top - 9}" fill="none" ${ink(3)}/><path d="M${x + 1} ${top + 14} q8 -12 20 -8 q-6 4 -4 9" fill="none" ${ink(1.2)}/>`;
+  const lx = x + 40, ly = top - 6;
+  s += `<path d="M${lx - 11} ${ly + 4} L${lx + 11} ${ly + 4} L${lx} ${ly - 7}Z" fill="${C.ink2}" ${ink(1.5)}/><path d="M${lx - 8} ${ly + 4} L${lx + 8} ${ly + 4} L${lx + 5} ${ly + 25} L${lx - 5} ${ly + 25}Z" fill="${C.sheet}" ${ink(1.5)}/>`;
+  s += `<path d="M${lx} ${ly + 4} V${ly + 25}" ${ink(.8)}/><rect x="${lx - 6}" y="${ly + 25}" width="12" height="3.5" fill="${C.ink}"/>`;
+  // a note taped on the post: whoever found the paper plane, please write back; tear-off slips at the foot
+  let n = `<g transform="${tf(x, 612, -4)}">` + srect(-40, -46, 80, 70, { fill: C.sheet, sw: 1.4, br: 0 });
+  n += T(0, -28, 'Ai nhặt được', { f: F.note, w: 400, s: 13.5, anchor: 'middle', fill: C.ink }) + T(0, -12, 'máy bay giấy', { f: F.note, w: 400, s: 13.5, anchor: 'middle', fill: C.ink }) + T(-2, 5, 'xin hồi âm!', { f: F.hand, w: 700, s: 15, anchor: 'middle', fill: C.ink });
+  n += g(26, 14, -20, 1, plane(14));
+  for (let i = 0; i < 7; i++) {
+    if (i === 2 || i === 5) continue;
+    const tx = -40 + i * 80 / 7;
+    n += srect(tx + .5, 24, 80 / 7 - 1, 22, { fill: C.sheet, sw: .9, br: 0, os: .4 }) + g(tx + 80 / 14 + 2, 45, -90, 1, T(0, 0, `09${12 + i * 7}`, { s: 6.5, w: 600, fill: C.ink2 }));
+  }
+  n += `<rect x="-13" y="-52" width="26" height="9" fill="${C.wash2}" transform="rotate(6)" ${ink(.8, C.pen)}/>`;
+  s += n + '</g>';
+  return s;
+}
+function bicycle(x, y) {                                          // (x, y): the middle of the wheel base, on the ground
+  const rr = 13, w1 = [x - 21, y - rr], w2 = [x + 21, y - rr];
+  let s = '';
+  for (const [cx, cy] of [w1, w2]) {
+    s += `<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" ${ink(1.8)}/><circle cx="${cx}" cy="${cy}" r="${rr - 2.4}" fill="none" ${ink(.5, C.pen)}/>`;
+    let d = ''; const a0 = r() * 40; for (let i = 0; i < 9; i++) { const [px, py] = pt(cx, cy, rr - 2.4, a0 + i * 40 + J(6)); d += `M${cx} ${cy}L${px} ${py}`; }
+    s += `<path d="${d}" stroke="${C.pen}" stroke-width=".5"/><circle cx="${cx}" cy="${cy}" r="1.6" fill="${C.ink}"/>`;
+  }
+  const bb = [x - 2, y - rr + 2], seat = [x - 9, y - rr - 19], head = [x + 13, y - rr - 21];
+  s += `<path d="M${w1[0]} ${w1[1]} L${bb[0]} ${bb[1]} L${seat[0] + 2} ${seat[1] + 4} Z M${bb[0]} ${bb[1]} L${head[0] - 1} ${head[1] + 5} L${seat[0] + 2} ${seat[1] + 4} M${head[0] - 1} ${head[1] + 5} L${w2[0]} ${w2[1]}" fill="none" ${ink(1.8)}/>`;
+  s += `<path d="M${seat[0] - 5} ${seat[1]} h9" ${ink(2.6)}/><path d="M${head[0] - 1} ${head[1] + 5} l1 -6 M${head[0] - 4} ${head[1] - 2} q4 -2 9 1" fill="none" ${ink(1.6)}/>`;
+  s += spoly([[head[0] + 1, head[1] + 2], [head[0] + 21, head[1] + 2], [head[0] + 18, head[1] + 15], [head[0] + 3, head[1] + 15]], { fill: C.wash, sw: 1.3, br: 0 }) + hatch(R(head[0] + 2, head[1] + 3, 18, 11), 45, 2.4, { c: C.pen, sw: .5, br: 0 });
+  s += g(head[0] + 8, head[1] - 2, -12, 1, srect(-6, -9, 13, 11, { fill: C.sheet, sw: .9, br: 0, os: .4 })) + g(head[0] + 15, head[1] - 1, 10, 1, srect(-5, -8, 11, 10, { fill: C.sheet, sw: .9, br: 0, os: .4 }));
+  return s;
+}
+function mailbox(x, base) {
+  let s = srect(x - 12, base - 46, 24, 46, { fill: C.wash, sw: 1.7, br: 0 }) + `<path d="M${x - 14} ${base - 46} Q${x} ${base - 62} ${x + 14} ${base - 46}Z" fill="${C.wash2}" ${ink(1.7)}/>`;
+  s += xhatch(R(x + 2, base - 45, 9, 44), 60, 2.2, { c: C.ink2, sw: .6, br: 0 }) + `<rect x="${x - 8}" y="${base - 38}" width="16" height="3" fill="${C.ink}"/>` + T(x - 2, base - 22, 'THƯ', { s: 7.5, ls: .6, anchor: 'middle' });
+  return s + srect(x - 15, base - 4, 30, 4, { fill: C.ink2, sw: 1, br: 0 });
+}
+const stool = (x, y) => g(x, y, 0, 1, `<path d="M-6 0 L-4 -10 M6 0 L4 -10 M-5 -4 H5" fill="none" ${ink(1.2)}/><ellipse cx="0" cy="-10.5" rx="6" ry="2.2" fill="${C.sheet}" ${ink(1.2)}/>`);
+
+/* ── the street: the far pavement, the road (light in the middle), the crossing, the near pavement ── */
+function street() {
+  let s = `<rect x="33" y="${GY}" width="1214" height="${CURB - GY}" fill="${C.wash}"/>`;
+  let d = ''; for (let x = 36 + r() * 20; x < 1244; x += 16 + r() * 26) d += `M${n1(x)} ${GY + 1}l${n1(-3 + J(1))} ${CURB - GY - 2}`;
+  s += `<path d="${d}" stroke="${C.pencil2}" stroke-width=".8"/>`;
+  s += `<path d="${wline(33, CURB, 1247, CURB, 1, 0)}" fill="none" ${ink(1.8)}/>` + hatch(R(33, CURB, 1214, 5), 70, 2.6, { c: C.pen, sw: .7, br: .1 });
+  let tex = '', texL = '';
+  for (let i = 0; i < 1100; i++) {                                    // asphalt: grit and scuffs, lighter on the stage
+    const x = 36 + r() * 1208, y = CURB + 8 + r() * (NEAR - CURB - 12), mid = x > 440 && x < 840, l = 1.5 + r() * 4, a = rad(J(25));
+    if (mid && r() < .5) continue;
+    const seg = `M${n1(x)} ${n1(y)}l${n1(Math.cos(a) * l)} ${n1(Math.sin(a) * l)}`;
+    if (mid) texL += seg; else tex += seg;
+  }
+  s += `<path d="${tex}" stroke="${C.pencil}" stroke-width=".8" stroke-linecap="round"/><path d="${texL}" stroke="${C.pencil3}" stroke-width=".8" stroke-linecap="round"/>`;
+  s += hatch([[33, CURB + 6], [440, CURB + 6], [400, NEAR - 2], [33, NEAR - 2]], 30, 5.5, { c: C.pencil2, sw: .7, br: .35, skip: .2 });
+  for (const [x0, x1, dep] of [[33, 178, 30], [180, 298, 16], [300, 470, 40], [872, 1032, 46], [1034, 1247, 22]]) {
+    const P = [[x0, GY + 1], [x1, GY + 1], [x1 - dep * .7, CURB + dep], [x0 - dep * .7, CURB + dep]].map(([px, py]) => [Math.max(33, px), py]);
+    s += xhatch(P, -62 + J(6), 2.6, { c: C.pen, sw: .75, br: .3 });
+  }
+  s += hatch([[840, CURB + 6], [1247, CURB + 6], [1247, NEAR - 2], [880, NEAR - 2]], 150, 5, { c: C.pencil2, sw: .7, br: .35, skip: .2 });
+  const ly = (CURB + NEAR) / 2 + 4; let dash = '';                    // the lane line, worn in places
+  for (let x = 40 + r() * 10; x < 1240; x += 52 + r() * 26) {
+    if (x > 500 && x < 790) continue;
+    const l = 22 + r() * 16, c = x > 440 && x < 840 ? C.pencil : C.ink2;
+    dash += srect(x, ly - 2.5 + J(1), l, 5, { fill: C.sheet, sw: .9, c, br: .3, os: 1 });
+  }
+  s += dash;
+  s += g(104, 664, 0, 1, `<ellipse rx="24" ry="8" fill="${C.wash}" ${ink(1.6)}/><ellipse rx="18" ry="5.5" fill="none" ${ink(.9)}/>`) + clip(`M80 664 a24 8 0 1 0 48 0 a24 8 0 1 0 -48 0Z`, xhatch(R(80, 655, 48, 18), 0, 3, { c: C.ink2, sw: .6, br: 0, aj: 0 }));
+  s += g(806, 662, 0, 1, `<ellipse rx="22" ry="7" fill="none" ${ink(1, C.pencil)}/><ellipse rx="16" ry="4.8" fill="none" ${ink(.8, C.pencil)}/>`) + clip(`M784 662 a22 7 0 1 0 44 0 a22 7 0 1 0 -44 0Z`, hatch(R(784, 654, 44, 16), 0, 3.2, { c: C.pencil2, sw: .6, br: 0, aj: 0 }));
+  s += `<path d="${wline(33, NEAR, 1247, NEAR, 1, 0)}" fill="none" ${ink(1.8)}/>` + hatch(R(33, NEAR + 1, 1214, 7), 68, 2.6, { c: C.pen, sw: .7, br: .12 });
+  s += srect(276, NEAR + 1, 34, 7, { fill: C.ink2, sw: 1, br: 0 }) + `<path d="M281 ${NEAR + 2} v5 M287 ${NEAR + 2} v5 M293 ${NEAR + 2} v5 M299 ${NEAR + 2} v5 M305 ${NEAR + 2} v5" stroke="${C.sheet}" stroke-width="1.6"/>`;
+  let pav = '';                                                       // the near pavement's slabs, their joints leaning toward the middle
+  for (let x = 40 + r() * 16; x < 1240; x += 30 + r() * 34) { const k = (x - 640) * .08; pav += `M${n1(x)} ${NEAR + 9} L${n1(x + k + J(2))} 767`; }
+  for (let x = 40; x < 1240;) { const l = 40 + r() * 110; pav += `M${n1(x)} ${n1(728 + J(3))} L${n1(Math.min(1240, x + l))} ${n1(728 + J(3))}`; x += l + 8 + r() * 30; }
+  s += `<path d="${pav}" fill="none" stroke="${C.pencil2}" stroke-width=".9"/>`;
+  let pd = '';                                                         // a puddle on the pavement, the lamp post upside down in it
+  for (let k = 0; k <= 20; k++) { const a = k / 20 * Math.PI * 2, f = 1 + .1 * Math.sin(a * 3 + 1) + .06 * Math.cos(a * 5); pd += `${k ? 'L' : 'M'}${n1(384 + Math.cos(a) * 46 * f)} ${n1(752 + Math.sin(a) * 10 * f)}`; }
+  pd += 'Z';
+  s += `<path d="${pd}" fill="${C.pen}"/>` + clip(pd, xhatch(R(334, 738, 102, 28), 8, 2.2, { c: C.ink, sw: .8, br: .3 }) + `<path d="M412 742 L413 766 M405 746 h14" stroke="${C.pencil2}" stroke-width="3"/>` +
+    `<path d="M352 750 q12 -3 24 0 M362 757 q9 -2 18 0 M384 746 q8 -2 16 0" fill="none" stroke="${C.sheet}" stroke-width="1.4" stroke-linecap="round"/>`) + `<path d="${pd}" fill="none" ${ink(1.6)}/>`;
+  return s;
+}
+/** the zebra crossing on the stage: drawn light, the paint worn and broken, each stripe in perspective */
+function crossing() {
+  const yA = CURB + 9, yB = NEAR - 5, xl = y => 574 + (534 - 574) * (y - yA) / (yB - yA), xr = y => 714 + (754 - 714) * (y - yA) / (yB - yA);
+  let s = hatch([[xl(yA) - 34, yA], [xr(yA) + 30, yA], [xr(yB) + 44, yB], [xl(yB) - 40, yB]], 24, 4.6, { c: C.pencil3, sw: .8, br: .45, skip: .18 });
+  const n = 6, yt = t => yA + (yB - yA) * Math.pow(t, 1.18);
+  for (let i = 0; i < n; i++) {
+    const ya = yt((i + .2) / n), yb = yt((i + .84) / n), cuts = [];
+    for (let k = 0; k < (r() * 2.4 | 0); k++) cuts.push(.15 + r() * .7);
+    cuts.sort((a, b) => a - b);
+    let f0 = 0;
+    for (const f1 of [...cuts, 1]) {
+      const g0 = f0 === 0 ? 0 : f0 + .02 + r() * .03, P = [[xl(ya) + (xr(ya) - xl(ya)) * g0, ya + J(.6)], [xl(ya) + (xr(ya) - xl(ya)) * f1, ya + J(.6)], [xl(yb) + (xr(yb) - xl(yb)) * f1, yb + J(.6)], [xl(yb) + (xr(yb) - xl(yb)) * g0, yb + J(.6)]];
+      s += spoly(P, { fill: C.sheet, sw: 1.1, c: C.pencil, wob: .6, os: 1.4, br: .2 });
+      if (r() < .5) s += hatch(P, 70 + J(30), 3 + r() * 2, { c: C.pencil3, sw: .7, skip: .3 });
+      f0 = f1;
+    }
+  }
+  return s + hand(770, 604, 'vạch sang đường', { s: 13.5, fill: C.pencil, sw: 3 });
+}
+
+/* ── loose sheets blowing down the street and up past the roofs ── */
+function papers() {
+  let s = '';
+  [[478, 300, -24, 34, 42, 'thư'], [790, 340, 18, 28, 36, null], [214, 640, 30, 40, 30, null], [1000, 564, -12, 30, 24, null], [356, 694, -40, 30, 38, null],
+    [620, 70, 12, 26, 32, 'nhớ'], [140, 258, -18, 28, 22, null], [1200, 230, 26, 26, 30, null], [744, 452, -8, 22, 28, null], [70, 720, 8, 34, 26, 'hẹn'], [530, 612, 20, 18, 22, null]]
+    .forEach(([x, y, a, w, h, word]) => { s += g(x, y, a, 1, paper(w, h, { word })); keep(x - w * .6, y - h * .6, x + w * .6, y + h * .6); });
+  return s;
+}
+function swirls() {
+  let s = '';
+  [[448, 236, 12, 0, false, C.ink], [700, 112, 10, 8, true, C.ink], [596, 350, 9, -6, false, C.pen], [310, 600, 11, -4, false, C.ink],
+    [990, 640 - 70, 8, 0, false, C.ink], [470, 470, 8, 6, true, C.pencil], [760, 520, 7, -6, false, C.pencil], [178, 712, 9, 0, true, C.ink], [1210, 470 - 190, 8, 10, false, C.ink],
+    [258, 290, 8, -8, false, C.pen], [826, 410, 7, 4, true, C.pencil]].forEach(([x, y, z, a, flip, c]) => { s += g(x, y, a, 1, swirl(z, { flip, c, sw: c === C.ink ? 1.7 : 1.3 })); });
+  return s;
+}
+
+/* ── the planes: five come in from all over town and meet at the heart; many more wander on their own ── */
+const H = [648, 212];
+function toHeart() {
+  let s = '';
+  const A1 = [[100, 362], [132, 328], [178, 312], [222, 300], ...loop([222, 300], -10, 17), [292, 300], [360, 304], [430, 282], [500, 248], [558, 214], [602, 200]];
+  const A2 = [[930, 160], [902, 186], [866, 222], [826, 254], [796, 268], ...loop([796, 268], 190, 16, 1), [752, 256], [718, 242], [688, 232]];
+  const A3 = [[462, 52], [496, 62], [522, 80], ...loop([522, 80], 30, 14), [566, 120], [592, 146], [616, 166]];
+  const A4 = [[888, 64], [850, 52], [808, 58], ...loop([808, 58], 175, 15, -1), [756, 88], [726, 122], [700, 148], [682, 166]];
+  const A5 = [[606, 646], [574, 612], [566, 566], [590, 528], [622, 512], ...loop([622, 512], -40, 20), [654, 452], [662, 392], [656, 330], [650, 286], [648, 248]];
+  s += flight(A5, 30, { dash: '2 6', c: C.pen, sw: 1.4, bank: -.3 });
+  s += flight(A1, 44, { dash: '9 5', sw: 1.7, bank: .3 }) + flight(A2, 38, { dash: '6 4 1.5 4', sw: 1.6, bank: -.4 }) + flight(A3, 32, { dash: '4 5', sw: 1.5, bank: .1 }) + flight(A4, 36, { dash: '11 5', sw: 1.6, bank: .5 });
+  return s;
+}
+function bigHeart() {
+  keep(H[0] - 60, H[1] - 58, H[0] + 60, H[1] + 44);
+  const z = 78, d = heartD(z);
+  let s = `<path d="${d}" fill="${C.coral}"/>` + clip(d, hatch([[z * .05, -z], [z, -z], [z, z], [z * .05, z]], 52, 3.4, { c: C.ink, sw: .75, br: .3, skip: .1 }));
+  s += `<path d="${d}" fill="none" ${ink(2.6)}/><path d="${heartD(z * 1.05)}" fill="none" ${ink(1, C.ink2)} transform="translate(1.5 -1) rotate(3)"/>`;
+  s += `<path d="M${n1(-z * .5)} ${n1(-z * .3)} Q${n1(-z * .48)} ${n1(-z * .58)} ${n1(-z * .22)} ${n1(-z * .6)}" fill="none" stroke="${C.sheet}" stroke-width="3.4" stroke-linecap="round"/>`;
+  return g(H[0], H[1], -5, 1, s) + hand(724, 290, 'gặp nhau ở đây', { s: 15, fill: C.ink }) + `<path d="M722 276 Q708 270 697 255" fill="none" ${ink(1.3)}/><path d="M699.6 262.6 L696.4 254.2 L704.6 256" fill="none" ${ink(1.3)}/>`;
+}
+function wanderers() {
+  let s = '';
+  s += flight([[44, 676], [88, 660], [132, 650], ...loop([132, 650], -8, 20), [208, 640], [262, 624], [314, 598]], 58, { dash: '10 5 2 5', sw: 1.7, bank: .4 });
+  s += hand(248, 668, 'bay đi!', { s: 16, fill: C.ink });
+  s += flight([[1238, 588], [1196, 574], [1148, 584], [1098, 578], [1046, 570]], 30, { dash: '5 4', bank: -.2 });
+  s += flight([[470, 666], [496, 648], [524, 652], [550, 636]], 22, { dash: '2 6', c: C.pencil, sw: 1.2, light: true, halo: false });
+  s += flight([[836, 640], [808, 612], [780, 618], [758, 600]], 20, { dash: '3 6', c: C.pencil, sw: 1.2, light: true, halo: false });
+  s += flight([[46, 752], [96, 740], [146, 746], [196, 730]], 26, { dash: '7 6', bank: .2 });
+  s += flight([[200, 470], [220, 452], [246, 446], [270, 430]], 18, { dash: '2 5', sw: 1.1 });
+  s += flight([...spiral(784, 400, 4, 26, 0, 1.4), [744, 372], [726, 344]], 24, { dash: '4 4 1 4', sw: 1.3, bank: -.3 });
+  s += flight([[552, 286], [528, 300], [508, 324], [500, 350]], 22, { dash: '3 5', sw: 1.2 });
+  s += flight([[1050, 466], [1012, 470], ...loop([1012, 470], 180, 13, 1), [972, 466], [944, 448]], 26, { dash: '6 4', sw: 1.4 });
+  s += flight([[1000, 760 - 30], [960, 744], [920, 744], [880, 730]], 22, { dash: '5 5', sw: 1.2 });
+  s += flight([[352, 200 + 70], [376, 286], [404, 282]], 16, { dash: '2 4', sw: 1.1 });
+  return s;
+}
+
+/* ── the title on a postcard label, top left ── */
+function inkTitle(x, y, str, fam, wt, size) {
+  const id = `k${CID++}`, tw = measure(str, `${wt} ${size}px "${fam}"`);
+  const t = (dx, dy, fill) => `<text x="${n1(x + dx)}" y="${n1(y + dy)}" font-family="${fam}" font-weight="${wt}" font-size="${size}" fill="${fill}">${str}</text>`;
+  return `<clipPath id="${id}">${t(4.5, 4, '#000')}</clipPath><g clip-path="url(#${id})">${hatch(R(x - 6, y - size * 1.25, tw + 26, size * 1.8), 42, 2, { c: C.pen, sw: .95, br: .1, wob: 0 })}</g>` + t(0, 0, C.ink);
+}
+function titleLabel() {
+  const x = 44, y = 40, w = 396, h = 224;
+  keep(x - 4, y - 4, x + w + 12, y + h + 14);
+  let s = `<g transform="${tf(x + w / 2, y + h / 2, -1.4)}"><g transform="translate(${-w / 2} ${-h / 2})">`;
+  s += hatch(R(8, 9, w, h), 46, 2.4, { c: C.pen, sw: .8 });
+  s += srect(0, 0, w, h, { fill: C.sheet, sw: 2.4, wob: 1, os: 3, br: 0 });
+  let st = '';
+  for (let xx = -30, i = 0; xx < w + 30; i++) { const ww = 9 + r() * 10, col = [C.ink, null, C.pencil, null][i % 4]; if (col) st += `<path d="M${n1(xx)} 1 L${n1(xx + ww)} 1 L${n1(xx + ww - 12)} 13 L${n1(xx - 12)} 13Z" fill="${col}"/>`; xx += ww; }
+  s += clip(`M1 1 H${w - 1} V13 H1Z`, st) + `<path d="${wline(1, 13, w - 1, 13, .3, 0)}" fill="none" ${ink(1.4)}/>`;
+  s += T(16, 32, 'BƯU THIẾP  ·  PHỐ GIÓ', { s: 10, ls: 2.4, fill: C.ink2 }) + T(w - 16, 32, 'No. 0912', { s: 10, ls: 1.6, anchor: 'end', fill: C.ink2 });
+  s += inkTitle(18, 112, 'Máy bay', F.title, 400, 76);
+  const gw = measure('giấy', `700 100px "${F.hand}"`);
+  s += inkTitle(w - 12 - gw, 190, 'giấy', F.hand, 700, 100);
+  s += T(20, 148, 'Every plane finds', { f: F.serif, w: 400, style: 'italic', s: 17, fill: C.ink2 }) + T(20, 169, 'its way to you', { f: F.serif, w: 400, style: 'italic', s: 17, fill: C.ink2 });
+  s += T(20, 204, 'gió sẽ đưa đường', { f: F.note, w: 400, s: 17, fill: C.pen });
+  s += `<path d="${spline([[300, 70], [322, 52], [344, 58], [352, 74], [340, 80], [334, 68], [350, 56], [378, 50]])}" fill="none" stroke="${C.ink}" stroke-width="1.2" stroke-dasharray="3 4"/>` + g(382, 48, -18, 1, plane(17));
+  return s + '</g></g>';
+}
+
+/* ── the stamp (a plane over the rooftops, perforated all round) and the postmark across it ── */
+function perforated(w, h, rr = 3.4) {
+  let d = `M${-w / 2} ${-h / 2}`;
+  const edge = (x0, y0, x1, y1) => {
+    const len = Math.hypot(x1 - x0, y1 - y0), n = Math.round(len / 9.4), ux = (x1 - x0) / len, uy = (y1 - y0) / len;
+    for (let i = 0; i < n; i++) { const m = (i + .5) / n * len; d += ` L${n1(x0 + ux * (m - rr))} ${n1(y0 + uy * (m - rr))} A${rr} ${rr} 0 0 0 ${n1(x0 + ux * (m + rr))} ${n1(y0 + uy * (m + rr))}`; }
+    d += ` L${n1(x1)} ${n1(y1)}`;
+  };
+  edge(-w / 2, -h / 2, w / 2, -h / 2); edge(w / 2, -h / 2, w / 2, h / 2); edge(w / 2, h / 2, -w / 2, h / 2); edge(-w / 2, h / 2, -w / 2, -h / 2);
+  return d + 'Z';
+}
+function stamp() {
+  const cx = 1178, cy = 118, w = 116, h = 144;
+  keep(cx - w / 2 - 8, cy - h / 2 - 8, cx + w / 2 + 12, cy + h / 2 + 12);
+  const d = perforated(w, h);
+  let s = `<g transform="${tf(cx, cy, 4)}">` + g(5, 6, 0, 1, clip(d, hatch(R(-w / 2, -h / 2, w, h), 40, 2.6, { c: C.pen, sw: .75 })));
+  s += `<path d="${d}" fill="${C.sheet}" ${ink(1.4)}/>`;
+  const fx = -w / 2 + 11, fy = -h / 2 + 11, fw = w - 22, fh = h - 44;
+  let art = hatch(R(fx, fy, fw, fh), 32, 3.6, { c: C.pencil2, sw: .7 });
+  for (let x = fx, i = 0; x < fx + fw; i++) { const bw = 9 + r() * 10, bh = 14 + r() * 26; art += `<rect x="${n1(x)}" y="${n1(fy + fh - bh)}" width="${n1(bw)}" height="${n1(bh)}" fill="${C.ink2}"/>`; for (let wy = fy + fh - bh + 4; wy < fy + fh - 4; wy += 6) for (let wx = x + 2; wx < x + bw - 3; wx += 4.5) if (r() < .5) art += `<rect x="${n1(wx)}" y="${n1(wy)}" width="2" height="2.6" fill="${C.sheet}"/>`; x += bw + (r() < .4 ? 2 : 0); }
+  art += g(-18, -36, 0, 1, cloud(30, { sw: 1 })) + `<path d="${spline([[-40, 2], [-26, -12], [-8, -8], [-2, -22], [-14, -28], [-18, -16], [2, -10], [22, -26]])}" fill="none" stroke="${C.ink}" stroke-width="1.1" stroke-dasharray="3 3"/>` + g(30, -32, -32, 1, plane(30, { bank: .3 }));
+  s += clip(`M${fx} ${fy} H${fx + fw} V${fy + fh} H${fx}Z`, art) + srect(fx, fy, fw, fh, { sw: 1.4, br: 0, os: 1 });
+  s += T(fx, h / 2 - 13, 'THƯ BAY', { s: 11, ls: 1.6 }) + T(-fx, h / 2 - 13, '520đ', { f: F.serif, w: 400, style: 'italic', s: 15, anchor: 'end' });
+  return s + '</g>';
+}
+function postmark(cx, cy, rr) {
+  keep(cx - rr - 4, cy - rr - 4, cx + rr + 96, cy + rr + 4);
+  let s = `<g transform="${tf(cx, cy, -14)}">`;
+  s += `<circle r="${rr}" fill="none" stroke="${C.ink}" stroke-width="2.2" stroke-dasharray="38 2 22 3 60 2 30 4"/><circle r="${rr - 13}" fill="none" stroke="${C.ink}" stroke-width="1.3" stroke-dasharray="24 2 40 3"/>`;
+  s += `<path id="pmT" d="M${-rr + 6.5} 0 A${rr - 6.5} ${rr - 6.5} 0 0 1 ${rr - 6.5} 0" fill="none"/><path id="pmB" d="M${-rr + 6.5} 0 A${rr - 6.5} ${rr - 6.5} 0 0 0 ${rr - 6.5} 0" fill="none"/>`;
+  s += `<text font-family="${F.sans}" font-weight="800" font-size="8.5" letter-spacing="1.1" fill="${C.ink}"><textPath href="#pmT" startOffset="50%" text-anchor="middle">BƯU CỤC PHỐ GIÓ</textPath></text>`;
+  s += `<text font-family="${F.sans}" font-weight="800" font-size="8.5" letter-spacing="1.1" fill="${C.ink}" dy="7.5"><textPath href="#pmB" startOffset="50%" text-anchor="middle">THÀNH PHỐ XÁM</textPath></text>`;
+  s += T(0, -1, '20 · 10', { s: 13, anchor: 'middle' }) + T(0, 13, '2026', { s: 9, ls: 2, anchor: 'middle', fill: C.ink2 }) + '</g>';
+  let wv = ''; for (let i = 0; i < 5; i++) { const y = cy - 26 + i * 11 + J(1); wv += `M${n1(cx + rr + 4)} ${n1(y)} q11 -6 22 0 t22 0 t22 0 t22 0`; }
+  return s + `<path d="${wv}" fill="none" stroke="${C.ink}" stroke-width="1.7" stroke-dasharray="30 3 18 2 44 3" stroke-linecap="round"/>`;
+}
+
+/* ── the address side of the postcard, bottom right ── */
+function addressLabel() {
+  const x = 890, y = 600, w = 346, h = 156;
+  keep(x - 6, y - 8, x + w + 10, y + h + 12);
+  let s = `<g transform="${tf(x + w / 2, y + h / 2, 1.3)}"><g transform="translate(${-w / 2} ${-h / 2})">`;
+  s += hatch(R(7, 8, w, h), 132, 2.6, { c: C.pen, sw: .8 }) + srect(0, 0, w, h, { fill: C.sheet, sw: 2.2, wob: .9, os: 3, br: 0 });
+  s += T(14, 23, 'BƯU THIẾP', { s: 13, ls: 3 }) + T(112, 23, 'post card', { f: F.serif, w: 400, style: 'italic', s: 14, fill: C.pen });
+  s += g(w - 72, 18, -3, 1, srect(-60, -11, 120, 22, { fill: C.ink, sw: 1.4, br: 0 }) + T(0, 4, 'BẰNG ĐƯỜNG GIÓ', { s: 9.5, ls: 1.4, anchor: 'middle', fill: C.sheet }));
+  s += `<path d="${wline(10, 34, w - 10, 34, .4, 0)}" fill="none" ${ink(1.2)}/><path d="${wline(152, 44, 154, h - 12, .8, 0)}" fill="none" ${ink(1.4)}/>`;
+  [['Chào người lạ,', 0], ['gió bảo anh gửi', 0], ['chiếc này cho em.', 0], ['người bên kia phố', 1]].forEach(([t, k], i) => { s += T(12, 60 + i * 23, k ? `— ${t}` : t, { f: k ? F.note : F.hand, w: k ? 400 : 700, s: k ? 14 : 18, fill: C.ink2 }); });
+  [['Gửi:', 'cô gái tầng 9'], ['', 'số 12, Phố Gió'], ['', 'Thành phố Xám']].forEach(([k, v], i) => {
+    const ly = 62 + i * 27;
+    if (k) s += T(166, ly, k, { s: 11, fill: C.pen });
+    s += T(200, ly, v, { f: F.note, w: 400, s: 17, fill: C.ink }) + `<path d="${wline(164, ly + 6, w - 14, ly + 6, .4, 0, .3)}" fill="none" ${ink(.9, C.pencil)}/>`;
+  });
+  '201026'.split('').forEach((dg, i) => { const bx = 166 + i * 22; s += srect(bx, h - 33, 17, 21, { sw: 1.1, br: 0, os: .6 }) + T(bx + 8.5, h - 16.5, dg, { f: F.note, w: 400, s: 15, anchor: 'middle' }); });
+  return s + '</g></g>';
+}
+function ribbon() {
+  const ry = 738, x0 = 446, x1 = 834;
+  keep(x0 - 10, ry - 22, x1 + 10, ry + 22);
+  return `<path d="M${x0} ${ry - 16} L${x1} ${ry - 16} L${x1 - 16} ${ry} L${x1} ${ry + 16} L${x0} ${ry + 16} L${x0 + 16} ${ry}Z" fill="${C.ink}" ${ink(2)}/>` +
+    T(640, ry + 5, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 14.5, w: 600, anchor: 'middle', fill: C.sheet });
+}
+
+/* ── the scatter: tiny planes on short dotted trails, curls of wind, specks, where nothing else is ── */
+function scatter() {
+  let s = '';
+  const placed = [];
+  for (let i = 0; i < 4000 && placed.length < 46; i++) {
+    const x = 50 + r() * 1180, y = 48 + r() * 704, stage = x > 440 && x < 840 && y > 420;
+    if (blocked(x, y, 12) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 34)) continue;
+    if (Math.hypot(x - H[0], y - H[1]) < 90) continue;
+    placed.push([x, y]);
+    const k = r(), a = J(40);
+    if (k < .45) { const z = 9 + r() * 7, l = 18 + r() * 16, ang = rad(a); s += `<path d="M${n1(x - Math.cos(ang) * l)} ${n1(y - Math.sin(ang) * l + J(5))} Q${n1(x - Math.cos(ang) * l * .5)} ${n1(y - Math.sin(ang) * l * .5 + J(8))} ${n1(x)} ${n1(y)}" fill="none" stroke="${stage ? C.pencil : C.ink2}" stroke-width="1" stroke-dasharray="2 3"/>` + g(x, y, a, 1, plane(z, { light: stage })); }
+    else if (k < .7) s += g(x, y, a, 1, swirl(4 + r() * 3, { c: stage ? C.pencil : C.pen, sw: 1.1, tail: 2.2 }));
+    else if (k < .85) s += g(x, y, a * 3, 1, paper(10 + r() * 6, 12 + r() * 6, { scrib: false }));
+    else s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(1.6 + r() * 1.6)}" fill="${stage ? C.pencil : C.ink2}"/>`;
+  }
+  return s;
+}
+
+const FACES = [`400 76px "${F.title}"`, `700 104px "${F.hand}"`, `italic 400 19px "${F.serif}"`, `400 17px "${F.note}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Máy bay giấy Đặt thiệp hướng điện thoại ƯỚC Every'))).then(() => {
+  const out = sheet() + sky() + distant() + wires() + leftSide() + rightSide() + street() + crossing() + pole() + lampPost() + bicycle(232, 560) + mailbox(1224, 560) +
+    stool(904, 560) + stool(924, 562) + stool(1004, 560) + papers() + swirls() + wanderers() + toHeart() + bigHeart() + titleLabel() + stamp() + postmark(1084, 226, 46) +
+    addressLabel() + ribbon() + scatter();
+  document.getElementById('card').innerHTML = out;
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>
