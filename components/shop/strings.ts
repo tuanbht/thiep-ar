@@ -190,6 +190,8 @@ export const S = {
 
   gift: {
     loading: "Đang mở thiệp…",
+    /** a shared gift link's preview, in messengers: says nothing of what is inside */
+    preview: "Có một tấm thiệp đang chờ bạn mở.",
     goneTitle: "Không tìm thấy tấm thiệp",
     goneBody: "Link có thể sai, hoặc thiệp chưa được thanh toán.",
   },

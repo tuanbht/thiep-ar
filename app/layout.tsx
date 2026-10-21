@@ -25,7 +25,11 @@ const dancing = Dancing_Script({
   display: "swap",
 });
 
+/** where the shop lives: a link preview's picture needs a whole address (without it, Next falls back to localhost) */
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl && URL.canParse(siteUrl) ? new URL(siteUrl) : undefined,
   title: {
     default: `${S.brandSub} · ${S.brand}`,
     template: `%s · ${S.brandSub}`,

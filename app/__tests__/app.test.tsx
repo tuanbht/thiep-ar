@@ -75,6 +75,44 @@ describe("the gift page", () => {
     });
   });
 
+  it("previews a shared gift link by its card: the template's picture and the card's title, never the letter", async () => {
+    const { generateMetadata } = await import("../g/[slug]/page");
+    getGift.mockResolvedValue({
+      giftCard: { id: "g1" },
+      product: { id: "starry-date", name: "Hẹn hò dưới sao" },
+      card: {
+        title: "Gửi Hanna",
+        template: "starry-date",
+        letter: { to: "Hanna à,", body: ["Bí mật của hai đứa"], from: "Anh" },
+        photos: ["https://storage.example/private/1.jpg"],
+      },
+    });
+    const meta = await generateMetadata(params("AbC123xyz0"));
+    const image = {
+      url: "/thumbs/starry-date.jpg",
+      width: 960,
+      height: 600,
+      alt: "Hẹn hò dưới sao",
+    };
+    expect(meta.openGraph).toMatchObject({
+      title: "Gửi Hanna",
+      images: [image],
+    });
+    expect(meta.twitter).toMatchObject({
+      card: "summary_large_image",
+      images: [image],
+    });
+    expect(JSON.stringify(meta)).not.toMatch(/Bí mật|storage\.example/); // the letter and the photos stay inside
+  });
+
+  it("gives a link that opens no gift no card's picture", async () => {
+    const { generateMetadata } = await import("../g/[slug]/page");
+    getGift.mockResolvedValue(null);
+    const meta = await generateMetadata(params("AbC123xyz0"));
+    expect(meta.openGraph).toBeUndefined();
+    expect(meta.robots).toMatchObject({ index: false });
+  });
+
   it("is not found for a malformed slug or a gift that is not paid, and a failed count is only logged", async () => {
     const { default: GiftPage } = await import("../g/[slug]/page");
     await expect(GiftPage(params("../etc"))).rejects.toThrow("NEXT_NOT_FOUND");

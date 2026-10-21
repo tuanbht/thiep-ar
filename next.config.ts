@@ -24,8 +24,54 @@ const SECURITY_HEADERS = [
   },
 ];
 
+/* Crawlers that read only the HTML: a page's metadata (a gift link's picture and title) goes in its <head> for them,
+   not streamed in after it as for browsers. Next's own list (next/dist/shared/lib/router/utils/html-bots), plus the
+   messengers gift links are shared in here that it lacks, Zalo above all. */
+const LINK_PREVIEW_BOTS = new RegExp(
+  [
+    "[\\w-]+-Google",
+    "Google-[\\w-]+",
+    "Chrome-Lighthouse",
+    "Slurp",
+    "DuckDuckBot",
+    "baiduspider",
+    "yandex",
+    "sogou",
+    "bitlybot",
+    "tumblr",
+    "vkShare",
+    "quora link preview",
+    "redditbot",
+    "ia_archiver",
+    "Bingbot",
+    "BingPreview",
+    "applebot",
+    "facebookexternalhit",
+    "facebookcatalog",
+    "Twitterbot",
+    "LinkedInBot",
+    "Slackbot",
+    "Discordbot",
+    "WhatsApp",
+    "SkypeUriPreview",
+    "Yeti",
+    "googleweblight",
+    "Zalo",
+    "TelegramBot",
+    "Viber",
+    "\\bLine\\/",
+    "kakaotalk-scrap",
+    "Pinterestbot",
+    "Embedly",
+    "iframely",
+    "MicrosoftPreview",
+  ].join("|"),
+  "i",
+);
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  htmlLimitedBots: LINK_PREVIEW_BOTS,
   partialPrefetching: true,
   poweredByHeader: false,
   // the server reads each template's template.json and form.json from disk (lib/catalog/templates.ts): ship them with
