@@ -1,0 +1,112 @@
+{
+ "label": "Hai Đứa Mình — The Series (3D: phim sitcom 6 tập trên sân khấu xoay, 12 chỗ hiện ảnh)",
+ "preset": {
+  "title": "Hai Đứa Mình — The Series",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Phim của hai đứa sắp bấm máy!",
+  "to": "Gửi nữ chính của anh,",
+  "body": [
+   "Cảm ơn em đã cùng anh đóng bộ phim dài nhất, vui nhất và đáng yêu nhất: chuyện của hai đứa mình.",
+   "Tập tiếp theo, mình vẫn diễn cùng nhau nhé."
+  ],
+  "from": "Nam chính của em"
+ },
+ "groups": [
+  {
+   "title": "Bảng clapper",
+   "note": "Tên phim hiện trên bảng clapper đầu mỗi tập; tên hai diễn viên chính hiện ở tập cuối.",
+   "rows": [
+    [
+     {
+      "slot": "show",
+      "label": "Tên phim",
+      "value": "Hai Đứa Mình",
+      "max": 24
+     },
+     {
+      "slot": "stars",
+      "label": "Diễn viên chính",
+      "value": "Anh & Em",
+      "max": 30
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Tên 6 tập phim",
+   "note": "Mỗi tập mở bằng tên của nó trên bảng clapper. Để nguyên nếu bạn thích tên gợi ý.",
+   "rows": [
+    [
+     {
+      "slot": "ep1",
+      "label": "Tập 1",
+      "value": "Lần đầu gặp nhau",
+      "max": 28,
+      "narrow": true
+     },
+     {
+      "slot": "ep2",
+      "label": "Tập 2",
+      "value": "Vào bếp",
+      "max": 28,
+      "narrow": true
+     }
+    ],
+    [
+     {
+      "slot": "ep3",
+      "label": "Tập 3",
+      "value": "Đêm xem phim",
+      "max": 28,
+      "narrow": true
+     },
+     {
+      "slot": "ep4",
+      "label": "Tập 4",
+      "value": "Tranh cái remote",
+      "max": 28,
+      "narrow": true
+     }
+    ],
+    [
+     {
+      "slot": "ep5",
+      "label": "Tập 5",
+      "value": "Lời tỏ tình",
+      "max": 28,
+      "narrow": true
+     },
+     {
+      "slot": "ep6",
+      "label": "Tập 6",
+      "value": "Hậu trường",
+      "max": 28,
+      "narrow": true
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Lời trong phim",
+   "note": "Lời tỏ tình hiện trên tấm thiệp trái tim anh giơ lên ở tập 5; lời kết hiện trên dải băng cuối phim. Ảnh của bạn hiện ở 12 chỗ: TV, khung tường, tủ lạnh, lịch, dây đèn, bảng clapper và cuộn phim cuối.",
+   "rows": [
+    [
+     {
+      "slot": "confess",
+      "label": "Lời tỏ tình (tập 5)",
+      "value": "Làm nữ chính của đời anh nhé?",
+      "max": 60,
+      "multiline": true
+     }
+    ],
+    [
+     {
+      "slot": "ending",
+      "label": "Lời kết (dải băng cuối phim)",
+      "value": "Còn tiếp… mãi mãi",
+      "max": 30
+     }
+    ]
+   ]
+  }
+ ]
+}

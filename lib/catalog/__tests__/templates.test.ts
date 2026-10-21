@@ -17,6 +17,32 @@ describe("the template catalog on the real templates", () => {
     expect(t!.form!.groups[0].rows[0][0].slot).toBe("board");
   });
 
+  it("reads the sitcom card: six episodes, twelve places for photos, pink, and its words", async () => {
+    const t = await getTemplateInfo("our-sitcom");
+    expect(t).toMatchObject({
+      name: "Hai Đứa Mình — The Series",
+      kind: "3d",
+      chapters: 6,
+      photoPlaces: 12,
+      theme: "blush",
+    });
+    const slots = t!.form!.groups.flatMap((g) =>
+      g.rows.flatMap((r) => r.map((f) => f.slot)),
+    );
+    expect(slots).toEqual([
+      "show",
+      "stars",
+      "ep1",
+      "ep2",
+      "ep3",
+      "ep4",
+      "ep5",
+      "ep6",
+      "confess",
+      "ending",
+    ]);
+  });
+
   it("knows each card's theme: blush for love and couple cards, the shop's night for the rest", async () => {
     expect((await getTemplateInfo("flower-letter"))?.theme).toBe("blush");
     expect((await getTemplateInfo("starry-date"))?.theme).toBe("blush");

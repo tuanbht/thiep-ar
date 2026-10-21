@@ -1,0 +1,87 @@
+{
+  "name": "Hai Đứa Mình — The Series",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "set.js",
+    "story.js"
+  ],
+  "height": 0.62,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "reveal": null,
+  "notes": "A sitcom of their love story in six episodes on a revolving set of three rooms (docs/cards/our-sitcom/concept.md). 1 Lần đầu gặp nhau: the coffee and the door. 2 Vào bếp: the egg, the smoke alarm, a new print on the fridge. 3 Đêm xem phim: on the sofa, backs to us, the TV showing their photos. 4 Tranh cái remote: it flies, he hands it over, a kiss. 5 Lời tỏ tình: string lights with four photos, he holds up the card's words (confess), a hug. 6 Hậu trường: the studio lights up, they bow, the film wheel rises with every photo and the first one in the middle. Photos on twelve surfaces (TV, three wall frames, two fridge prints, a calendar, four on the string lights, the camera's monitor), the clapperboard and the film wheel. The set and the studio are set.js; the moves story.js; the act is templates/_acts/lovestory.js.",
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb",
+    "boy2": "models/boy.glb",
+    "girl2": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "Casual Man and Casual Woman",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
+    },
+    {
+      "model": "Instrument samples for the music (FreePats)",
+      "author": "FreePats contributors",
+      "license": "CC0 1.0",
+      "url": "http://freepats.zenvoid.org/"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    }
+  ],
+  "categories": [
+    "love",
+    "couple"
+  ],
+  "tags": [
+    "sitcom",
+    "phim",
+    "căn hộ",
+    "hài",
+    "hậu trường",
+    "xem phim",
+    "nấu ăn",
+    "tỏ tình",
+    "đèn dây"
+  ],
+  "photos": 12,
+  "sound": {
+    "music": "sound/music.mp3",
+    "soft": "sound/music-soft.mp3",
+    "volume": 0.55,
+    "effects": {
+      "clap": "sound/clap.mp3",
+      "door": "sound/door.mp3",
+      "splash": "sound/splash.mp3",
+      "alarm": "sound/alarm.mp3",
+      "sizzle": "sound/sizzle.mp3",
+      "pop": "sound/pop.mp3",
+      "boing": "sound/boing.mp3",
+      "applause": "sound/applause.mp3",
+      "ting": "sound/ting.mp3",
+      "sparkle": "sound/sparkle.mp3",
+      "shutter": "sound/shutter.mp3"
+    }
+  }
+}
