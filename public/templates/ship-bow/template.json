@@ -1,0 +1,45 @@
+{
+  "name": "Mũi thuyền lộng gió",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "scenery.js",
+    "crew.js",
+    "story.js"
+  ],
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "Into the wind at the bow of a little ship at sunset (KayKit Adventurers, CC0: the Barbarian without his bear hat and cape, his beard pulled into his face so he is clean-shaven, dark hair built in code, recoloured into a navy-and-white striped sailor shirt with a navy collar and belt, cream trousers and a red polka-dot kerchief; the Mage without her hat and cape, recoloured into a coral dress with a cream collar and a gold sash, bare calves and white shoes, a sky-blue bow in her hair; weapons and books dropped by scripts/pack-models.mjs). The rest is built in code: a sky page that folds up (golden hour, a dusk painted over it, a big sun that sinks behind the far sea), a sea of swells rolling past with foam at the bow, the ship (hull with portholes, deck, rail, a step at the bow, a mast with flag, lantern and bunting, a cabin with a wheel, a lifebuoy, an anchor), gulls, dolphins and wind streaks. Stop 1: she looks out from the bow rail while he steers; a gull lands on the wheel and he salutes it, tiptoes up behind her and ties his kerchief over her eyes; she jumps and laughs, he whispers at her side, and a gust spins the tag on the mast round to show the card's first words (slot note1). Stop 2: he leads her to the bow and lifts her onto the step; she pulls the kerchief off and spreads her arms into the wind, the kerchief streaming from her hand, his hands at her waist; dolphins leap alongside, and a page of the ship's log with the card's photo and caption (slot caption) blows in and is pegged to the mast. Stop 3: she lets the kerchief fly off to the sunset, steps down and turns to him; they kiss as the sun slips into the sea, the sky turns rose and violet, stars come out, the lantern lights, and two gulls fly in a banner with the last words (slot note2). The next tap opens the letter. The act is the shared templates/_acts/lovestory.js; this card's own moves are in scenery.js, crew.js and story.js.",
+  "categories": [
+    "viral-scenes",
+    "love",
+    "couple"
+  ],
+  "tags": [
+    "con tàu",
+    "mũi thuyền",
+    "biển",
+    "hoàng hôn",
+    "gió biển",
+    "cá heo",
+    "hải âu"
+  ],
+  "models": {
+    "boy": "models/boy.glb",
+    "girl": "models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "KayKit Adventurers",
+      "author": "Kay Lousberg",
+      "license": "CC0 1.0",
+      "url": "https://kaylousberg.itch.io/kaykit-adventurers"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "label": "Mũi thuyền lộng gió (3D: trên mũi tàu lúc hoàng hôn, nàng dang tay đón gió trong vòng tay chàng)",
+  "preset": {
+    "title": "Mũi thuyền lộng gió",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Gió biển hôm ấy thổi tung mái tóc em, còn anh chỉ muốn giữ em thật chặt.",
+      "Mình cứ thế đi cùng nhau, qua thật nhiều hoàng hôn nữa, em nhé."
+    ],
+    "from": "Người đứng sau lưng em"
+  },
+  "groups": [
+    {
+      "title": "Ba lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời đầu tiên (trên tấm thẻ treo dây cờ)", "value": "Nhắm mắt lại, tin anh nhé", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (kẹp trong trang nhật ký hải trình)", "value": "Gió biển và em", "max": 28 }],
+        [{ "slot": "note2", "label": "Lời cuối (trên dải băng đôi hải âu mang tới)", "value": "Cùng anh đi đến cuối chân trời", "max": 32 }]
+      ]
+    }
+  ]
+}

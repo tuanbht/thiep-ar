@@ -1,0 +1,25 @@
+{
+  "label": "Thảm bay đêm trăng (3D: chàng đến đón nàng bằng tấm thảm bay, lượn qua thành phố dưới trăng)",
+  "preset": {
+    "title": "Thảm bay đêm trăng",
+    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "to": "Gửi em,",
+    "body": [
+      "Đêm nay anh chỉ muốn đưa em bay qua cả thành phố dưới ánh trăng.",
+      "Chỉ cần em nắm tay anh, điều gì cũng có thể thành phép màu."
+    ],
+    "from": "Người lái thảm bay của em"
+  },
+  "groups": [
+    {
+      "title": "Bốn lời nhắn",
+      "note": "Mỗi lời hiện ra ở một điểm dừng: chạm để xem tiếp. Chữ dài sẽ tự nhỏ lại.",
+      "rows": [
+        [{ "slot": "note1", "label": "Lời thứ nhất (trên cuộn giấy chàng mở ra)", "value": "Em có tin vào phép màu không?", "max": 60, "multiline": true }],
+        [{ "slot": "note2", "label": "Lời thứ hai (sao trời viết lên đám mây)", "value": "Nắm tay anh, đừng sợ nhé", "max": 60, "multiline": true }],
+        [{ "slot": "caption", "label": "Dòng dưới tấm ảnh (đôi bồ câu mang đến)", "value": "Bay cùng nhau qua đêm trăng", "max": 28 }],
+        [{ "slot": "note3", "label": "Lời cuối (trên tấm băng đèn trời nâng lên)", "value": "Thế giới của anh là em", "max": 32 }]
+      ]
+    }
+  ]
+}
