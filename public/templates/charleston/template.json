@@ -18,5 +18,6 @@
   "boardDefault": "Congratulations!",
   "notes": "Y Bot (Mixamo, from the three.js examples' Samba Dancing.fbx) dances a Charleston from the CMU motion capture library (subject 93, free for commercial use), turned to face the phone and retargeted by tools/make-dancer.mjs; the X Bot idle while the mystery box opens. The board rises on a stand beside him. Sources and the exact command: scenes/charleston/source/. The printed card (scenes/charleston/card.html) is a jazz-age Art Deco invitation with the Charleston step chart drawn on the round dance floor where he stands.",
   "categories": ["fun"],
-  "tags": ["nhảy", "vũ điệu", "cổ điển", "tiệc tùng"]
+  "tags": ["nhảy", "vũ điệu", "cổ điển", "tiệc tùng"],
+  "photos": 1
 }

@@ -1,7 +1,8 @@
 /* Party Monkey: a 3D scene for the player (template kind "3d").
    The player calls NM_SCENE({anchor, card, tpl, THREE, onStop}) once and gets back {play(i), pause(), resume()}.
    Chapter 0: the monkey dances in confetti, then raises a board with the card's words.
-   Chapter 1: a mystery box drops in, opens, and the letter floats out. A tap after that opens the letter.
+   Chapter 1: a mystery box drops in, opens, and the letter floats out, the buyer's photos rising above it in a polaroid
+   (photos.js) that shows them in turn. A tap after that opens the letter.
    Built from primitives, so there is no model to download. The card is assumed to lie flat: the monkey
    stands up out of it (local +y becomes the card's +z). */
 window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
@@ -85,6 +86,24 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   lid.add(at(sphere(.03, C.gold, 1, .7, 1), 0, .05, .095));
   const letter = new THREE.Group(); letter.position.set(0, .05, 0); letter.visible = false; gift.add(letter);
   letter.add(new THREE.Mesh(new THREE.BoxGeometry(.15, .1, .01), mat(C.cream)), at(sphere(.016, C.red), 0, -.005, .007));
+
+  /** templates/_acts/photos.js, the buyer's photos in polaroids, loaded from beside this act (null if it cannot be) */
+  const photosKit = () => new Promise(res => {
+    if (window.NM_PHOTOS) return res(window.NM_PHOTOS);
+    const s = document.createElement('script');
+    s.src = new URL('photos.js', new URL(tpl.scene || '../_acts/dancer.js', new URL(`${dir || '.'}/`, location.href))).href;
+    s.onload = () => res(window.NM_PHOTOS || null); s.onerror = () => res(null);
+    document.head.appendChild(s);
+  });
+  const hasPhotos = (Array.isArray(card.photos) && card.photos.length > 0) || !!card.photo;
+  /* the photos: a polaroid that rises out of the box above the letter; none without photos */
+  let photos = null, photo = null;
+  if (hasPhotos) photosKit().then(make => {
+    if (!make || disposed) return;
+    photos = make({ THREE, card });
+    photo = photos.polaroid({ width: .2 });
+    photo.root.visible = false; photo.root.position.set(0, .05, -.03); gift.add(photo.root);
+  });
   // confetti and sparkles
   const makePoints = (n, size) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3)); g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
     const p = new THREE.Points(g, new THREE.PointsMaterial({ size, vertexColors: true, transparent: true, opacity: 1, sizeAttenuation: true })); p.frustumCulled = false; return p; };
@@ -170,12 +189,18 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
     if (sparks.visible) { for (let i = 0; i < 70; i++) sp.position.setXYZ(i, gift.position.x + spv[i][0] * sk, .14 + spv[i][1] * sk - .4 * sk * sk, gift.position.z + spv[i][2] * sk); sp.position.needsUpdate = true; sparks.material.opacity = 1 - sk; }
     letter.visible = t > 1.8; letter.position.y = lerp(.05, .4, up) + .012 * Math.sin(idle * 2.1) * up; letter.rotation.y = .3 * Math.sin(idle * .9) * up; letter.rotation.x = -.25 * up;
     if (!model) board.rotation.z = -armR.rotation.z + .08 * Math.sin(idle * 1.3);
+    if (photo) {                               // the photos rise out of the box just after the letter, and stay above it
+      const rise = ease.out(seg(t, 2.0, 3.4));
+      photo.root.visible = t > 2.0; photo.root.position.y = lerp(.05, .5, rise); photo.root.scale.setScalar(Math.max(.001, rise));
+      photo.root.rotation.y = -.2 * Math.sin(idle * .7) * rise;
+    }
   }
   function tick(now) {
     dt = Math.min(.05, (now - last) / 1000); last = now;
     if (!paused) { t += dt; idle += dt; }
     if (chapter === 0) pose0(); else if (chapter === 1) pose1();
     if (mixer && !paused) mixer.update(dt);
+    if (photos) photos.tick(idle);
     torso.scale.y = 1 + .015 * Math.sin(idle * 2.4);                      // breathing, always
     if (!paused && !stopped && t >= DUR[chapter]) { stopped = true; onStop(chapter); }
     if (!disposed) raf = requestAnimationFrame(tick);
@@ -183,7 +208,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   let dt = 0, disposed = false, raf = requestAnimationFrame(tick);
 
   return {
-    play(i) { chapter = i; t = 0; stopped = false; paused = false; if (i === 0) { gift.visible = false; letter.visible = false; } },
+    play(i) { chapter = i; t = 0; stopped = false; paused = false; if (i === 0) { gift.visible = false; letter.visible = false; if (photos) photos.shuffle(); } },
     pause() { paused = true; },
     turn(rad) { spin.rotation.y += rad; },
     resume() { paused = false; last = performance.now(); },

@@ -1,6 +1,7 @@
 /* Showtime: a 15-second act for a 3D template ("kind": "3d", "scene": "../_acts/showtime.js", "character": "character.js").
    A small character pops out of the card, says hello, runs a lap round the card, dances, does its own trick, cheers while
    the card's words come up on a board, and hands over the letter. One stop (chapters [0]): the next tap opens the letter.
+   The buyer's photos come up with the board, in a polaroid on a post across from it, and show in turn (photos.js).
    The player calls NM_SCENE({anchor, card, tpl, THREE, onStop, dir}) and gets {play, pause, resume, turn, ready, clips,
    clip, modelError, dispose}. The card lies flat: the act stands up out of it (local +y is the card's +z) and faces the
    card's bottom edge (local +z), where a phone usually looks from.
@@ -139,6 +140,26 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   board.add(kit.at(kit.cyl(.009, .009, .26, 0x8b5a2b, .006), 0, .13, 0));
   const panel = new THREE.Mesh(keep(new THREE.BoxGeometry(.3, .19, .012)), [kit.toon(0xfffaf0), kit.toon(0xfffaf0), kit.toon(0xfffaf0), kit.toon(0xfffaf0), keep(new THREE.MeshBasicMaterial({ map: boardTex })), kit.toon(0xfffaf0)]);
   panel.position.y = .33; panel.castShadow = true; kit.outline(panel, .008); board.add(panel);
+
+  /** templates/_acts/photos.js, the buyer's photos in polaroids, loaded from beside this act (null if it cannot be) */
+  const photosKit = () => new Promise(res => {
+    if (window.NM_PHOTOS) return res(window.NM_PHOTOS);
+    const s = document.createElement('script');
+    s.src = new URL('photos.js', new URL(tpl.scene || '../_acts/showtime.js', new URL(`${dir || '.'}/`, location.href))).href;
+    s.onload = () => res(window.NM_PHOTOS || null); s.onerror = () => res(null);
+    document.head.appendChild(s);
+  });
+  const hasPhotos = (Array.isArray(card.photos) && card.photos.length > 0) || !!card.photo;
+  /* the photos: a polaroid on a post at the back left, across from the board and up with it; none without photos */
+  let photos = null;
+  const photoPost = kit.pivot(-.36, 0, -.16); photoPost.rotation.y = .45; photoPost.scale.setScalar(.001); spin.add(photoPost);
+  if (hasPhotos) photosKit().then(make => {
+    if (!make || disposed) return;
+    photos = make({ THREE, card });
+    const p = photos.polaroid({ width: .24 });
+    p.root.position.set(0, .2, .012); photoPost.add(p.root);
+    photoPost.add(kit.at(kit.cyl(.009, .009, .26, 0x8b5a2b, .006), 0, .13, 0));
+  });
 
   const sealCanvas = document.createElement('canvas'); sealCanvas.width = sealCanvas.height = 128;
   { const c = sealCanvas.getContext('2d'); c.fillStyle = '#c8372d'; c.beginPath(); c.arc(64, 64, 60, 0, 7); c.fill();
@@ -334,6 +355,8 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
       if (pose) pose(ctx);
       if (show.snap) { const w = ease.smooth(clamp((show.T - show.actStart) / .22)); rig.blend(show.snap, w); if (w >= 1) show.snap = null; }
       if (!show.paused) effects(name === 'idle' ? 'present' : name, name === 'idle' ? 1.8 + t : t, k, show.T);
+      photoPost.scale.copy(board.scale);                             // the photos come up with the board
+      if (photos) photos.tick(show.T);
       if (!show.paused) Object.values(FX).forEach(f => f.update(dt, show.T));
       puffs.forEach(p => { if (p.life <= 0) return; p.life -= dt; const u = 1 - p.life / .5; p.m.scale.setScalar(.6 + u * 1.4); p.m.material.opacity = .8 * (1 - u); if (p.life <= 0) p.m.visible = false; });
     }
@@ -342,7 +365,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   raf = requestAnimationFrame(tick);
 
   return {
-    play(i) { if (i !== 0) return; reset(); show.loop = null; show.stopped = false; show.paused = false; last = performance.now(); },
+    play(i) { if (i !== 0) return; reset(); if (photos) photos.shuffle(); show.loop = null; show.stopped = false; show.paused = false; last = performance.now(); },
     pause() { show.paused = true; },
     resume() { show.paused = false; last = performance.now(); },
     turn(rad) { spin.rotation.y += rad; },

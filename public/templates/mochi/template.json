@@ -11,5 +11,6 @@
   "boardColor": "#ff8fb0",
   "notes": "A round strawberry mochi, built from primitives in character.js (no model to download). The 15-second show is the shared templates/_acts/showtime.js: pop out of the card, hello, a lap round the card, a squishy dance, a somersault roll, cheering with confetti cannons and fireworks while the board with the card's words comes up, then the letter rises. One stop: a tap opens the letter.",
   "categories": ["fun", "birthday"],
-  "tags": ["bánh mochi", "dễ thương", "nhảy", "chúc mừng", "thiếu nhi"]
+  "tags": ["bánh mochi", "dễ thương", "nhảy", "chúc mừng", "thiếu nhi"],
+  "photos": 1
 }

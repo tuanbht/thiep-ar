@@ -18,5 +18,6 @@
   "boardDefault": "Congratulations!",
   "notes": "X Bot (Mixamo, from the three.js examples) dances the Macarena from the CMU motion capture library (subject 143, free for commercial use), retargeted by tools/make-dancer.mjs. She makes the dance's quarter turns, then idles while the mystery box opens; the board rises on a stand beside her. Sources and the exact command: scenes/macarena/source/. The printed card (scenes/macarena/card.html) is a 90s dance-party flyer: a maraca-shaking dancer in a sunburst, a mixtape and the seven Macarena moves as a step chart.",
   "categories": ["fun"],
-  "tags": ["nhảy", "vũ điệu", "sôi động", "tiệc tùng"]
+  "tags": ["nhảy", "vũ điệu", "sôi động", "tiệc tùng"],
+  "photos": 1
 }
