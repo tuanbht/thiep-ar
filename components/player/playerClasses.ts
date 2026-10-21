@@ -1,9 +1,16 @@
 /* The gift player's class names (see player.css). */
 import "./player.css";
+import "./blush.css";
+import "./photos.css";
 
 const s = {
   root: "gp",
   preview: "gp-preview",
+  blush: "gp-blush",
+  photoStrip: "gp-photo-strip",
+  stripPhoto: "gp-strip-photo",
+  photoFan: "gp-photo-fan",
+  introArt: "gp-intro-art",
   stage: "gp-stage",
   filmDom: "gp-film-dom",
   ui: "gp-ui",

@@ -119,6 +119,7 @@ export default async function ProductPage({
           product={product}
           form={info.form}
           photoPlaces={info.photoPlaces}
+          theme={info.theme}
         />
       ) : (
         <p className="mx-auto mb-20 max-w-xl px-4 text-center italic text-paper/70">

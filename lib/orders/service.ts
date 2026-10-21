@@ -340,25 +340,39 @@ export class OrdersService {
       );
       return null;
     }
-    const links = await Promise.all(
-      giftCard.content.photoPaths.map(async (p) => {
-        try {
-          return await this.d.photos.signedUrl(p, PHOTO_LINK_SECONDS);
-        } catch (e) {
-          console.error(
-            `[orders] a photo of gift ${giftCard.id} could not be signed`,
-            e,
-          );
-          return null;
-        }
+    const [info, links] = await Promise.all([
+      // the template's theme, so the page opens in it; without it the player finds it when the act loads
+      this.d.templates(giftCard.template).catch((e: unknown) => {
+        console.error(
+          `[orders] the template of gift ${giftCard.id} could not be read`,
+          e,
+        );
+        return null;
       }),
-    );
+      Promise.all(
+        giftCard.content.photoPaths.map(async (p) => {
+          try {
+            return await this.d.photos.signedUrl(p, PHOTO_LINK_SECONDS);
+          } catch (e) {
+            console.error(
+              `[orders] a photo of gift ${giftCard.id} could not be signed`,
+              e,
+            );
+            return null;
+          }
+        }),
+      ),
+    ]);
     return {
       giftCard,
       product,
       card: toCard(
         giftCard.content,
-        giftCard,
+        {
+          template: giftCard.template,
+          design: giftCard.design,
+          theme: info?.theme ?? null,
+        },
         links.filter((l): l is string => !!l),
       ),
     };

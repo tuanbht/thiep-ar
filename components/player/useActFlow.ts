@@ -54,7 +54,7 @@ export function useActFlow(
       opts.current.onStop?.(i);
     };
     (async () => {
-      session.prepareFor(loaded.kind);
+      session.prepareFor(loaded.kind, loaded.theme);
       act =
         loaded.kind === "3d"
           ? await createAct3d({

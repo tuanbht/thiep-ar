@@ -1,21 +1,37 @@
 "use client";
-/* <GiftPlayer>: the gift page's player. three.js and MindAR load only in the browser, after the page. */
+/* <GiftPlayer>: the gift page's player. three.js and MindAR load only in the browser, after the page; until then the
+   page waits in the card's theme, so a love card is pink from its first frame. */
 import dynamic from "next/dynamic";
+import type { Theme } from "@/lib/player/core/card";
 import type { GiftPlayerProps } from "./types";
 import s from "./playerClasses";
 import { fontVars } from "./fonts";
-import { T } from "./strings";
+import { wordsFor } from "./strings";
 
-const View = dynamic(() => import("./GiftPlayerView"), {
-  ssr: false,
-  loading: () => (
-    <div className={`${s.root} ${fontVars}`}>
-      <div className={s.loading}>{T.loading}</div>
+/** what shows while the player loads */
+export function PlayerWaiting({ theme }: { theme: Theme }) {
+  const root = [s.root, fontVars, theme === "blush" && s.blush];
+  return (
+    <div className={root.filter(Boolean).join(" ")}>
+      <div className={s.loading}>{wordsFor(theme).loading}</div>
     </div>
-  ),
-});
+  );
+}
+
+/* next/dynamic's placeholder does not see the props: one loader per theme (the player itself loads once) */
+const Views: Record<Theme, ReturnType<typeof dynamic<GiftPlayerProps>>> = {
+  night: dynamic(() => import("./GiftPlayerView"), {
+    ssr: false,
+    loading: () => <PlayerWaiting theme="night" />,
+  }),
+  blush: dynamic(() => import("./GiftPlayerView"), {
+    ssr: false,
+    loading: () => <PlayerWaiting theme="blush" />,
+  }),
+};
 
 export function GiftPlayer(props: GiftPlayerProps) {
+  const View = Views[props.card.theme ?? "night"];
   return <View {...props} />;
 }
 

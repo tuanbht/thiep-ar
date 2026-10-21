@@ -4,11 +4,12 @@ import {
   kindOf,
   parseTemplate,
   templateDir,
+  themeOf,
   type Chapter,
   type Kind,
   type Template,
 } from "@/lib/player/core/template";
-import type { Card } from "@/lib/player/core/card";
+import type { Card, Theme } from "@/lib/player/core/card";
 import type { Slots } from "@/lib/player/engine/types";
 
 export class LoadError extends Error {}
@@ -20,6 +21,8 @@ export interface Loaded {
   kind: Kind;
   slots: Slots | null;
   chapters: Chapter[];
+  /** the card's, as the shop set it; else the template's */
+  theme: Theme;
 }
 
 async function json(
@@ -44,7 +47,13 @@ async function json(
 
 export async function loadTemplateFor(
   card: Card,
-  o: { fallbackHint: string; missing: string; signal?: AbortSignal },
+  o: {
+    fallbackHint: string;
+    /** the stops' hint on a blush card (default fallbackHint) */
+    blushHint?: string;
+    missing: string;
+    signal?: AbortSignal;
+  },
 ): Promise<Loaded> {
   const tdir = templateDir(card.template);
   let tpl: Template;
@@ -70,12 +79,17 @@ export async function loadTemplateFor(
       slots = null;
     } // a film without words still plays
   }
+  const theme = card.theme ?? themeOf(tpl);
   return {
     card,
     tpl,
     tdir,
     kind,
     slots,
-    chapters: chaptersOf(tpl, o.fallbackHint),
+    theme,
+    chapters: chaptersOf(
+      tpl,
+      theme === "blush" && o.blushHint ? o.blushHint : o.fallbackHint,
+    ),
   };
 }

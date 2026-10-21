@@ -30,6 +30,13 @@ describe("card", () => {
     expect(safeId(undefined)).toBe("");
   });
 
+  it("keeps a theme it knows, and none otherwise (the player then asks the template)", () => {
+    expect(mergeCard({ theme: "blush" }).theme).toBe("blush");
+    expect(mergeCard({ theme: "night" }).theme).toBe("night");
+    expect(mergeCard({ theme: "neon" })).not.toHaveProperty("theme");
+    expect(mergeCard({})).not.toHaveProperty("theme");
+  });
+
   it("takes the photos as a list, or the one photo of a card made before lists; photo is always the first", () => {
     expect(
       mergeCard({ photos: ["https://p/1.jpg", 7, "", "https://p/2.jpg"] }),

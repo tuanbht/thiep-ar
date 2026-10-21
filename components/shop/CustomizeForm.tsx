@@ -27,6 +27,7 @@ import { LIMITS } from "@/lib/api/dto";
 import type { FormSpec } from "@/lib/catalog/form";
 import { toCard } from "@/lib/content/toCard";
 import type { Product } from "@/lib/domain/types";
+import type { Theme } from "@/lib/player/core/card";
 import type { PlayerEvent } from "@/components/player/types";
 import {
   allFields,
@@ -51,6 +52,8 @@ export interface CustomizeFormProps {
   form: FormSpec;
   /** how many places the card's act has for photos (template.json "photos") */
   photoPlaces?: number;
+  /** the template's theme, so the preview opens in it */
+  theme?: Theme | null;
 }
 
 const DESKTOP = "(min-width: 1024px)";
@@ -107,6 +110,7 @@ export function CustomizeForm({
   product,
   form,
   photoPlaces = 0,
+  theme = null,
 }: CustomizeFormProps) {
   const router = useRouter();
   const fields = useMemo(() => allFields(form.groups), [form.groups]);
@@ -172,8 +176,13 @@ export function CustomizeForm({
     [values, fields, paths],
   );
   const card = useMemo(
-    () => toCard(content, product, previews),
-    [content, product, previews],
+    () =>
+      toCard(
+        content,
+        { template: product.template, design: product.design, theme },
+        previews,
+      ),
+    [content, product.template, product.design, theme, previews],
   );
 
   useEffect(() => {

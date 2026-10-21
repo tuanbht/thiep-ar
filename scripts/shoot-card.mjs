@@ -137,7 +137,9 @@ export async function shootCard(template, o = {}, log = console.log) {
         shots.push(fh);
       }
       log(`stop ${i} after ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-      await page.getByRole("button", { name: /Chạm để xem tiếp/ }).click();
+      await page
+        .getByRole("button", { name: /Chạm (nhẹ )?để xem tiếp/ })
+        .click(); // a love card says it softly
       const next = await until(
         new RegExp(`^playing:${i + 1}$|^reading$`),
         10_000,

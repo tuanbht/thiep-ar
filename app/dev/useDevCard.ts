@@ -31,7 +31,7 @@ export function useDevCard(): {
           setState({
             card: toCard(
               content,
-              { template: t, design: null },
+              { template: t, design: null, theme: null },
               params.getAll("photo").filter(Boolean),
             ),
             params,

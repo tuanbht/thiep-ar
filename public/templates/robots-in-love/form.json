@@ -2,7 +2,7 @@
   "label": "Robot biết yêu (3D: hai chú robot nhảy múa và trao trái tim)",
   "preset": {
     "title": "Robot biết yêu",
-    "intro": "Đặt thiệp nằm phẳng, hướng điện thoại vào thiệp và chờ một chút.",
+    "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có một lời thương đang chờ em.",
     "to": "Gửi em,",
     "body": [
       "Từ ngày gặp em, mọi mạch điện trong anh đều chạy về một hướng.",

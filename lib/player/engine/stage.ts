@@ -1,9 +1,23 @@
 /* The three.js stage both modes draw on: a transparent canvas over the camera picture (camera mode) or over the night
    sky (preview), one camera at the origin looking down -z, and a loop that runs every act's update before each frame.
-   A 3D act is lit by its own scene.js under physical lights, ACES and soft shadows, as in the Studio; a film is unlit. */
+   A 3D act is lit by its own scene.js under physical lights and soft shadows, as in the Studio, its colours mapped by
+   ACES, or on a blush card by the neutral curve, which keeps pastels bright where ACES greys them; a film is unlit. */
 import * as THREE from "three";
+import type { Theme } from "../core/card";
 
 export type Tick = (dt: number, now: number) => void;
+
+/** The colour curve and exposure for an act: none for a film (its frames are already graded), the neutral curve for a
+    3D act on a blush card, ACES for the rest. */
+export function toneFor(
+  kind: "film" | "3d",
+  theme: Theme = "night",
+): { toneMapping: THREE.ToneMapping; exposure: number } {
+  if (kind !== "3d") return { toneMapping: THREE.NoToneMapping, exposure: 1 };
+  return theme === "blush"
+    ? { toneMapping: THREE.NeutralToneMapping, exposure: 1.08 }
+    : { toneMapping: THREE.ACESFilmicToneMapping, exposure: 1.05 };
+}
 
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
@@ -40,11 +54,13 @@ export class Stage {
     this.renderer.setAnimationLoop((now) => this.frame(now));
   }
 
-  /** a 3D act is tone-mapped like the Studio's light box; a film keeps its own colours. Set before building the act. */
-  lightFor(kind: "film" | "3d") {
-    this.renderer.toneMapping =
-      kind === "3d" ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-    this.renderer.toneMappingExposure = kind === "3d" ? 1.05 : 1;
+  /** a 3D act is tone-mapped like the Studio's light box: on a love card (blush) with the neutral curve, which keeps
+      its colours bright and true where ACES greys and darkens them; a film keeps its own colours. Set before building
+      the act. */
+  lightFor(kind: "film" | "3d", theme: Theme = "night") {
+    const { toneMapping, exposure } = toneFor(kind, theme);
+    this.renderer.toneMapping = toneMapping;
+    this.renderer.toneMappingExposure = exposure;
   }
 
   onTick(t: Tick): () => void {

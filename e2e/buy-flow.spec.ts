@@ -58,7 +58,7 @@ test("a buyer writes a card, pays, and the recipient opens it with the camera", 
   // write it
   await page.getByLabel("Tiêu đề").fill(`Gửi Hanna ${mark}`);
   await page
-    .getByLabel("Note", { exact: true })
+    .getByLabel("Lời nhắn", { exact: true })
     .fill("Happy Women's Day Hanna");
   await page.getByLabel("Lời mở thư").fill("Hanna à,");
   await page.getByLabel("Lời ký tên").fill(`Yêu em. ${mark}`);

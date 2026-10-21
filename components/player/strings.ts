@@ -1,4 +1,6 @@
 /* Every word the player says by itself (the card's own words come with the card). Vietnamese: the recipients are. */
+import type { Theme } from "@/lib/player/core/card";
+
 export const T = {
   eyebrow: "Thiệp thực tế ảo",
   start: "Mở camera",
@@ -27,3 +29,17 @@ export const T = {
   previewLabel: "Xem trước tấm thiệp",
   previewHint: "Kéo để xoay",
 } as const;
+
+/** What the player says differently on a love or couple card (the blush theme). */
+export const T_BLUSH = {
+  eyebrow: "Thiệp yêu thương",
+  tapToContinue: "Chạm nhẹ để xem tiếp nhé",
+  letterTitle: "Lá thư yêu thương",
+  loading: "Đang gói yêu thương…",
+} as const;
+
+export type Words = { readonly [K in keyof typeof T]: string };
+
+/** The player's words for a card's theme. */
+export const wordsFor = (theme: Theme): Words =>
+  theme === "blush" ? { ...T, ...T_BLUSH } : T;

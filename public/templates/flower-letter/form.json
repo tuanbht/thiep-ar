@@ -1,25 +1,25 @@
 {
-  "label": "Thư hoa / Flower Letter (3D: an envelope opens, carnations bloom, a note and your photo rise)",
+  "label": "Thư hoa (3D: phong thư mở ra, hoa cẩm chướng nở, lời nhắn và ảnh của bạn bay lên)",
   "preset": {
     "title": "Thư hoa",
-    "intro": "Lay the card flat, point your phone at it and wait a moment.",
-    "to": "Dear you,",
+    "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có những bông hoa đang chờ được nở.",
+    "to": "Gửi người thương,",
     "body": [
-      "Some flowers that will never wilt, and a few words I wanted you to keep.",
-      "Happy Women's Day."
+      "Gửi tặng những bông hoa không bao giờ héo, cùng đôi lời thương muốn được giữ mãi.",
+      "Chúc hôm nay thật rạng rỡ và ngập tràn yêu thương."
     ],
-    "from": "With love"
+    "from": "Thương thật nhiều"
   },
   "groups": [
     {
-      "title": "The note",
-      "note": "The words on the note that rises out of the envelope, in handwriting. Up to about 40 letters; longer words get smaller. Add a photo too: it pops up in a polaroid at the second stop.",
+      "title": "Lời nhắn",
+      "note": "Lời viết tay trên tấm thiệp nhỏ bay lên từ phong thư. Khoảng 40 chữ cái, chữ dài sẽ tự nhỏ lại. Thêm ảnh nữa nhé: ảnh hiện trong khung polaroid ở điểm dừng thứ hai.",
       "rows": [
         [
           {
             "slot": "board",
-            "label": "Note",
-            "value": "Happy Women's Day!",
+            "label": "Lời nhắn",
+            "value": "Chúc mừng ngày Phụ nữ!",
             "max": 40
           }
         ]

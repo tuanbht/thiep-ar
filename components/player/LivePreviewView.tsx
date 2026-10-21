@@ -10,7 +10,7 @@ import type { Act } from "@/lib/player/engine/types";
 import { fontVars } from "./fonts";
 import s from "./liveClasses";
 import { LoadError, loadTemplateFor, type Loaded } from "./loadTemplate";
-import { T } from "./strings";
+import { T, T_BLUSH, wordsFor } from "./strings";
 import type { LivePreviewProps } from "./types";
 import { cx } from "./ui";
 import { useActFlow } from "./useActFlow";
@@ -59,6 +59,7 @@ export default function LivePreviewView({
     const ac = new AbortController();
     loadTemplateFor(JSON.parse(settled) as Card, {
       fallbackHint: T.tapToContinue,
+      blushHint: T_BLUSH.tapToContinue,
       missing: T.templateMissing,
       signal: ac.signal,
     }).then(
@@ -188,10 +189,13 @@ export default function LivePreviewView({
   const busy = !message && (!running || !view || view.phase === "starting");
   const hint = view && view.phase === "paused" && !autoplay ? view.hint : null;
 
+  const theme = loaded?.theme ?? card.theme ?? "night";
+  const words = wordsFor(theme);
+
   return (
     <div
       ref={setBox}
-      className={cx(s.box, fontVars, className)}
+      className={cx(s.box, fontVars, theme === "blush" && s.blush, className)}
       role="group"
       aria-label={T.previewLabel}
       data-preview-state={message ? "error" : (view?.state ?? "loading")}
@@ -206,7 +210,7 @@ export default function LivePreviewView({
         )}
         aria-live="polite"
       >
-        {message ?? (busy ? T.loading : "")}
+        {message ?? (busy ? words.loading : "")}
       </div>
       {running && !message && (
         <div className={s.bar}>

@@ -68,7 +68,7 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   const stage = new THREE.Group(); spin.add(stage);
   const hemi = new THREE.HemisphereLight(0xfff6f0, 0xc9a9c4, 1.1); root.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(.45, 1.4, .95); sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024); sun.shadow.camera.near = .1; sun.shadow.camera.far = 4; sun.shadow.bias = -.0005;
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.near = .1; sun.shadow.camera.far = 4; sun.shadow.bias = -.0005;
   sun.shadow.camera.left = sun.shadow.camera.bottom = -.8; sun.shadow.camera.right = sun.shadow.camera.top = .8;
   root.add(sun, sun.target); sun.target.position.set(0, .1, 0);
   const catcher = new THREE.Mesh(keep(new THREE.PlaneGeometry(1.2, .8)), keep(new THREE.ShadowMaterial({ opacity: .3, depthWrite: false })));   // decals on the card stay visible

@@ -12,6 +12,20 @@ export interface View {
 }
 
 const RAD = Math.PI / 180;
+
+/** Where a 3D act is first seen from. A screen held upright sees far up and down, so the act comes close, near eye
+    level, and fills it; a wide one sees only 45 degrees up and down, so it stands back a little, higher, and a tall act
+    (a heart of lanterns, a moon) keeps its top in view. */
+export const firstView3d = ({
+  width,
+  height,
+}: {
+  width: number;
+  height: number;
+}): { elevation: number; distance: number } =>
+  height >= width
+    ? { elevation: 26, distance: 1.4 }
+    : { elevation: 32, distance: 1.7 };
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const round = (x: number) => Math.round(x * 100) / 100;
 
@@ -53,8 +67,9 @@ export class PreviewView {
     this.pivot = kind === "3d" ? pivot : 0;
     this.view = {
       azimuth: 0,
-      elevation: kind === "3d" ? 32 : 90,
-      distance: kind === "3d" ? 1.7 : this.fit(0.5, aspect / 2),
+      ...(kind === "3d"
+        ? firstView3d(this.size())
+        : { elevation: 90, distance: this.fit(0.5, aspect / 2) }),
       lift: 0,
     };
   }

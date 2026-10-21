@@ -1,15 +1,10 @@
 /* The gift player's screens and overlays. Presentational only: what they show comes in as props. Anything a tap must
    not pass through to the act carries data-ui. */
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import type { Card } from "@/lib/player/core/card";
+import { PhotoFan, useWorkingPhotos } from "./PhotoStrip";
 import s from "./playerClasses";
-import { T } from "./strings";
+import { T, type Words } from "./strings";
 import Image from "next/image";
 
 const cx = (...c: (string | false | null | undefined)[]) =>
@@ -44,9 +39,7 @@ export function Letter({
 /** The letter's photos: one wide, or several in a strip. They are the buyer's own, from signed links that last an hour,
     so no next/image optimisation for them; one that will not load (its link ran out in a tab left open) is left out. */
 function LetterPhotos({ photos }: { photos: readonly string[] }) {
-  const [broken, setBroken] = useState<ReadonlySet<string>>(() => new Set());
-  const shown = photos.filter((p) => !broken.has(p));
-  const drop = (p: string) => setBroken((b) => new Set(b).add(p));
+  const [shown, drop] = useWorkingPhotos(photos);
   /* eslint-disable @next/next/no-img-element */
   if (shown.length === 1)
     return <img src={shown[0]} alt="" onError={() => drop(shown[0])} />;
@@ -108,20 +101,28 @@ export function Intro(p: {
   ready: boolean;
   onStart(): void;
   onNoCamera(): void;
+  /** the theme's words (default the player's own) */
+  words?: Words;
+  /** the buyer's photos, fanned over the card's picture */
+  photos?: readonly string[];
 }) {
+  const W = p.words ?? T;
   const inApp =
     typeof navigator !== "undefined" && IN_APP.test(navigator.userAgent);
   return (
     <section className={s.ui} aria-label={p.title} data-ui>
-      <Image
-        src={`/thumbs/${p.template}.jpg`}
-        alt=""
-        width={960}
-        height={600}
-        sizes={"(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
-        className="aspect-[16/10] mb-10 h-auto w-full max-w-240 object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] motion-safe:group-hover:scale-[1.04]"
-      />
-      <p className={s.eyebrow}>{T.eyebrow}</p>
+      <div className={s.introArt}>
+        <Image
+          src={`/thumbs/${p.template}.jpg`}
+          alt=""
+          width={960}
+          height={600}
+          sizes={"(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"}
+          className="aspect-[16/10] h-auto w-full max-w-240 object-cover transition-transform duration-700 ease-[var(--ease-out-expo)] motion-safe:group-hover:scale-[1.04]"
+        />
+        <PhotoFan photos={p.photos ?? []} />
+      </div>
+      <p className={s.eyebrow}>{W.eyebrow}</p>
       <h1 className={s.title} id="title">
         {p.title}
       </h1>
@@ -146,7 +147,7 @@ export function Intro(p: {
         disabled={!p.ready}
         aria-busy={!p.ready}
       >
-        {p.ready ? T.start : T.loading}
+        {p.ready ? W.start : W.loading}
       </button>
       <button
         className={cx(s.btn, s.ghost)}
@@ -240,16 +241,19 @@ export function Fallback(p: {
   why: string;
   film: string;
   onRetry(): void;
+  /** the theme's words (default the player's own) */
+  words?: Words;
 }) {
+  const W = p.words ?? T;
   return (
     <section
       className={cx(s.ui, s.fallback)}
       id="fallback"
-      aria-label={T.letterTitle}
+      aria-label={W.letterTitle}
       data-ui
     >
       <p className={s.eyebrow}>{p.card.title}</p>
-      <h1 className={cx(s.title, s.titleSmall)}>{T.letterTitle}</h1>
+      <h1 className={cx(s.title, s.titleSmall)}>{W.letterTitle}</h1>
       <p className={s.lead} id="why">
         {p.why}
       </p>

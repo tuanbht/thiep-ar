@@ -5,7 +5,8 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { formSpecSchema, type FormSpec } from "./form";
-import { kindOf, parseTemplate } from "../player/core/template";
+import type { Theme } from "../player/core/card";
+import { kindOf, parseTemplate, themeOf } from "../player/core/template";
 import type { Kind } from "../domain/types";
 
 export interface TemplateInfo {
@@ -15,11 +16,12 @@ export interface TemplateInfo {
   aspect: number;
   /** how many stops the act has */
   chapters: number;
-  /** the template's own hint at each stop */
   /** null when the template has no form.json (or a broken one): it cannot be customised */
   form: FormSpec | null;
   /** how many places the act has for the buyer's photos (template.json "photos"; 0: they show only in the letter) */
   photoPlaces: number;
+  /** the page's look while the card plays (template.json "theme", else from its categories) */
+  theme: Theme;
 }
 
 const ID = /^[a-z0-9][a-z0-9_-]*$/i;
@@ -71,6 +73,7 @@ export function createTemplateCatalog(
         Number.isInteger(tpl.photos) && Number(tpl.photos) > 0
           ? Math.min(Number(tpl.photos), 20)
           : 0,
+      theme: themeOf(tpl),
     };
   }
 

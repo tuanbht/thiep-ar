@@ -1,6 +1,12 @@
 /* A card: the words, the letter and the photos one customer sends, in the shape the player plays. The same template
    plays many cards. The shop builds it from the buyer's gift content (lib/content/toCard.ts). */
 
+/** How the player dresses a card: "blush" (light pink and loving words, for love and couple cards) or "night" (the
+    shop's own). */
+export type Theme = "blush" | "night";
+export const isTheme = (v: unknown): v is Theme =>
+  v === "blush" || v === "night";
+
 export interface CardLetter {
   to: string;
   body: string[];
@@ -25,6 +31,8 @@ export interface Card {
   mailbox: string;
   /** the card's own printed design: tracked from templates/<template>/designs/<design>.mind */
   design?: string;
+  /** set by the shop from the product's categories; unset, the player takes the template's */
+  theme?: Theme;
 }
 
 export const CARD_DEFAULTS: Readonly<Card> = Object.freeze({
@@ -105,5 +113,6 @@ export function mergeCard(raw: unknown): Card {
     signs: texts(c.signs, d.signs),
     mailbox: text(c.mailbox, d.mailbox),
     ...(design && { design }),
+    ...(isTheme(c.theme) && { theme: c.theme }),
   };
 }

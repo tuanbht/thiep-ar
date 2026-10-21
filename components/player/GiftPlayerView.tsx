@@ -9,8 +9,9 @@ import { CardSession, type Mode } from "@/lib/player/engine/session";
 import type { Act, FilmAct } from "@/lib/player/engine/types";
 import { fontVars } from "./fonts";
 import { LoadError, loadTemplateFor, type Loaded } from "./loadTemplate";
+import { PhotoStrip } from "./PhotoStrip";
 import s from "./playerClasses";
-import { T } from "./strings";
+import { T, T_BLUSH, wordsFor } from "./strings";
 import type { GiftPlayerProps } from "./types";
 import {
   cx,
@@ -78,6 +79,7 @@ export default function GiftPlayerView({
     const c = JSON.parse(cardKey) as typeof card;
     loadTemplateFor(c, {
       fallbackHint: T.tapToContinue,
+      blushHint: T_BLUSH.tapToContinue,
       missing: T.templateMissing,
       signal: ac.signal,
     }).then(setLoaded, (e: unknown) => {
@@ -267,6 +269,8 @@ export default function GiftPlayerView({
     (phase === "loading" || phase === "idle") &&
     !(initialMode === "preview" && phase === "idle");
   const title = loaded?.card.title ?? card.title;
+  const theme = loaded?.theme ?? card.theme ?? "night";
+  const words = wordsFor(theme);
 
   return (
     <div
@@ -274,6 +278,7 @@ export default function GiftPlayerView({
       className={cx(
         s.root,
         fontVars,
+        theme === "blush" && s.blush,
         mode === "preview" && running && s.preview,
       )}
       data-player-state={view?.state ?? "loading"}
@@ -287,6 +292,8 @@ export default function GiftPlayerView({
           template={card.template}
           lead={card.intro}
           ready={!!flow && phase === "idle"}
+          words={words}
+          photos={card.photos}
           onStart={() => void start()}
           onNoCamera={() =>
             kind === "3d"
@@ -300,11 +307,15 @@ export default function GiftPlayerView({
           card={loaded.card}
           why={why}
           film={`${loaded.tdir}/film`}
+          words={words}
           onRetry={() => void start()}
         />
       )}
       {!message && running && view && loaded && (
         <>
+          {(mode === "preview" || view.found || pinned) && (
+            <PhotoStrip photos={loaded.card.photos} />
+          )}
           <TopBar title={title}>
             {mode === "ar" && (view.found || pinned) && (
               <button type="button" id="pin" onClick={() => void togglePin()}>

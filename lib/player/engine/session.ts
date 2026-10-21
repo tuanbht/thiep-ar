@@ -1,6 +1,7 @@
 /* One card on screen: the stage, the card frame the act is built on, and what moves that frame — MindAR following the
    printed card (camera mode), the orbit view (preview) or the gyroscope once pinned. In camera mode a 3D act faces
    the phone by default ("face"); in the preview it stands on the virtual card, which the view turns. */
+import type { Theme } from "../core/card";
 import * as THREE from "three";
 import {
   addTip,
@@ -76,8 +77,8 @@ export class CardSession {
   }
 
   /** set the lighting for the act about to be built (a 3D act is tone-mapped, a film is not) */
-  prepareFor(kind: "film" | "3d") {
-    this.stage.lightFor(kind);
+  prepareFor(kind: "film" | "3d", theme: Theme = "night") {
+    this.stage.lightFor(kind, theme);
   }
 
   /** put an act on the card, replacing the one there; `middle`: a 3D act's middle, in card widths above the card */

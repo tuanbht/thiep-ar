@@ -8,7 +8,14 @@ import {
 import { PaymentUnavailable } from "../../payments/provider";
 import { AccessDenied, InvalidInput, NotFound, TooLarge } from "../errors";
 import { SLUG_RE } from "../ids";
-import { FIXED_NOW, flowerOrder, JPEG, makeService, PNG } from "./test-kit";
+import {
+  catalog,
+  FIXED_NOW,
+  flowerOrder,
+  JPEG,
+  makeService,
+  PNG,
+} from "./test-kit";
 
 const ORIGIN = "http://localhost:3000";
 const parse = (o: Record<string, unknown> = {}) =>
@@ -304,6 +311,7 @@ describe("OrdersService: the gift", () => {
     expect(g.product.id).toBe("flower-letter");
     expect(g.card).toMatchObject({
       template: "flower-letter",
+      theme: "blush", // a love card opens pink from its first frame
       title: "Gửi Hanna",
       greeting: "Hanna à,",
       photo: "",
@@ -311,6 +319,34 @@ describe("OrdersService: the gift", () => {
       letter: { to: "Hanna à,", from: "Anh" },
     });
     expect(g.card).not.toHaveProperty("chapters");
+  });
+
+  it("still opens when its template cannot be read, leaving the theme to the player", async () => {
+    let gone = false; // the template's files go missing after the gift was bought
+    const kit = makeService({
+      templates: async (id) => {
+        if (gone) throw new Error("disk gone");
+        return catalog.getTemplateInfo(id);
+      },
+    });
+    const { response, accessToken } = await kit.orders.createOrder(
+      parse(flowerOrder()),
+      ORIGIN,
+    );
+    await kit.orders.startPayment(response.orderId, accessToken, ORIGIN);
+    const slug = (await kit.repo.getGiftCard(
+      (await kit.repo.getOrder(response.orderId))!.giftCardId,
+    ))!.slug;
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    gone = true;
+    const g = (await kit.orders.getGift(slug))!;
+    expect(g.card.title).toBe("Gửi Hanna");
+    expect(g.card).not.toHaveProperty("theme");
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining("could not be read"),
+      expect.any(Error),
+    );
+    log.mockRestore();
   });
 
   it("knows nothing of a slug that is malformed or not there", async () => {

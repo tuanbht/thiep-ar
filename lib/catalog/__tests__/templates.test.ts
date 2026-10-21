@@ -17,6 +17,12 @@ describe("the template catalog on the real templates", () => {
     expect(t!.form!.groups[0].rows[0][0].slot).toBe("board");
   });
 
+  it("knows each card's theme: blush for love and couple cards, the shop's night for the rest", async () => {
+    expect((await getTemplateInfo("flower-letter"))?.theme).toBe("blush");
+    expect((await getTemplateInfo("starry-date"))?.theme).toBe("blush");
+    expect((await getTemplateInfo("mochi"))?.theme).toBe("night");
+  });
+
   it("reads a film", async () => {
     expect(await getTemplateInfo("rain-clearing")).toMatchObject({
       kind: "film",

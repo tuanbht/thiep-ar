@@ -1,6 +1,6 @@
 /* A template: what plays on the printed card. templates/<id>/template.json says which kind it is
    ("film": a video on the card with painted words; "3d": scene.js builds the act) and where it stops. */
-import { safeId, type Card } from "./card";
+import { isTheme, safeId, type Card, type Theme } from "./card";
 
 export type Kind = "film" | "3d";
 
@@ -36,6 +36,24 @@ export interface Chapter {
 export const templateDir = (id: string): string => `/templates/${safeId(id)}`;
 
 export const kindOf = (t: Template): Kind => (t.kind === "3d" ? "3d" : "film");
+
+/** shelf categories whose cards are dressed in blush */
+const BLUSH_CATEGORIES: ReadonlySet<string> = new Set(["love", "couple"]);
+
+/** A template's theme: template.json's own "theme", else blush for a love or couple card and the shop's night for the
+    rest. The server reads it with the template (lib/catalog/templates.ts) and puts it on the card, so the page opens in
+    it; the player falls back to it for a card that has none. */
+export const themeOf = (t: Template): Theme => {
+  if (isTheme(t.theme)) return t.theme;
+  const categories: readonly unknown[] = Array.isArray(t.categories)
+    ? t.categories
+    : [];
+  return categories.some(
+    (c) => typeof c === "string" && BLUSH_CATEGORIES.has(c),
+  )
+    ? "blush"
+    : "night";
+};
 
 /** template.json as a template, or an error that says what is wrong with it. */
 export function parseTemplate(raw: unknown): Template {

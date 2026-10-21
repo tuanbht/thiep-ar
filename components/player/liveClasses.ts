@@ -1,5 +1,6 @@
 /* The live preview's class names (see live.css). */
 import "./live.css";
+import "./blush.css";
 
 const s = {
   box: "gp-live",
@@ -11,5 +12,6 @@ const s = {
   bar: "gp-live-bar",
   hint: "gp-live-hint",
   replay: "gp-live-replay",
+  blush: "gp-live-blush",
 } as const;
 export default s;

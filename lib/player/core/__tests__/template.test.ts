@@ -6,6 +6,7 @@ import {
   parseTemplate,
   targetsUrl,
   templateDir,
+  themeOf,
 } from "../template";
 
 describe("template", () => {
@@ -76,5 +77,26 @@ describe("template", () => {
     expect(actMiddle({ aspect: 1, chapters: [0] })).toBeCloseTo(0.2);
     expect(actMiddle({ aspect: 1, chapters: [0], height: 5 })).toBe(0.35);
     expect(actMiddle({ aspect: 1, chapters: [0], height: 0.01 })).toBe(0.1);
+  });
+});
+
+describe("themeOf", () => {
+  const tpl = (extra: object) => ({ aspect: 0.625, chapters: [0], ...extra });
+
+  it("dresses love and couple cards in blush, every other card in the shop's night", () => {
+    expect(themeOf(tpl({ categories: ["love", "viral-scenes"] }))).toBe(
+      "blush",
+    );
+    expect(themeOf(tpl({ categories: ["couple"] }))).toBe("blush");
+    expect(themeOf(tpl({ categories: ["birthday", "fun"] }))).toBe("night");
+    expect(themeOf(tpl({}))).toBe("night");
+  });
+
+  it("lets a template choose its own, and ignores a theme it does not know", () => {
+    expect(themeOf(tpl({ theme: "night", categories: ["love"] }))).toBe(
+      "night",
+    );
+    expect(themeOf(tpl({ theme: "blush" }))).toBe("blush");
+    expect(themeOf(tpl({ theme: "neon", categories: ["love"] }))).toBe("blush");
   });
 });

@@ -8,7 +8,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mergeCard } from "@/lib/player/core/card";
-import { Hint, Letter, ReadView } from "../ui";
+import { T_BLUSH, wordsFor } from "../strings";
+import { Hint, Intro, Letter, ReadView } from "../ui";
 
 const card = mergeCard({
   template: "mochi",
@@ -123,5 +124,35 @@ describe("ReadView", () => {
     unmount();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("Intro", () => {
+  const intro = (extra: object) =>
+    render(
+      <Intro
+        title="Hẹn hò dưới sao"
+        template="starry-date"
+        lead=""
+        ready
+        onStart={() => {}}
+        onNoCamera={() => {}}
+        {...extra}
+      />,
+    );
+
+  it("fans the buyer's photos over the card's picture, three at most", () => {
+    const photos = ["a", "b", "c", "d"].map((x) => `https://p/${x}.jpg`);
+    const { container } = intro({ photos });
+    expect(
+      [...container.querySelectorAll(".gp-photo-fan img")].map((i) =>
+        i.getAttribute("src"),
+      ),
+    ).toEqual(photos.slice(0, 3));
+  });
+
+  it("speaks the theme's words", () => {
+    intro({ words: wordsFor("blush") });
+    expect(screen.getByText(T_BLUSH.eyebrow)).toBeTruthy();
   });
 });

@@ -1,7 +1,7 @@
 /* A buyer's gift content as the player's card: the shape lib/player plays (the same one the old kit's cards had).
    Pure, so the shop's live preview (browser) and the gift page (server) build it alike. */
-import { mergeCard, type Card } from "../player/core/card";
-import type { GiftContent, Product } from "../domain/types";
+import { mergeCard, type Card, type Theme } from "../player/core/card";
+import type { GiftContent } from "../domain/types";
 import type { FormSpec } from "../catalog/form";
 
 /** The words a template starts with, as gift content: what the shop's form opens with. */
@@ -24,16 +24,26 @@ export function presetContent(form: FormSpec): GiftContent {
   };
 }
 
+/** What a card is made of besides its words: the template and print design it was bought with, and the template's
+    theme (TemplateInfo.theme), so the page opens in it; null leaves the theme to the player, which reads it with the
+    template. */
+export interface CardMaking {
+  template: string;
+  design: string | null;
+  theme: Theme | null;
+}
+
 /** `photoUrls`: where the browser can fetch the photos now (signed links, or local object URLs in the preview), in the
     buyer's order; the player shuffles them. */
 export function toCard(
   content: GiftContent,
-  product: Pick<Product, "template" | "design">,
+  making: CardMaking,
   photoUrls: readonly string[],
 ): Card {
   return mergeCard({
-    template: product.template,
-    design: product.design ?? undefined,
+    template: making.template,
+    design: making.design ?? undefined,
+    theme: making.theme ?? undefined,
     title: content.title,
     intro: content.intro,
     seal: initials(content.letter.from || content.title),

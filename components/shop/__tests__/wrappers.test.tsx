@@ -23,6 +23,8 @@ vi.mock("next/dynamic", () => ({
   },
 }));
 
+vi.mock("@/components/player/fonts", () => ({ fontVars: "fonts" }));
+
 const { GiftClient } = await import("../GiftClient");
 const { PreviewPanel } = await import("../PreviewPanel");
 const card = { title: "Gửi Hanna" } as never;
@@ -53,5 +55,15 @@ describe("the player wrappers", () => {
     expect(screen.getByText("Xem trước")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Gửi Hanna" }));
     expect(onEvent).toHaveBeenCalledWith("letter_open", { chapter: 1 });
+  });
+
+  it("the preview box is pink behind a love card, before the player is there", () => {
+    const box = (theme?: string) =>
+      render(
+        <PreviewPanel card={{ title: "Gửi Hanna", theme } as never} />,
+      ).container.querySelector("figure > div")!.className;
+    expect(box("blush")).toContain("#ffe3ec");
+    cleanup();
+    expect(box()).toContain("--color-night");
   });
 });
