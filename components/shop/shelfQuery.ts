@@ -13,13 +13,19 @@ export interface ShelfParams {
 }
 
 type Search = Record<string, string | string[] | undefined>;
-const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
+const first = (v: string | string[] | undefined) =>
+  (Array.isArray(v) ? v[0] : v) ?? "";
 
 /** Words as the shelf searches them: control characters (which Postgres refuses: a scanner's ?q=%00) and runs of
     spaces made one space, trimmed, cut to QUERY_MAX; '' when no letter or digit is left to search for. */
 export function tidyQuery(text: string): string {
-  const q = text.replace(/\p{Cc}+/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, QUERY_MAX).trim();
-  return /[\p{L}\p{N}]/u.test(q) ? q : '';
+  const q = text
+    .replace(/\p{Cc}+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, QUERY_MAX)
+    .trim();
+  return /[\p{L}\p{N}]/u.test(q) ? q : "";
 }
 
 export function readShelfParams(search: Search): ShelfParams {
@@ -28,10 +34,13 @@ export function readShelfParams(search: Search): ShelfParams {
 }
 
 /** The shelf's address for these words and this category; the plain shelf when both are empty. */
-export function shelfHref({ q, c }: { q?: string; c?: string | null }, hash = ''): string {
+export function shelfHref(
+  { q, c }: { q?: string; c?: string | null },
+  hash = "",
+): string {
   const search = new URLSearchParams();
-  if (q?.trim()) search.set('q', q.trim());
-  if (c) search.set('c', c);
+  if (q?.trim()) search.set("q", q.trim());
+  if (c) search.set("c", c);
   const s = search.toString();
-  return `/${s ? `?${s}` : ''}${hash}`;
+  return `/${s ? `?${s}` : ""}${hash}`;
 }

@@ -6,8 +6,8 @@
      POST /api/uploads                  multipart "photo"   -> 201 UploadResponse
      POST /api/events                   EventRequest        -> 204
    Errors: { error: string } with 400 (bad input), 403 (no access), 404, 409 (wrong state), 413, 429, 503. */
-import { z } from 'zod';
-import { CLIENT_EVENT_NAMES, type OrderStatus } from '../domain/types';
+import { z } from "zod";
+import { CLIENT_EVENT_NAMES, type OrderStatus } from "../domain/types";
 
 export const LIMITS = {
   title: 80,
@@ -21,7 +21,7 @@ export const LIMITS = {
   phone: 20,
   photoBytes: 5 * 1024 * 1024,
   /** photos one card can carry */
-  photos: 10
+  photos: 10,
 } as const;
 
 const trimmed = (max: number) => z.string().trim().max(max);
@@ -31,31 +31,52 @@ export const PHOTO_PATH = /^drafts\/[0-9a-f-]{36}\.(jpg|png|webp)$/;
 
 export const giftContentInputSchema = z.object({
   title: trimmed(LIMITS.title).min(1),
-  intro: trimmed(LIMITS.intro).default(''),
+  intro: trimmed(LIMITS.intro).default(""),
   letter: z.object({
     to: trimmed(LIMITS.to).min(1),
-    body: z.array(trimmed(LIMITS.paragraph)).max(LIMITS.paragraphs).transform(ps => ps.filter(Boolean)),
-    from: trimmed(LIMITS.from).min(1)
+    body: z
+      .array(trimmed(LIMITS.paragraph))
+      .max(LIMITS.paragraphs)
+      .transform((ps) => ps.filter(Boolean)),
+    from: trimmed(LIMITS.from).min(1),
   }),
   /** slot name -> words; checked against the product's form on the server (unknown slots refused, lengths capped) */
   slots: z.record(z.string(), z.string()).default({}),
   /** paths returned by POST /api/uploads, in the buyer's order */
-  photoPaths: z.array(z.string().regex(PHOTO_PATH)).max(LIMITS.photos).default([]),
+  photoPaths: z
+    .array(z.string().regex(PHOTO_PATH))
+    .max(LIMITS.photos)
+    .default([]),
   /** an older client's one photo (before photo lists): counted as the last of photoPaths */
-  photoPath: z.string().regex(PHOTO_PATH).nullable().optional()
+  photoPath: z.string().regex(PHOTO_PATH).nullable().optional(),
 });
 export type GiftContentInput = z.input<typeof giftContentInputSchema>;
 
 export const buyerSchema = z.object({
-  name: trimmed(LIMITS.name).optional().transform(v => v || null),
-  email: z.string().trim().max(LIMITS.email).email().optional().or(z.literal('')).transform(v => v || null),
-  phone: z.string().trim().max(LIMITS.phone).regex(/^[0-9+ ()-]*$/).optional().transform(v => v || null)
+  name: trimmed(LIMITS.name)
+    .optional()
+    .transform((v) => v || null),
+  email: z
+    .string()
+    .trim()
+    .max(LIMITS.email)
+    .email()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => v || null),
+  phone: z
+    .string()
+    .trim()
+    .max(LIMITS.phone)
+    .regex(/^[0-9+ ()-]*$/)
+    .optional()
+    .transform((v) => v || null),
 });
 
 export const createOrderRequestSchema = z.object({
   productId: z.string().regex(/^[a-z0-9][a-z0-9_-]*$/i),
   content: giftContentInputSchema,
-  buyer: buyerSchema.prefault({})
+  buyer: buyerSchema.prefault({}),
 });
 export type CreateOrderRequest = z.input<typeof createOrderRequestSchema>;
 
@@ -104,12 +125,25 @@ export interface UploadResponse {
 
 export const eventRequestSchema = z.object({
   name: z.enum(CLIENT_EVENT_NAMES),
-  sessionId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
+  sessionId: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{8,64}$/)
+    .optional(),
   giftSlug: z.string().max(32).optional(),
-  productId: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i).optional(),
-  props: z.record(z.string().max(40), z.union([z.string().max(200), z.number(), z.boolean(), z.null()])).optional()
-    .refine(p => !p || Object.keys(p).length <= 20, 'at most 20 props')
+  productId: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i)
+    .optional(),
+  props: z
+    .record(
+      z.string().max(40),
+      z.union([z.string().max(200), z.number(), z.boolean(), z.null()]),
+    )
+    .optional()
+    .refine((p) => !p || Object.keys(p).length <= 20, "at most 20 props"),
 });
 export type EventRequest = z.input<typeof eventRequestSchema>;
 
-export interface ApiError { error: string }
+export interface ApiError {
+  error: string;
+}

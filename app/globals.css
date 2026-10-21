@@ -29,8 +29,10 @@
   --text-display: clamp(2.25rem, 1.5rem + 3.4vw, 4.25rem);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-paper: 0 1px 0 rgb(35 29 51 / 0.06), 0 18px 40px -22px rgb(11 16 48 / 0.55);
-  --shadow-lift: 0 2px 0 rgb(35 29 51 / 0.08), 0 30px 60px -28px rgb(11 16 48 / 0.7);
+  --shadow-paper:
+    0 1px 0 rgb(35 29 51 / 0.06), 0 18px 40px -22px rgb(11 16 48 / 0.55);
+  --shadow-lift:
+    0 2px 0 rgb(35 29 51 / 0.08), 0 30px 60px -28px rgb(11 16 48 / 0.7);
 }
 
 @layer base {
@@ -41,21 +43,36 @@
   }
   body {
     background:
-      radial-gradient(120% 70% at 85% -10%, rgb(59 71 144 / 0.55), transparent 60%),
+      radial-gradient(
+        120% 70% at 85% -10%,
+        rgb(59 71 144 / 0.55),
+        transparent 60%
+      ),
       radial-gradient(90% 60% at 0% 0%, rgb(34 43 102 / 0.6), transparent 55%),
       var(--color-night);
     color: var(--color-paper);
     font-family: var(--font-letter);
   }
-  ::selection { background: var(--color-gold); color: var(--color-night); }
-  :focus-visible { outline: 3px solid var(--color-gold); outline-offset: 3px; }
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-night);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 3px;
+  }
 }
 
 @layer components {
   /* the airmail envelope's edge: red, cream, blue, cream */
   .airmail {
-    background: repeating-linear-gradient(-45deg,
-      var(--color-post) 0 14px, var(--color-paper) 14px 22px, var(--color-airmail) 22px 36px, var(--color-paper) 36px 44px);
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-post) 0 14px,
+      var(--color-paper) 14px 22px,
+      var(--color-airmail) 22px 36px,
+      var(--color-paper) 36px 44px
+    );
   }
 
   /* a postage stamp: perforated all round (two mask layers: holes on a grid, a solid middle over them) */
@@ -63,16 +80,26 @@
     --perf: 5px;
     padding: calc(2 * var(--perf));
     -webkit-mask:
-      radial-gradient(var(--perf), #0000 97%, #000) round calc(-1.5 * var(--perf)) calc(-1.5 * var(--perf)) / calc(3 * var(--perf)) calc(3 * var(--perf)),
-      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--perf)) calc(100% - 3 * var(--perf));
+      radial-gradient(var(--perf), #0000 97%, #000) round
+        calc(-1.5 * var(--perf)) calc(-1.5 * var(--perf)) /
+        calc(3 * var(--perf)) calc(3 * var(--perf)),
+      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--perf))
+        calc(100% - 3 * var(--perf));
     mask:
-      radial-gradient(var(--perf), #0000 97%, #000) round calc(-1.5 * var(--perf)) calc(-1.5 * var(--perf)) / calc(3 * var(--perf)) calc(3 * var(--perf)),
-      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--perf)) calc(100% - 3 * var(--perf));
+      radial-gradient(var(--perf), #0000 97%, #000) round
+        calc(-1.5 * var(--perf)) calc(-1.5 * var(--perf)) /
+        calc(3 * var(--perf)) calc(3 * var(--perf)),
+      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--perf))
+        calc(100% - 3 * var(--perf));
   }
 
   /* writing paper: faint rules every line */
   .ruled {
-    background-image: repeating-linear-gradient(to bottom, transparent 0 calc(1.9rem - 1px), rgb(43 76 155 / 0.12) calc(1.9rem - 1px) 1.9rem);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(1.9rem - 1px),
+      rgb(43 76 155 / 0.12) calc(1.9rem - 1px) 1.9rem
+    );
   }
 
   /* paper grain, drawn once as an SVG noise */
@@ -99,20 +126,33 @@
 
   /* a slow lift on hover, only where the visitor is fine with motion */
   .lift {
-    transition: transform 420ms var(--ease-out-expo), box-shadow 420ms var(--ease-out-expo);
+    transition:
+      transform 420ms var(--ease-out-expo),
+      box-shadow 420ms var(--ease-out-expo);
   }
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-    .lift:hover { transform: translateY(-4px) rotate(-0.4deg); box-shadow: var(--shadow-lift); }
+    .lift:hover {
+      transform: translateY(-4px) rotate(-0.4deg);
+      box-shadow: var(--shadow-lift);
+    }
   }
 
   .rise {
     animation: rise 700ms var(--ease-out-expo) both;
   }
   @keyframes rise {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: none; }
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
-    .rise { animation: none; }
+    .rise {
+      animation: none;
+    }
   }
 }

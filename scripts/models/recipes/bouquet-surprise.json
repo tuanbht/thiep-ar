@@ -1,7 +1,13 @@
 {
   "boy": {
     "from": "kaykit/Barbarian",
-    "drop": ["1H_Axe_Offhand", "Barbarian_Round_Shield", "1H_Axe", "2H_Axe", "Mug"],
+    "drop": [
+      "1H_Axe_Offhand",
+      "Barbarian_Round_Shield",
+      "1H_Axe",
+      "2H_Axe",
+      "Mug"
+    ],
     "clips": ["Idle", "Walking_A", "Cheer", "Running_Strafe_Right"]
   },
   "girl": {

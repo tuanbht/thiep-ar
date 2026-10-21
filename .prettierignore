@@ -1,0 +1,12 @@
+# Prettier also skips everything in .gitignore.
+
+# generated, or written by tools
+pnpm-lock.yaml
+lib/db/database.types.ts
+AGENTS.md
+
+# the cards themselves: scene scripts, per-frame film data and the settings the card tools write (ESLint skips them too)
+public/templates/
+
+# print designs: each printed card and its .mind target were made from exactly this rendering
+print-designs/

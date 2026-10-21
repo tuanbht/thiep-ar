@@ -1,12 +1,29 @@
 {
   "boy": {
     "from": "kaykit/Knight",
-    "drop": ["1H_Sword", "1H_Sword_Offhand", "2H_Sword", "Badge_Shield", "Rectangle_Shield", "Round_Shield", "Spike_Shield", "Knight_Helmet", "Knight_Cape"],
+    "drop": [
+      "1H_Sword",
+      "1H_Sword_Offhand",
+      "2H_Sword",
+      "Badge_Shield",
+      "Rectangle_Shield",
+      "Round_Shield",
+      "Spike_Shield",
+      "Knight_Helmet",
+      "Knight_Cape"
+    ],
     "clips": ["Idle", "Walking_A", "Running_A"]
   },
   "girl": {
     "from": "kaykit/Rogue",
-    "drop": ["Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Knife", "Throwable", "Rogue_Cape"],
+    "drop": [
+      "Knife_Offhand",
+      "1H_Crossbow",
+      "2H_Crossbow",
+      "Knife",
+      "Throwable",
+      "Rogue_Cape"
+    ],
     "clips": ["Idle", "Walking_A", "Running_A"]
   }
 }

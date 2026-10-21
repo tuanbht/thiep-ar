@@ -21,13 +21,13 @@ With `PAYMENT_PROVIDER=test` (the default) the checkout pays at once, so the who
 
 ## The buy flow
 
-| page | what happens |
-|---|---|
-| `/` | the shelf: every active product, 3D acts first, then films; search it by words (`?q=`) and by category (`?c=`) |
-| `/cards/[productId]` | the form from the template's `form.json` beside a live preview; photo upload; "Mua thiệp" creates the order; the card being written is kept as a draft in the browser (localStorage) until its order is paid, so a reload loses nothing |
-| `/checkout/[orderId]` | the order slip and "Thanh toán" |
-| `/orders/[orderId]` | waits for the payment, then shows the gift link, its QR code, copy and share |
-| `/g/[slug]` | the gift: camera (MindAR tracks the printed card) or without the camera; the letter at the end |
+| page                  | what happens                                                                                                                                                                                                                            |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                   | the shelf: every active product, 3D acts first, then films; search it by words (`?q=`) and by category (`?c=`)                                                                                                                          |
+| `/cards/[productId]`  | the form from the template's `form.json` beside a live preview; photo upload; "Mua thiệp" creates the order; the card being written is kept as a draft in the browser (localStorage) until its order is paid, so a reload loses nothing |
+| `/checkout/[orderId]` | the order slip and "Thanh toán"                                                                                                                                                                                                         |
+| `/orders/[orderId]`   | waits for the payment, then shows the gift link, its QR code, copy and share                                                                                                                                                            |
+| `/g/[slug]`           | the gift: camera (MindAR tracks the printed card) or without the camera; the letter at the end                                                                                                                                          |
 
 The order belongs to the browser that placed it (an httpOnly cookie holds a random token; only its hash is stored).
 A gift opens only once its order is paid. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the routes, the data
@@ -67,6 +67,7 @@ the photos of cards kept as lists, paid ones too, for unused.
 `ALLOW_TEST_PAYMENTS=true`) or `sepay`.
 
 **SePay** (bank transfer by VietQR, `lib/payments/sepay/`):
+
 1. The checkout shows a VietQR code for the shop's bank account (read from SePay's API), with the amount and the
    order's payment code as the transfer message (`GC-261020-7K3QX` -> `GC2610207K3QX`).
 2. The page polls `GET /api/orders/:id` every 3 s. The server asks SePay's transaction list (at most every 4 s per order)
@@ -121,7 +122,9 @@ node scripts/shoot-card.mjs <id>     # plays the card on the dev player (pnpm de
 ```bash
 pnpm test                # Vitest: unit tests, plus the database suite against local Supabase when .env.local is set
 pnpm test:e2e            # Playwright: the whole buy flow, a fake camera filming the flower-letter print, the database checked
-pnpm typecheck && pnpm lint
+pnpm typecheck
+pnpm lint                # ESLint, then Prettier --check (Prettier's default style)
+pnpm lint:fix            # ESLint --fix, then Prettier --write
 ```
 
 Tests live in a `__tests__` folder beside the code they test.

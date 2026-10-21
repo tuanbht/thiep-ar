@@ -1,7 +1,16 @@
 {
   "boy": {
     "from": "kaykit/Knight",
-    "drop": ["1H_Sword", "1H_Sword_Offhand", "2H_Sword", "Badge_Shield", "Rectangle_Shield", "Round_Shield", "Spike_Shield", "Knight_Helmet"],
+    "drop": [
+      "1H_Sword",
+      "1H_Sword_Offhand",
+      "2H_Sword",
+      "Badge_Shield",
+      "Rectangle_Shield",
+      "Round_Shield",
+      "Spike_Shield",
+      "Knight_Helmet"
+    ],
     "clips": ["Idle"]
   },
   "girl": {

@@ -29,14 +29,7 @@
       "Mage_Hat",
       "Mage_Cape"
     ],
-    "clips": [
-      "Idle",
-      "Walking_A",
-      "Hit_A",
-      "Hit_B",
-      "Cheer",
-      "Running_B"
-    ]
+    "clips": ["Idle", "Walking_A", "Hit_A", "Hit_B", "Cheer", "Running_B"]
   },
   "pot": {
     "from": "restaurant/pot_A_stew"

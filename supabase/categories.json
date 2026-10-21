@@ -1,11 +1,39 @@
 [
-  { "id": "love", "name": "Tình yêu", "blurb": "Gửi người thương những lời khó nói" },
-  { "id": "couple", "name": "Cặp đôi", "blurb": "Hai bạn nhỏ và những khoảnh khắc chung" },
-  { "id": "viral-scenes", "name": "Cảnh phim viral", "blurb": "Khoảnh khắc lãng mạn như trong phim" },
-  { "id": "proposal", "name": "Cầu hôn", "blurb": "Cho câu hỏi quan trọng nhất" },
-  { "id": "long-distance", "name": "Yêu xa", "blurb": "Xa mặt nhưng không cách lòng" },
+  {
+    "id": "love",
+    "name": "Tình yêu",
+    "blurb": "Gửi người thương những lời khó nói"
+  },
+  {
+    "id": "couple",
+    "name": "Cặp đôi",
+    "blurb": "Hai bạn nhỏ và những khoảnh khắc chung"
+  },
+  {
+    "id": "viral-scenes",
+    "name": "Cảnh phim viral",
+    "blurb": "Khoảnh khắc lãng mạn như trong phim"
+  },
+  {
+    "id": "proposal",
+    "name": "Cầu hôn",
+    "blurb": "Cho câu hỏi quan trọng nhất"
+  },
+  {
+    "id": "long-distance",
+    "name": "Yêu xa",
+    "blurb": "Xa mặt nhưng không cách lòng"
+  },
   { "id": "birthday", "name": "Sinh nhật", "blurb": "Mừng thêm một tuổi mới" },
-  { "id": "family", "name": "Gia đình", "blurb": "Gửi mẹ, gửi ba, gửi người thân" },
-  { "id": "fun", "name": "Vui nhộn", "blurb": "Nhảy múa, tinh nghịch, cười tươi" },
+  {
+    "id": "family",
+    "name": "Gia đình",
+    "blurb": "Gửi mẹ, gửi ba, gửi người thân"
+  },
+  {
+    "id": "fun",
+    "name": "Vui nhộn",
+    "blurb": "Nhảy múa, tinh nghịch, cười tươi"
+  },
   { "id": "encourage", "name": "Động viên", "blurb": "Cố lên, có mình ở đây" }
 ]

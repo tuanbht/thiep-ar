@@ -2,20 +2,45 @@
    configured provider) activates the gift; its link opens it. Every route and page goes through here.
    Dependencies come in (repository, photo store, template catalog, payment provider factory, clock, randomness), so
    tests run it on memory with a fixed clock. */
-import type { z } from 'zod';
-import type { createOrderRequestSchema, CreateOrderResponse, OrderView, PayResponse, UploadResponse } from '../api/dto';
-import { LIMITS } from '../api/dto';
-import type { TemplateInfo } from '../catalog/templates';
-import { validateContent } from '../content/validate';
-import { toCard } from '../content/toCard';
-import { StateError, UniqueViolation, type ConfirmedPayment, type PaymentConfirmation, type Repository } from '../db/repository';
-import type { AnalyticsEvent, GiftCard, Order, Product, ProductFilter, ShelfCategory } from '../domain/types';
-import type { PaymentProvider } from '../payments/provider';
-import type { Card } from '../player/core/card';
-import { randomToken, safeEqualHex, sha256Hex } from '../server/security';
-import { AccessDenied, InvalidInput, NotFound, TooLarge } from './errors';
-import { makeOrderCode, makeSlug, ORDER_ID_RE, SLUG_RE, type RandomBytes } from './ids';
-import { sniffPhoto, type PhotoCleaner, type PhotoStore } from './photo';
+import type { z } from "zod";
+import type {
+  createOrderRequestSchema,
+  CreateOrderResponse,
+  OrderView,
+  PayResponse,
+  UploadResponse,
+} from "../api/dto";
+import { LIMITS } from "../api/dto";
+import type { TemplateInfo } from "../catalog/templates";
+import { validateContent } from "../content/validate";
+import { toCard } from "../content/toCard";
+import {
+  StateError,
+  UniqueViolation,
+  type ConfirmedPayment,
+  type PaymentConfirmation,
+  type Repository,
+} from "../db/repository";
+import type {
+  AnalyticsEvent,
+  GiftCard,
+  Order,
+  Product,
+  ProductFilter,
+  ShelfCategory,
+} from "../domain/types";
+import type { PaymentProvider } from "../payments/provider";
+import type { Card } from "../player/core/card";
+import { randomToken, safeEqualHex, sha256Hex } from "../server/security";
+import { AccessDenied, InvalidInput, NotFound, TooLarge } from "./errors";
+import {
+  makeOrderCode,
+  makeSlug,
+  ORDER_ID_RE,
+  SLUG_RE,
+  type RandomBytes,
+} from "./ids";
+import { sniffPhoto, type PhotoCleaner, type PhotoStore } from "./photo";
 
 export type CreateOrderInput = z.output<typeof createOrderRequestSchema>;
 
@@ -26,7 +51,9 @@ export interface OrdersDeps {
   cleanPhoto?: PhotoCleaner;
   templates: (id: string) => Promise<TemplateInfo | null>;
   /** makes the payment provider when a payment starts; `confirm` is this service's confirmPayment */
-  makeProvider: (confirm: (c: PaymentConfirmation) => Promise<ConfirmedPayment>) => PaymentProvider;
+  makeProvider: (
+    confirm: (c: PaymentConfirmation) => Promise<ConfirmedPayment>,
+  ) => PaymentProvider;
   /** the site's public address for gift links (NEXT_PUBLIC_SITE_URL); else the request's origin */
   siteUrl?: string;
   now?: () => Date;
@@ -48,69 +75,139 @@ export class OrdersService {
   }
 
   /** the shelf: what is on sale, matching the words typed and the category picked, if any */
-  listProducts(filter?: ProductFilter): Promise<Product[]> { return this.d.repo.listProducts(filter); }
+  listProducts(filter?: ProductFilter): Promise<Product[]> {
+    return this.d.repo.listProducts(filter);
+  }
 
-  listCategories(): Promise<ShelfCategory[]> { return this.d.repo.listCategories(); }
+  listCategories(): Promise<ShelfCategory[]> {
+    return this.d.repo.listCategories();
+  }
 
-  getProduct(id: string): Promise<Product | null> { return this.d.repo.getProduct(id); }
+  getProduct(id: string): Promise<Product | null> {
+    return this.d.repo.getProduct(id);
+  }
 
   /* ── buying ── */
 
-  async createOrder(req: CreateOrderInput, origin: string): Promise<{ response: CreateOrderResponse; accessToken: string }> {
+  async createOrder(
+    req: CreateOrderInput,
+    origin: string,
+  ): Promise<{ response: CreateOrderResponse; accessToken: string }> {
     const product = await this.d.repo.getProduct(req.productId);
-    if (!product || !product.active) throw new NotFound('Mẫu thiệp này không còn bán.');
+    if (!product || !product.active)
+      throw new NotFound("Mẫu thiệp này không còn bán.");
     const info = await this.d.templates(product.template);
     if (!info) {
-      console.error(`[orders] product ${product.id} names template ${product.template}, which has no template.json`);
-      throw new NotFound('Mẫu thiệp này không còn bán.');
+      console.error(
+        `[orders] product ${product.id} names template ${product.template}, which has no template.json`,
+      );
+      throw new NotFound("Mẫu thiệp này không còn bán.");
     }
     const content = validateContent(req.content, info.form);
-    if ((await Promise.all(content.photoPaths.map(p => this.d.photos.exists(p)))).some(kept => !kept))
-      throw new InvalidInput(['Có ảnh đã tải lên không còn nữa. Vui lòng chọn lại ảnh đó.']);
+    if (
+      (
+        await Promise.all(
+          content.photoPaths.map((p) => this.d.photos.exists(p)),
+        )
+      ).some((kept) => !kept)
+    )
+      throw new InvalidInput([
+        "Có ảnh đã tải lên không còn nữa. Vui lòng chọn lại ảnh đó.",
+      ]);
 
-    const gift = await this.retry('slug', () => this.d.repo.createGiftCard({ slug: makeSlug(this.d.random), productId: product.id,
-      template: product.template, design: product.design, content }));
+    const gift = await this.retry("slug", () =>
+      this.d.repo.createGiftCard({
+        slug: makeSlug(this.d.random),
+        productId: product.id,
+        template: product.template,
+        design: product.design,
+        content,
+      }),
+    );
     const accessToken = randomToken();
-    const order = await this.retry('order code', () => this.d.repo.createOrder({ code: makeOrderCode(this.now(), this.d.random), giftCardId: gift.id,
-      productId: product.id, amountVnd: product.priceVnd, buyer: req.buyer, accessTokenHash: sha256Hex(accessToken) }));
-    await this.recordEvent({ name: 'order_created', orderId: order.id, giftCardId: gift.id, productId: product.id,
-      props: { amountVnd: order.amountVnd, origin: safeOrigin(origin) } });
-    return { response: { orderId: order.id, code: order.code, checkoutUrl: `/checkout/${order.id}` }, accessToken };
+    const order = await this.retry("order code", () =>
+      this.d.repo.createOrder({
+        code: makeOrderCode(this.now(), this.d.random),
+        giftCardId: gift.id,
+        productId: product.id,
+        amountVnd: product.priceVnd,
+        buyer: req.buyer,
+        accessTokenHash: sha256Hex(accessToken),
+      }),
+    );
+    await this.recordEvent({
+      name: "order_created",
+      orderId: order.id,
+      giftCardId: gift.id,
+      productId: product.id,
+      props: { amountVnd: order.amountVnd, origin: safeOrigin(origin) },
+    });
+    return {
+      response: {
+        orderId: order.id,
+        code: order.code,
+        checkoutUrl: `/checkout/${order.id}`,
+      },
+      accessToken,
+    };
   }
 
   /** a unique value (slug, code) clashing is rare but possible: draw again a few times */
   private async retry<T>(what: string, make: () => Promise<T>): Promise<T> {
     for (let i = 1; ; i++) {
-      try { return await make(); }
-      catch (e) {
-        if (!(e instanceof UniqueViolation) || i >= ATTEMPTS) throw e;          // only a clash of random names is worth a retry
+      try {
+        return await make();
+      } catch (e) {
+        if (!(e instanceof UniqueViolation) || i >= ATTEMPTS) throw e; // only a clash of random names is worth a retry
         console.warn(`[orders] ${what} clashed (try ${i}): ${e.message}`);
       }
     }
   }
 
   /** the order, for the browser that made it */
-  private async ownOrder(orderId: string, accessToken: string | null): Promise<Order> {
-    if (!ORDER_ID_RE.test(orderId)) throw new NotFound('Không tìm thấy đơn hàng.');
+  private async ownOrder(
+    orderId: string,
+    accessToken: string | null,
+  ): Promise<Order> {
+    if (!ORDER_ID_RE.test(orderId))
+      throw new NotFound("Không tìm thấy đơn hàng.");
     const order = await this.d.repo.getOrder(orderId);
-    if (!order) throw new NotFound('Không tìm thấy đơn hàng.');
-    if (!accessToken || !safeEqualHex(sha256Hex(accessToken), order.accessTokenHash)) throw new AccessDenied();
+    if (!order) throw new NotFound("Không tìm thấy đơn hàng.");
+    if (
+      !accessToken ||
+      !safeEqualHex(sha256Hex(accessToken), order.accessTokenHash)
+    )
+      throw new AccessDenied();
     return order;
   }
 
-  async getOrderView(orderId: string, accessToken: string | null, origin: string): Promise<OrderView> {
+  async getOrderView(
+    orderId: string,
+    accessToken: string | null,
+    origin: string,
+  ): Promise<OrderView> {
     const order = await this.settle(await this.ownOrder(orderId, accessToken));
-    const [product, gift] = await Promise.all([this.d.repo.getProduct(order.productId), this.d.repo.getGiftCard(order.giftCardId)]);
-    const giftUrl = order.status === 'paid' && gift?.status === 'active' ? this.giftUrl(gift, origin) : null;
+    const [product, gift] = await Promise.all([
+      this.d.repo.getProduct(order.productId),
+      this.d.repo.getGiftCard(order.giftCardId),
+    ]);
+    const giftUrl =
+      order.status === "paid" && gift?.status === "active"
+        ? this.giftUrl(gift, origin)
+        : null;
     return {
       id: order.id,
       code: order.code,
       status: order.status,
       amountVnd: order.amountVnd,
-      product: { id: order.productId, name: product?.name ?? order.productId, template: product?.template ?? gift?.template ?? '' },
+      product: {
+        id: order.productId,
+        name: product?.name ?? order.productId,
+        template: product?.template ?? gift?.template ?? "",
+      },
       createdAt: order.createdAt,
       paidAt: order.paidAt,
-      giftUrl
+      giftUrl,
     };
   }
 
@@ -119,23 +216,42 @@ export class OrdersService {
   }
 
   /** "Pay": the provider either pays at once (test), hands back a QR code to pay by transfer (SePay), or redirects */
-  async startPayment(orderId: string, accessToken: string | null, origin: string): Promise<PayResponse> {
+  async startPayment(
+    orderId: string,
+    accessToken: string | null,
+    origin: string,
+  ): Promise<PayResponse> {
     const order = await this.ownOrder(orderId, accessToken);
     const done = { redirect: `/orders/${order.id}` };
-    if (order.status === 'paid') return done;                                // pressed twice, or came back: nothing to pay
-    if (order.status !== 'pending') throw new StateError(`order ${order.code} is ${order.status}`);
+    if (order.status === "paid") return done; // pressed twice, or came back: nothing to pay
+    if (order.status !== "pending")
+      throw new StateError(`order ${order.code} is ${order.status}`);
     const product = await this.d.repo.getProduct(order.productId);
-    if (!product) throw new NotFound('Mẫu thiệp này không còn bán.');
-    const provider = this.d.makeProvider(c => this.confirmPayment(c));    // PaymentUnavailable when none is configured
-    await this.recordEvent({ name: 'payment_started', orderId: order.id, productId: product.id, giftCardId: order.giftCardId,
-      props: { provider: provider.id } });
-    const start = await provider.start(order, product, { origin: this.d.siteUrl ?? origin });
-    if (start.kind === 'qr') {
-      if (order.paymentProvider !== provider.id || order.paymentRef !== start.ref) await this.d.repo.setOrderPayment(order.id, provider.id, start.ref);
+    if (!product) throw new NotFound("Mẫu thiệp này không còn bán.");
+    const provider = this.d.makeProvider((c) => this.confirmPayment(c)); // PaymentUnavailable when none is configured
+    await this.recordEvent({
+      name: "payment_started",
+      orderId: order.id,
+      productId: product.id,
+      giftCardId: order.giftCardId,
+      props: { provider: provider.id },
+    });
+    const start = await provider.start(order, product, {
+      origin: this.d.siteUrl ?? origin,
+    });
+    if (start.kind === "qr") {
+      if (
+        order.paymentProvider !== provider.id ||
+        order.paymentRef !== start.ref
+      )
+        await this.d.repo.setOrderPayment(order.id, provider.id, start.ref);
       return { qr: start.qr };
     }
-    if (start.kind !== 'redirect') return done;
-    if (!isGatewayUrl(start.url, provider.redirectHosts ?? [])) throw new Error(`provider ${provider.id} redirected to a host it does not own`);
+    if (start.kind !== "redirect") return done;
+    if (!isGatewayUrl(start.url, provider.redirectHosts ?? []))
+      throw new Error(
+        `provider ${provider.id} redirected to a host it does not own`,
+      );
     return { redirect: start.url };
   }
 
@@ -145,28 +261,48 @@ export class OrdersService {
       confirmed now. At most every CHECK_EVERY_MS per order unless `force` (a webhook); a provider that does not answer
       leaves the order as it is (the next look tries again). */
   private async settle(order: Order, force = false): Promise<Order> {
-    if (order.status !== 'pending' || !order.paymentProvider || order.paymentProvider === 'test') return order;
+    if (
+      order.status !== "pending" ||
+      !order.paymentProvider ||
+      order.paymentProvider === "test"
+    )
+      return order;
     const at = this.now().getTime();
-    if (!force && at - (this.lastCheck.get(order.id) ?? 0) < CHECK_EVERY_MS) return order;
+    if (!force && at - (this.lastCheck.get(order.id) ?? 0) < CHECK_EVERY_MS)
+      return order;
     this.lastCheck.set(order.id, at);
     let provider: PaymentProvider;
-    try { provider = this.d.makeProvider(c => this.confirmPayment(c)); } catch { return order; }
-    if (provider.id !== order.paymentProvider || !provider.findPayment) return order;
+    try {
+      provider = this.d.makeProvider((c) => this.confirmPayment(c));
+    } catch {
+      return order;
+    }
+    if (provider.id !== order.paymentProvider || !provider.findPayment)
+      return order;
     try {
       const found = await provider.findPayment(order);
       if (!found) return order;
-      const r = await this.confirmPayment({ orderId: order.id, provider: provider.id, providerRef: found.providerRef,
-        amountVnd: order.amountVnd, raw: { ...(found.raw as object), receivedVnd: found.amountVnd }, paidAt: found.paidAt });
+      const r = await this.confirmPayment({
+        orderId: order.id,
+        provider: provider.id,
+        providerRef: found.providerRef,
+        amountVnd: order.amountVnd,
+        raw: { ...(found.raw as object), receivedVnd: found.amountVnd },
+        paidAt: found.paidAt,
+      });
       this.lastCheck.delete(order.id);
       return r.order;
     } catch (e) {
-      console.error(`[orders] could not check the payment of order ${order.code}`, e);
+      console.error(
+        `[orders] could not check the payment of order ${order.code}`,
+        e,
+      );
       return order;
     }
   }
 
   /** A provider's webhook named this order: look for its payment now. Unknown codes are ignored. */
-  async notifyPayment(orderCode: string): Promise<Order['status'] | null> {
+  async notifyPayment(orderCode: string): Promise<Order["status"] | null> {
     const order = await this.d.repo.getOrderByCode(orderCode);
     if (!order) return null;
     return (await this.settle(order, true)).status;
@@ -176,8 +312,13 @@ export class OrdersService {
   async confirmPayment(c: PaymentConfirmation): Promise<ConfirmedPayment> {
     const r = await this.d.repo.confirmPayment(c);
     if (!r.alreadyPaid) {
-      await this.recordEvent({ name: 'order_paid', orderId: r.order.id, giftCardId: r.giftCard.id, productId: r.order.productId,
-        props: { provider: c.provider, amountVnd: c.amountVnd } });
+      await this.recordEvent({
+        name: "order_paid",
+        orderId: r.order.id,
+        giftCardId: r.giftCard.id,
+        productId: r.order.productId,
+        props: { provider: c.provider, amountVnd: c.amountVnd },
+      });
     }
     return r;
   }
@@ -186,17 +327,41 @@ export class OrdersService {
 
   /** an active gift by its link, as the player's card (each photo as a link valid for an hour, one that cannot be signed
       left out); null otherwise */
-  async getGift(slug: string): Promise<{ giftCard: GiftCard; product: Product; card: Card } | null> {
+  async getGift(
+    slug: string,
+  ): Promise<{ giftCard: GiftCard; product: Product; card: Card } | null> {
     if (!SLUG_RE.test(slug)) return null;
     const giftCard = await this.d.repo.getGiftCardBySlug(slug);
-    if (!giftCard || giftCard.status !== 'active') return null;
+    if (!giftCard || giftCard.status !== "active") return null;
     const product = await this.d.repo.getProduct(giftCard.productId);
-    if (!product) { console.error(`[orders] gift ${giftCard.id} names product ${giftCard.productId}, which is gone`); return null; }
-    const links = await Promise.all(giftCard.content.photoPaths.map(async p => {
-      try { return await this.d.photos.signedUrl(p, PHOTO_LINK_SECONDS); }
-      catch (e) { console.error(`[orders] a photo of gift ${giftCard.id} could not be signed`, e); return null; }
-    }));
-    return { giftCard, product, card: toCard(giftCard.content, giftCard, links.filter((l): l is string => !!l)) };
+    if (!product) {
+      console.error(
+        `[orders] gift ${giftCard.id} names product ${giftCard.productId}, which is gone`,
+      );
+      return null;
+    }
+    const links = await Promise.all(
+      giftCard.content.photoPaths.map(async (p) => {
+        try {
+          return await this.d.photos.signedUrl(p, PHOTO_LINK_SECONDS);
+        } catch (e) {
+          console.error(
+            `[orders] a photo of gift ${giftCard.id} could not be signed`,
+            e,
+          );
+          return null;
+        }
+      }),
+    );
+    return {
+      giftCard,
+      product,
+      card: toCard(
+        giftCard.content,
+        giftCard,
+        links.filter((l): l is string => !!l),
+      ),
+    };
   }
 
   /** the id of an active or draft gift by its link, for events; null for anything else */
@@ -208,19 +373,31 @@ export class OrdersService {
   /* ── photos ── */
 
   async uploadPhoto(bytes: Uint8Array): Promise<UploadResponse> {
-    if (bytes.byteLength > LIMITS.photoBytes) throw new TooLarge(`Ảnh tối đa ${LIMITS.photoBytes / 1024 / 1024} MB.`);
-    if (!bytes.byteLength) throw new InvalidInput(['Chưa có ảnh nào được gửi.']);
+    if (bytes.byteLength > LIMITS.photoBytes)
+      throw new TooLarge(`Ảnh tối đa ${LIMITS.photoBytes / 1024 / 1024} MB.`);
+    if (!bytes.byteLength)
+      throw new InvalidInput(["Chưa có ảnh nào được gửi."]);
     const sniffed = sniffPhoto(bytes);
-    if (!sniffed) throw new InvalidInput(['Chỉ nhận ảnh JPG, PNG hoặc WebP.']);
+    if (!sniffed) throw new InvalidInput(["Chỉ nhận ảnh JPG, PNG hoặc WebP."]);
     let photo = { bytes, ext: sniffed };
     if (this.d.cleanPhoto) {
-      try { photo = await this.d.cleanPhoto(bytes, sniffed); }
-      catch (e) { console.warn('[orders] an upload is not a readable image', e); throw new InvalidInput(['Ảnh này không đọc được. Hãy thử ảnh khác.']); }
+      try {
+        photo = await this.d.cleanPhoto(bytes, sniffed);
+      } catch (e) {
+        console.warn("[orders] an upload is not a readable image", e);
+        throw new InvalidInput(["Ảnh này không đọc được. Hãy thử ảnh khác."]);
+      }
     }
     const { ext } = photo;
     const photoPath = await this.d.photos.uploadDraftPhoto(photo.bytes, ext);
-    const previewUrl = await this.d.photos.signedUrl(photoPath, PHOTO_LINK_SECONDS);
-    await this.recordEvent({ name: 'photo_uploaded', props: { ext, bytes: photo.bytes.byteLength } });
+    const previewUrl = await this.d.photos.signedUrl(
+      photoPath,
+      PHOTO_LINK_SECONDS,
+    );
+    await this.recordEvent({
+      name: "photo_uploaded",
+      props: { ext, bytes: photo.bytes.byteLength },
+    });
     return { photoPath, previewUrl };
   }
 
@@ -228,14 +405,28 @@ export class OrdersService {
 
   /** keeps an event; a failure is logged, never passed on (a lost event must not break a purchase) */
   async recordEvent(e: AnalyticsEvent): Promise<void> {
-    try { await this.d.repo.recordEvent(e); }
-    catch (err) { console.error(`[orders] event ${e.name} was not recorded`, err); }
+    try {
+      await this.d.repo.recordEvent(e);
+    } catch (err) {
+      console.error(`[orders] event ${e.name} was not recorded`, err);
+    }
   }
 }
 
-const safeOrigin = (o: string) => { try { return new URL(o).origin; } catch { return null; } };
+const safeOrigin = (o: string) => {
+  try {
+    return new URL(o).origin;
+  } catch {
+    return null;
+  }
+};
 
 /** A gateway link the buyer may be sent to: https, on one of the provider's own hosts (never wherever a response said). */
 export function isGatewayUrl(url: string, hosts: readonly string[]): boolean {
-  try { const u = new URL(url); return u.protocol === 'https:' && hosts.includes(u.hostname); } catch { return false; }
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && hosts.includes(u.hostname);
+  } catch {
+    return false;
+  }
 }

@@ -1,5 +1,5 @@
 /* MindAR's image tracker (mind-ar 1.2.5), used without its A-Frame or three.js wrappers. */
-declare module 'mind-ar/dist/mindar-image.prod.js' {
+declare module "mind-ar/dist/mindar-image.prod.js" {
   export interface ControllerUpdate {
     type: string;
     targetIndex: number;

@@ -1,10 +1,26 @@
 /* Where the platform keeps its data. Business code depends on this interface only; Supabase implements it in
    production (lib/db/supabase-repository.ts), memory in tests (lib/db/memory-repository.ts). Every method throws
    RepositoryError on a storage failure; "not found" is null, never an error. */
-import type { AnalyticsEvent, Buyer, GiftCard, GiftContent, Order, Payment, PaymentProviderId, Product, ProductFilter, ShelfCategory } from '../domain/types';
+import type {
+  AnalyticsEvent,
+  Buyer,
+  GiftCard,
+  GiftContent,
+  Order,
+  Payment,
+  PaymentProviderId,
+  Product,
+  ProductFilter,
+  ShelfCategory,
+} from "../domain/types";
 
 export class RepositoryError extends Error {
-  constructor(message: string, readonly cause?: unknown) { super(message); }
+  constructor(
+    message: string,
+    readonly cause?: unknown,
+  ) {
+    super(message);
+  }
 }
 
 /** A unique value (a gift's slug, an order's code) is taken: a fresh random one may succeed. */
@@ -66,7 +82,11 @@ export interface Repository {
   /** an order by its code ("GC-261016-7K3QX"), e.g. from a bank transfer's message */
   getOrderByCode(code: string): Promise<Order | null>;
   /** remember which provider and reference a payment was started with (the order stays pending) */
-  setOrderPayment(orderId: string, provider: PaymentProviderId, ref: string): Promise<Order>;
+  setOrderPayment(
+    orderId: string,
+    provider: PaymentProviderId,
+    ref: string,
+  ): Promise<Order>;
 
   /** atomically: the order becomes paid, its gift card active, and the payment is recorded. Idempotent for the same
       provider reference; StateError if the order is not pending (or paid by another payment) or the amount differs. */

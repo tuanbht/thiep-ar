@@ -33,15 +33,15 @@ same provider reference (a provider may call back more than once).
 
 ## Data (supabase/migrations)
 
-| table | what |
-|---|---|
-| products | what is sold: template (+ design), name, kind, price in VND, active, sort, tags (search words), search (tsvector, kept by triggers) |
-| categories | the shelf's categories (id, name, blurb, sort), from supabase/categories.json |
-| product_categories | which product is in which category (a product can be in several) |
-| gift_cards | the buyer's content (jsonb), slug (unique, unguessable), status draft/active/disabled |
-| orders | code, amount, status, buyer contact, access token hash, payment provider + ref, paid_at |
-| payments | every confirmed payment, with the provider's raw payload |
-| events | analytics: name, session, gift/order/product, props jsonb, user agent, referrer, time |
+| table              | what                                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| products           | what is sold: template (+ design), name, kind, price in VND, active, sort, tags (search words), search (tsvector, kept by triggers) |
+| categories         | the shelf's categories (id, name, blurb, sort), from supabase/categories.json                                                       |
+| product_categories | which product is in which category (a product can be in several)                                                                    |
+| gift_cards         | the buyer's content (jsonb), slug (unique, unguessable), status draft/active/disabled                                               |
+| orders             | code, amount, status, buyer contact, access token hash, payment provider + ref, paid_at                                             |
+| payments           | every confirmed payment, with the provider's raw payload                                                                            |
+| events             | analytics: name, session, gift/order/product, props jsonb, user agent, referrer, time                                               |
 
 The database does not list the payment providers: `orders.payment_provider` and `payments.provider` take any lowercase
 id (`^[a-z][a-z0-9_]{1,31}$`). Which ones exist is the app's business (`PaymentProviderId`, `PAYMENT_PROVIDER`), so
@@ -52,21 +52,22 @@ RLS is on for every table with no policies: only the server (secret key) reads a
 
 ## Code map
 
-| path | what | owner |
-|---|---|---|
-| `lib/domain/types.ts` | the domain types | contract |
-| `lib/db/repository.ts` | the Repository interface | contract |
-| `lib/db/supabase-repository.ts`, `lib/db/memory-repository.ts`, `supabase/` | data | data |
-| `lib/payments/provider.ts` | PaymentProvider interface | contract |
-| `lib/payments/test-provider.ts`, `lib/orders/`, `lib/server/`, `lib/catalog/templates.ts`, `lib/content/validate.ts`, `app/api/**` (incl. `cron/cleanup`) | server | server |
-| `lib/api/dto.ts`, `lib/catalog/form.ts`, `lib/content/toCard.ts` | shared shapes and pure helpers | contract |
-| `lib/player/**`, `components/player/**` | the AR player (three.js + MindAR, no A-Frame) | player |
-| `app/**` (not `app/api`), `components/shop/**`, `app/globals.css` | the shop's pages and design | shop |
-| `public/templates/<id>/` | template assets, served as they are | assets |
-| `public/templates/_acts/lovestory.js`, `public/templates/<love card>/story.js` | the love story cards' shared act and each card's story | assets |
-| `scripts/pack-models.mjs`, `scripts/models/`, `scripts/print-card.mjs`, `print-designs/`, `scripts/shoot-card.mjs` | making a 3D card: free models trimmed to what it uses, its print and tracking target, pictures of every stop | tools |
+| path                                                                                                                                                      | what                                                                                                         | owner    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------- |
+| `lib/domain/types.ts`                                                                                                                                     | the domain types                                                                                             | contract |
+| `lib/db/repository.ts`                                                                                                                                    | the Repository interface                                                                                     | contract |
+| `lib/db/supabase-repository.ts`, `lib/db/memory-repository.ts`, `supabase/`                                                                               | data                                                                                                         | data     |
+| `lib/payments/provider.ts`                                                                                                                                | PaymentProvider interface                                                                                    | contract |
+| `lib/payments/test-provider.ts`, `lib/orders/`, `lib/server/`, `lib/catalog/templates.ts`, `lib/content/validate.ts`, `app/api/**` (incl. `cron/cleanup`) | server                                                                                                       | server   |
+| `lib/api/dto.ts`, `lib/catalog/form.ts`, `lib/content/toCard.ts`                                                                                          | shared shapes and pure helpers                                                                               | contract |
+| `lib/player/**`, `components/player/**`                                                                                                                   | the AR player (three.js + MindAR, no A-Frame)                                                                | player   |
+| `app/**` (not `app/api`), `components/shop/**`, `app/globals.css`                                                                                         | the shop's pages and design                                                                                  | shop     |
+| `public/templates/<id>/`                                                                                                                                  | template assets, served as they are                                                                          | assets   |
+| `public/templates/_acts/lovestory.js`, `public/templates/<love card>/story.js`                                                                            | the love story cards' shared act and each card's story                                                       | assets   |
+| `scripts/pack-models.mjs`, `scripts/models/`, `scripts/print-card.mjs`, `print-designs/`, `scripts/shoot-card.mjs`                                        | making a 3D card: free models trimmed to what it uses, its print and tracking target, pictures of every stop | tools    |
 
 ## Conventions
+
 - Server-only modules start with `import 'server-only'`; the secret key never reaches the browser.
 - Every request body is parsed with its zod schema (`lib/api/dto.ts`); errors are `{ error }` with a status.
 - State-changing routes check the Origin header (same origin) and are rate-limited per IP.

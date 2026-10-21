@@ -3,17 +3,23 @@
 
 /** 404: no such order, product or gift (or one the caller may not know about). */
 export class NotFound extends Error {
-  constructor(message = 'Không tìm thấy.') { super(message); }
+  constructor(message = "Không tìm thấy.") {
+    super(message);
+  }
 }
 
 /** 403: the order belongs to another browser (no or a wrong access cookie). */
 export class AccessDenied extends Error {
-  constructor(message = 'Đơn hàng này được tạo trên một trình duyệt khác.') { super(message); }
+  constructor(message = "Đơn hàng này được tạo trên một trình duyệt khác.") {
+    super(message);
+  }
 }
 
 /** 400: what was sent does not fit; `issues` says what, one line each. */
 export class InvalidInput extends Error {
-  constructor(readonly issues: string[]) { super(issues.join(' ')); }
+  constructor(readonly issues: string[]) {
+    super(issues.join(" "));
+  }
 }
 
 /** 413: too large. */

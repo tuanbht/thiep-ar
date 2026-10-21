@@ -1,25 +1,52 @@
-import type { Metadata, Viewport } from 'next';
-import { Barlow_Condensed, Dancing_Script, Lora } from 'next/font/google';
-import { S } from '@/components/shop/strings';
-import './globals.css';
+import type { Metadata, Viewport } from "next";
+import { Barlow_Condensed, Dancing_Script, Lora } from "next/font/google";
+import { S } from "@/components/shop/strings";
+import "./globals.css";
 
-const barlow = Barlow_Condensed({ weight: ['500', '700', '800'], subsets: ['latin', 'latin-ext', 'vietnamese'], variable: '--font-barlow', display: 'swap' });
-const lora = Lora({ weight: ['400', '500', '600'], style: ['normal', 'italic'], subsets: ['latin', 'latin-ext', 'vietnamese'], variable: '--font-lora', display: 'swap' });
-const dancing = Dancing_Script({ weight: ['700'], subsets: ['latin', 'vietnamese'], variable: '--font-dancing', display: 'swap' });
+const barlow = Barlow_Condensed({
+  weight: ["500", "700", "800"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
+  variable: "--font-barlow",
+  display: "swap",
+});
+const lora = Lora({
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  subsets: ["latin", "latin-ext", "vietnamese"],
+  variable: "--font-lora",
+  display: "swap",
+});
+const dancing = Dancing_Script({
+  weight: ["700"],
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-dancing",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: { default: `${S.brandSub} · ${S.brand}`, template: `%s · ${S.brandSub}` },
+  title: {
+    default: `${S.brandSub} · ${S.brand}`,
+    template: `%s · ${S.brandSub}`,
+  },
   description: S.home.lead,
   icons: {
-    icon: '/favicon.ico',
-  }
+    icon: "/favicon.ico",
+  },
 };
 
-export const viewport: Viewport = { themeColor: '#0b1030', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
+export const viewport: Viewport = {
+  themeColor: "#0b1030",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="vi" className={`${barlow.variable} ${lora.variable} ${dancing.variable} h-full antialiased`}>
+    <html
+      lang="vi"
+      className={`${barlow.variable} ${lora.variable} ${dancing.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

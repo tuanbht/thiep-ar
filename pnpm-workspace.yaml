@@ -1,33 +1,33 @@
 # pnpm settings for the platform (one package, no workspace members).
 allowBuilds:
-  canvas: false          # mind-ar's native canvas build fails on new Node; the player never needs it
-  core-js: false         # its install script only prints a message
-  sharp: false           # Next's image optimiser ships prebuilt binaries
+  canvas: false # mind-ar's native canvas build fails on new Node; the player never needs it
+  core-js: false # its install script only prints a message
+  sharp: false # Next's image optimiser ships prebuilt binaries
   unrs-resolver: false
-  supabase: true         # downloads the Supabase CLI binary (pnpm db:start)
+  supabase: true # downloads the Supabase CLI binary (pnpm db:start)
 minimumReleaseAgeExclude:
-  - '@next/env@16.4.2'
-  - '@next/eslint-plugin-next@16.4.2'
-  - '@next/swc-darwin-arm64@16.4.2'
-  - '@next/swc-darwin-x64@16.4.2'
-  - '@next/swc-linux-arm64-gnu@16.4.2'
-  - '@next/swc-linux-arm64-musl@16.4.2'
-  - '@next/swc-linux-x64-gnu@16.4.2'
-  - '@next/swc-linux-x64-musl@16.4.2'
-  - '@next/swc-win32-arm64-msvc@16.4.2'
-  - '@next/swc-win32-x64-msvc@16.4.2'
-  - '@supabase/auth-js@2.118.0'
-  - '@supabase/functions-js@2.118.0'
-  - '@supabase/postgrest-js@2.118.0'
-  - '@supabase/realtime-js@2.118.0'
-  - '@supabase/storage-js@2.118.0'
-  - '@supabase/supabase-js@2.118.0'
-  - '@vitest/coverage-v8@5.0.5'
-  - '@vitest/mocker@5.0.5'
-  - '@vitest/spy@5.0.5'
+  - "@next/env@16.4.2"
+  - "@next/eslint-plugin-next@16.4.2"
+  - "@next/swc-darwin-arm64@16.4.2"
+  - "@next/swc-darwin-x64@16.4.2"
+  - "@next/swc-linux-arm64-gnu@16.4.2"
+  - "@next/swc-linux-arm64-musl@16.4.2"
+  - "@next/swc-linux-x64-gnu@16.4.2"
+  - "@next/swc-linux-x64-musl@16.4.2"
+  - "@next/swc-win32-arm64-msvc@16.4.2"
+  - "@next/swc-win32-x64-msvc@16.4.2"
+  - "@supabase/auth-js@2.118.0"
+  - "@supabase/functions-js@2.118.0"
+  - "@supabase/postgrest-js@2.118.0"
+  - "@supabase/realtime-js@2.118.0"
+  - "@supabase/storage-js@2.118.0"
+  - "@supabase/supabase-js@2.118.0"
+  - "@vitest/coverage-v8@5.0.5"
+  - "@vitest/mocker@5.0.5"
+  - "@vitest/spy@5.0.5"
   - eslint-config-next@16.4.2
   - jsdom@30.1.3
   - next@16.4.2
   - vitest@5.0.5
 overrides:
-  canvas: '-'            # mind-ar lists canvas for running under Node only; the browser tracker never loads it (and its tar is vulnerable)
+  canvas: "-" # mind-ar lists canvas for running under Node only; the browser tracker never loads it (and its tar is vulnerable)
