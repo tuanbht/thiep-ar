@@ -1,0 +1,79 @@
+{
+  "name": "Sinh nhật Mẹ",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "set.js",
+    "story.js"
+  ],
+  "height": 0.62,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A birthday card for a mother from her children, in a dollhouse kitchen at night (gạch bông floor, a door, a counter under a window with a crescent moon, the fridge, a long table with two chairs, a vase and a big photo standing on it). 1 Ca trực về khuya: the door opens and Mẹ, a nurse, comes home from her shift, tired; she sets her bag on a chair, stretches her back (Haizz…) and turns to the fridge, where the children's note (note) comes off the door to be read, a photo clipped to it. 2 Bếp sáng đèn: the lights come on warm (BẤT NGỜ!!, confetti), a garland of five big photos unrolls across the back wall, two prints pop onto the fridge, the carnations bloom; she covers her mouth, then looks round. 3 Bánh kem của mẹ: she goes to the table as a cake glides in from the phone's side, a ribbon with the card's line (cake) unrolls along the table's edge, the candles light; she claps and cheers, hearts rise, the big photo on the table turns round to show the hero (the first photo) and two balloons lift the banner (banner) from behind the wall. Photos on ten surfaces, as big as the room allows: the big photo standing on the table and the note's photo (chapter 1), the garland's five across the back wall and the fridge's two (chapter 2), and the table's photo turning round to the hero (chapter 3). A tap on her: a hop and hearts; a tap on the cake: the candles blow out and light again. Mẹ is the model named mom: _models/mom.glb, Grab3D's Nurse (1.68 m), fitted .30 tall. The kitchen is set.js, the moves story.js, the act templates/_acts/lovestory.js. Sound: the shared birthday sounds (templates/_sounds, docs/sounds/README.md): the music box (soft) while she comes home, the party Happy Birthday (music) from the lights on, and an effect for each moment (the door, the pop of the lights, a ting per photo and candle, a horn as the cake lands, a blow when a tap puts the candles out).",
+  "models": {
+    "mom": "../_models/mom.glb"
+  },
+  "credits": [
+    {
+      "model": "Nurse (Mẹ)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/nurse/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
+    },
+    {
+      "model": "Instrument samples for the birthday music (FreePats, the shared birthday sounds in templates/_sounds)",
+      "author": "FreePats contributors",
+      "license": "CC0 1.0",
+      "url": "http://freepats.zenvoid.org/"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    }
+  ],
+  "categories": [
+    "birthday",
+    "family"
+  ],
+  "theme": "blush",
+  "tags": [
+    "sinh nhật",
+    "mẹ",
+    "gia đình",
+    "bánh kem",
+    "căn bếp",
+    "bất ngờ",
+    "y tá",
+    "cảm ơn mẹ",
+    "hoa cẩm chướng"
+  ],
+  "photos": 10,
+  "sound": {
+    "music": "../_sounds/birthday.mp3",
+    "soft": "../_sounds/birthday-soft.mp3",
+    "volume": 0.5,
+    "effects": {
+      "door": "../_sounds/door.mp3",
+      "pop": "../_sounds/pop.mp3",
+      "sparkle": "../_sounds/sparkle.mp3",
+      "ting": "../_sounds/ting.mp3",
+      "horn": "../_sounds/horn.mp3",
+      "blow": "../_sounds/blow.mp3",
+      "applause": "../_sounds/applause.mp3",
+      "shutter": "../_sounds/shutter.mp3"
+    }
+  }
+}

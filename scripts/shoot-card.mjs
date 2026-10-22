@@ -106,11 +106,15 @@ export async function shootCard(template, o = {}, log = console.log) {
       throw new Error(
         `the card did not start (state "${first}")${errors.length ? `; the page said: ${[...new Set(errors)].slice(0, 3).join(" | ")}` : ""}`,
       );
-    // the player's gesture guide opens by itself with the act: put it away, the pictures are of the act
-    await page
-      .locator(".gp-guide button")
-      .click({ timeout: 4000 })
-      .catch(() => {});
+    // the player's gesture guide opens by itself with the act: put it away, the pictures are of the act. On a busy
+    // machine it can open late, so look again before every picture.
+    const guide = page.locator(".gp-guide button");
+    await guide.click({ timeout: 4000 }).catch(() => {});
+    const snap = async (file) => {
+      if (await guide.isVisible().catch(() => false))
+        await guide.click({ timeout: 1000 }).catch(() => {});
+      await page.screenshot({ path: file });
+    };
     const shots = [];
     for (let i = 0; ; i++) {
       const t0 = Date.now();
@@ -125,7 +129,7 @@ export async function shootCard(template, o = {}, log = console.log) {
           out,
           `play-${i}-${typeof g === "number" ? `g${g.toFixed(1)}` : (k * o.every).toFixed(1)}.png`,
         );
-        await page.screenshot({ path: f });
+        await snap(f);
         shots.push(f);
       }
       const s = await until(new RegExp(`^paused:${i}$|^reading$|^error`), wait);
@@ -133,13 +137,13 @@ export async function shootCard(template, o = {}, log = console.log) {
         throw new Error(`chapter ${i} did not reach its stop (state "${s}")`);
       await page.waitForTimeout(700);
       const f = path.join(out, `stop-${i}.png`);
-      await page.screenshot({ path: f });
+      await snap(f);
       shots.push(f);
       for (let h = 1.5; h <= (Number(o.hold) || 0) + 1e-6; h += 1.5) {
         // the card waiting at its stop
         await page.waitForTimeout(1500);
         const fh = path.join(out, `stop-${i}-h${h.toFixed(1)}.png`);
-        await page.screenshot({ path: fh });
+        await snap(fh);
         shots.push(fh);
       }
       log(`stop ${i} after ${((Date.now() - t0) / 1000).toFixed(1)} s`);
@@ -152,7 +156,7 @@ export async function shootCard(template, o = {}, log = console.log) {
       );
       if (next === "reading") {
         const r = path.join(out, "letter.png");
-        await page.screenshot({ path: r });
+        await snap(r);
         shots.push(r);
         break;
       }

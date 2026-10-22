@@ -1,0 +1,58 @@
+{
+ "label": "Sinh nhật Ông (3D: buổi chiều ở sân nhà, album ảnh, bánh thọ đào)",
+ "preset": {
+  "title": "Sinh nhật Ông",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có lời chúc mừng sinh nhật gửi Ông.",
+  "to": "Kính gửi Ông,",
+  "body": [
+   "Hôm nay là sinh nhật Ông, cả nhà mình quây quần để gửi đến Ông thật nhiều yêu thương.",
+   "Cảm ơn Ông vì những buổi chiều pha trà kể chuyện, những ván cờ tướng và bao lời dạy bảo mà chúng cháu luôn ghi nhớ.",
+   "Chúng cháu kính chúc Ông thật nhiều sức khỏe, lúc nào cũng vui vẻ và sống lâu trăm tuổi bên con cháu."
+  ],
+  "from": "Các con, các cháu của Ông"
+ },
+ "groups": [
+  {
+   "title": "Tờ báo của Ông",
+   "note": "Ở cảnh 1, Ông vừa đung đưa ghế vừa đọc báo; tít này in to trên trang nhất, ngay trên một tấm ảnh của bạn. Ngắn gọn và vui là đẹp nhất.",
+   "rows": [
+    [
+     {
+      "slot": "headline",
+      "label": "Tít báo trang nhất",
+      "value": "Ông lên báo!",
+      "max": 22
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Album kỷ niệm",
+   "note": "Dòng chữ viết tay dưới hai tấm ảnh trong album ở cảnh 2, khi các trang lật qua. Ảnh của bạn hiện ở 8 chỗ: trang nhất tờ báo, hai trang album, bốn khung ảnh trên cây cảnh, và khung ảnh lớn ở cảnh cuối (luôn là ảnh đầu tiên bạn chọn).",
+   "rows": [
+    [
+     {
+      "slot": "album",
+      "label": "Dòng chữ trong album",
+      "value": "Những ngày vui bên Ông",
+      "max": 36
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Băng rôn mừng thọ",
+   "note": "Hai quả bóng bay kéo băng rôn đỏ mở ra ở cảnh cuối, sau khi Ông thổi nến. Lời chúc nên ngắn để chữ hiện thật to.",
+   "rows": [
+    [
+     {
+      "slot": "banner",
+      "label": "Lời chúc trên băng rôn",
+      "value": "Chúc Ông sống lâu trăm tuổi",
+      "max": 32
+     }
+    ]
+   ]
+  }
+ ]
+}

@@ -1,0 +1,80 @@
+{
+  "name": "Sinh nhật nàng",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "set.js",
+    "story.js"
+  ],
+  "height": 0.85,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "reveal": null,
+  "notes": "A birthday for her on a city rooftop, from dusk into night (the shared woman, templates/_models/girl.glb, alone, fitted at H .32). The rooftop is set.js: a wooden deck and a parapet, a painted city behind (a dusk sky with a night sky fading in over it, towers whose windows light up, a moon and stars), the stairwell's hut with its door, string lights on three poles, potted plants, a little round table. 1 Hẹn trên sân thượng: the door opens, she walks out past the sign at the stairs (slot stairs, a polaroid taped on top), looks around while the string lights come on bulb by bulb, three polaroids on them lighting up with their bulbs. 2 Bóng bay kỷ niệm: six clear balloons rise from behind the parapet, a photo inside each turning to face the phone; she looks up, claps, spins. 3 Điều ước: a cake appears, its five candles light one by one; she clasps her hands to wish (the wish card, slot wish), leans in and blows them out in a puff of sparkles; one trick candle lights again (Ơ?!) and she blows harder. 4 Tuổi mới rực rỡ: small fireworks over the city, three more polaroids come down on the string lights between the first three, the banner (slot banner) rises under the first photo in a heart frame; she cheers and blows a kiss. Photos on fifteen surfaces: six balloons, six polaroids on the string lights, a big frame leaning on the parapet, the polaroid on the sign, the heart (always the first photo). A tap on her: a hop and hearts. The moves are story.js; the act is templates/_acts/lovestory.js.",
+  "models": {
+    "her": "../_models/girl.glb"
+  },
+  "credits": [
+    {
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
+    },
+    {
+      "model": "Instrument samples for the music (FreePats)",
+      "author": "FreePats contributors",
+      "license": "CC0 1.0",
+      "url": "http://freepats.zenvoid.org/"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    }
+  ],
+  "categories": [
+    "birthday",
+    "love"
+  ],
+  "tags": [
+    "sinh nhật",
+    "người yêu",
+    "sân thượng",
+    "bóng bay",
+    "bánh kem",
+    "điều ước",
+    "đèn dây",
+    "pháo hoa"
+  ],
+  "photos": 15,
+  "sound": {
+    "music": "../_sounds/birthday.mp3",
+    "soft": "../_sounds/birthday-soft.mp3",
+    "volume": 0.5,
+    "effects": {
+      "door": "../_sounds/door.mp3",
+      "ting": "../_sounds/ting.mp3",
+      "pop": "../_sounds/pop.mp3",
+      "sparkle": "../_sounds/sparkle.mp3",
+      "boing": "../_sounds/boing.mp3",
+      "blow": "../_sounds/blow.mp3",
+      "firework": "../_sounds/firework.mp3",
+      "horn": "../_sounds/horn.mp3",
+      "applause": "../_sounds/applause.mp3",
+      "shutter": "../_sounds/shutter.mp3"
+    }
+  }
+}

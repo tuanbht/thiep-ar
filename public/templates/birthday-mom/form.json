@@ -1,0 +1,58 @@
+{
+ "label": "Sinh nhật Mẹ (3D: mẹ đi làm về, căn bếp bừng sáng với ảnh và bánh kem)",
+ "preset": {
+  "title": "Sinh nhật Mẹ",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có một bất ngờ đang chờ mẹ.",
+  "to": "Mẹ yêu của tụi con,",
+  "body": [
+   "Cảm ơn mẹ vì những ca trực dài, những bữa cơm nóng hổi và cả những lần mẹ lo cho tụi con trước cả bản thân mình.",
+   "Hôm nay đến lượt tụi con lo cho mẹ. Chúc mẹ thật khỏe, thật vui và lúc nào cũng cười thật tươi."
+  ],
+  "from": "Các con của mẹ"
+ },
+ "groups": [
+  {
+   "title": "Mảnh giấy trên tủ lạnh",
+   "note": "Mẹ đi làm về sẽ thấy mảnh giấy này dán trên tủ lạnh, rồi nó bay ra cho mẹ đọc ở cuối cảnh 1. Viết ngắn thôi, như một lời nhắn vội của các con.",
+   "rows": [
+    [
+     {
+      "slot": "note",
+      "label": "Lời nhắn trên tủ lạnh",
+      "value": "Mẹ nghỉ ngơi đi, để tụi con lo!",
+      "max": 50,
+      "multiline": true
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Lời trên bánh kem",
+   "note": "Hiện trên tấm thẻ cắm trên bánh kem ở cảnh 3. Ngắn gọn thì chữ to và dễ đọc hơn.",
+   "rows": [
+    [
+     {
+      "slot": "cake",
+      "label": "Lời trên bánh",
+      "value": "Sinh nhật vui vẻ, mẹ yêu!",
+      "max": 30
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Dải băng cuối",
+   "note": "Hai quả bóng bay kéo dải băng này lên ở cuối thiệp. Ảnh của bạn hiện ở 11 chỗ: khung ảnh trên tường, mảnh giấy, dây ảnh trước cửa sổ, tủ lạnh, và ảnh đầu tiên trong khung trên quầy bếp.",
+   "rows": [
+    [
+     {
+      "slot": "banner",
+      "label": "Lời trên dải băng",
+      "value": "Cảm ơn mẹ vì tất cả",
+      "max": 28
+     }
+    ]
+   ]
+  }
+ ]
+}

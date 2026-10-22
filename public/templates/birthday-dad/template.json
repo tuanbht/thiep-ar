@@ -1,0 +1,79 @@
+{
+  "name": "Sinh nhật Bố",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "set.js",
+    "story.js"
+  ],
+  "height": 0.9,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "reveal": null,
+  "notes": "A birthday card for a father, from his children, in an evening living room (Bố is the shared templates/_models/dad.glb, Grab3D's Businessman, alone, fitted at H .32). The room is set.js: a honey wood floor with a rug; a tall blush wall with the front door at the left (a dim hall behind it), the light switch with the children's big sticky note above it (slot note), a sofa under three family photos hung high, a wall unit at the right (the TV on a low cabinet, a bookshelf above it), a coffee table with Bố's mug, a coat stand with his hat, a scarf and an umbrella, a floor lamp at the front. 1 Bố về nhà: the room is dark but for the lamp; the door opens and he comes in from work, tired, his briefcase in his hand (model.hold), sets it down by the sofa (Haizz… mệt quá!), sees the note (Ủa?) and reaches for the switch (Interact): the stop holds his finger on it, so the tap that plays on switches the light on. 2 Bất ngờ!: click, the lights and the fairy lights pop on, confetti bursts, four photo pennants unroll across the bookshelf and the TV switches on to the photos (a new one every 1.15 s) under the caption (slot tv) and a TRỰC TIẾP sign; he jumps back with his hands up (Ôi trời!), laughs and claps, and comes to the middle of the rug, clapping. 3 Điệu nhảy của Bố: a disco ball comes down and throws spots of colour over the wall and the floor; he dances (Dance_A, then Dance_B: Bố vẫn còn phong độ!) while the three family photos and the pennants swing to the beat. 4 Bánh kem & lời chúc: a three-tier cake appears on the coffee table and he leans in and blows the five candles out; a big trophy rises in front of the TV with the first photo on its cup and a plate (slot plate), turning to the phone, and the banner (slot banner) rises over the room; he cheers (Bố thương các con!). Photos on eleven surfaces: the TV, four pennants, three wall frames, two frames on the bookshelf, and the trophy (always the first photo). A tap on Bố: he flexes (Bố vẫn khỏe!). A floor guard lifts him by whatever a clip blend tips a shoe under the floor. The moves are story.js; the act is templates/_acts/lovestory.js.",
+  "models": {
+    "dad": "../_models/dad.glb"
+  },
+  "credits": [
+    {
+      "model": "Businessman (Bố, templates/_models/dad.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/businessman/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
+    },
+    {
+      "model": "Instrument samples for the music (FreePats)",
+      "author": "FreePats contributors",
+      "license": "CC0 1.0",
+      "url": "http://freepats.zenvoid.org/"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    }
+  ],
+  "categories": [
+    "birthday",
+    "family"
+  ],
+  "theme": "blush",
+  "tags": [
+    "sinh nhật",
+    "bố",
+    "gia đình",
+    "phòng khách",
+    "bất ngờ",
+    "điệu nhảy",
+    "bánh kem",
+    "cúp"
+  ],
+  "photos": 11,
+  "sound": {
+    "music": "../_sounds/birthday.mp3",
+    "soft": "../_sounds/birthday-soft.mp3",
+    "volume": 0.5,
+    "effects": {
+      "door": "../_sounds/door.mp3",
+      "ting": "../_sounds/ting.mp3",
+      "pop": "../_sounds/pop.mp3",
+      "horn": "../_sounds/horn.mp3",
+      "sparkle": "../_sounds/sparkle.mp3",
+      "blow": "../_sounds/blow.mp3",
+      "applause": "../_sounds/applause.mp3",
+      "shutter": "../_sounds/shutter.mp3"
+    }
+  }
+}

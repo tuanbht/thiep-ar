@@ -1,0 +1,78 @@
+{
+  "name": "Sinh nhật Ông",
+  "kind": "3d",
+  "theme": "blush",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "set.js",
+    "story.js"
+  ],
+  "height": 0.32,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2
+  ],
+  "reveal": null,
+  "notes": "A birthday card for a grandfather from his children and grandchildren, in a sunny Vietnamese family courtyard late in the afternoon: red-brick tiles, the house's ochre wall with a window and green shutters under a tiled eave, a pergola of bougainvillea with a birdcage (a red-whiskered bulbul), a bonsai in a blue glazed pot on a porcelain stool, Ông's rocking chair behind a low tea table, a cờ tướng board on a stool and a gift box. Ông is the shared Elderly Man (templates/_models/grandpa.glb). 1 Buổi chiều của ông: he rocks in his chair with his tea, reading Báo Nhà Mình, its front page showing one of the buyer's photos under the card's headline (slot headline); the bird hops and sings, he looks up, sips, turns the paper round, sees himself (\"Ơ… ông đây mà!\") and holds it out to us. 2 Album kỷ niệm: the paper goes to his lap, the album on the table stands up on its easel and opens, its pages turning with two photos a spread over the card's line (slot album); he leans forward and points, four framed photos appear on the bonsai's branches and sway (\"Nhớ hồi đó quá!\"). 3 Bánh mừng thọ: the album gives way to a tray of peach-shaped longevity buns and a small cake with candles; he stands, claps, blows the candles out; confetti, two balloons unroll the banner with the card's wish (slot banner), the gift box opens and the first photo flies up in a big wooden frame to float over the banner, red paper lanterns rise, he waves (\"Cảm ơn các con, các cháu!\"). Photos on eight surfaces (the newspaper, two album pages, four bonsai frames, the hero frame). A tap on Ông makes him chuckle; a tap on the cage makes the bird sing. Sound: the shared birthday loops in templates/_sounds (the music box through chapters 1 and 2, the party from the cake on) and their effects: a ting for the bird's hops, the newspaper photo held out and each bonsai frame; a sparkle for the album and the lanterns; the blow, then applause; pops for the cake and the gift. The courtyard is set.js, the moves story.js, the act templates/_acts/lovestory.js.",
+  "models": {
+    "grandpa": "../_models/grandpa.glb"
+  },
+  "credits": [
+    {
+      "model": "Elderly Man (Ông, the shared family in templates/_models)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/elderly-man/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.itch.io/universal-animation-library"
+    },
+    {
+      "model": "Instrument samples for the birthday music (FreePats, the shared birthday sounds in templates/_sounds)",
+      "author": "FreePats contributors",
+      "license": "CC0 1.0",
+      "url": "http://freepats.zenvoid.org/"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    }
+  ],
+  "categories": [
+    "birthday",
+    "family"
+  ],
+  "tags": [
+    "sinh nhật",
+    "ông",
+    "mừng thọ",
+    "gia đình",
+    "bánh thọ đào",
+    "album ảnh",
+    "cây cảnh",
+    "trà chiều",
+    "cờ tướng",
+    "đèn lồng"
+  ],
+  "photos": 8,
+  "sound": {
+    "music": "../_sounds/birthday.mp3",
+    "soft": "../_sounds/birthday-soft.mp3",
+    "volume": 0.5,
+    "effects": {
+      "ting": "../_sounds/ting.mp3",
+      "sparkle": "../_sounds/sparkle.mp3",
+      "blow": "../_sounds/blow.mp3",
+      "applause": "../_sounds/applause.mp3",
+      "pop": "../_sounds/pop.mp3",
+      "shutter": "../_sounds/shutter.mp3"
+    }
+  }
+}

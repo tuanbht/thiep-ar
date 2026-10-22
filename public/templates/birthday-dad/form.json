@@ -1,0 +1,72 @@
+{
+ "label": "Sinh nhật Bố (3D: bố đi làm về, bật đèn là bất ngờ, điệu nhảy của bố, bánh kem)",
+ "preset": {
+  "title": "Sinh nhật Bố",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có một bất ngờ sinh nhật đang chờ Bố.",
+  "to": "Bố yêu,",
+  "body": [
+   "Chúc mừng sinh nhật Bố! Cảm ơn Bố đã đi làm vất vả mỗi ngày, mà tối nào về nhà vẫn có thời gian chơi với tụi con, kể chuyện cười (dù có chuyện tụi con nghe mười lần rồi).",
+   "Tụi con chúc Bố thật khỏe, bớt mệt, cười nhiều hơn và lúc nào cũng nhảy đẹp như tối nay. Tụi con thương Bố nhiều lắm!"
+  ],
+  "from": "Các con của Bố"
+ },
+ "groups": [
+  {
+   "title": "Mẩu giấy cạnh công tắc đèn",
+   "note": "Mẩu giấy nhớ dán trên công tắc đèn ở cảnh đầu, lúc Bố về tới nhà trong phòng tối. Một lời nhắn ngắn để Bố bật đèn lên; chữ dài sẽ tự nhỏ lại.",
+   "rows": [
+    [
+     {
+      "slot": "note",
+      "label": "Lời trên mẩu giấy",
+      "value": "Bố bật đèn lên nhé!",
+      "max": 36,
+      "multiline": true
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Dòng chữ trên TV",
+   "note": "Dòng chữ chạy dưới màn hình TV khi TV bật lên chiếu ảnh của bạn ở cảnh thứ hai. Một câu ngắn, như dòng tít của bản tin.",
+   "rows": [
+    [
+     {
+      "slot": "tv",
+      "label": "Dòng chữ trên TV",
+      "value": "Bố là siêu anh hùng của tụi con",
+      "max": 42
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Chiếc cúp",
+   "note": "Tấm biển vàng dưới chiếc cúp to ở cảnh cuối; trên cúp là ảnh đầu tiên của bạn. Vài chữ thôi là đẹp nhất.",
+   "rows": [
+    [
+     {
+      "slot": "plate",
+      "label": "Chữ trên tấm biển",
+      "value": "Bố tuyệt nhất",
+      "max": 22
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Dải băng cuối",
+   "note": "Lời chúc trên dải băng bay lên ở cảnh cuối. Ảnh của bạn hiện ở 11 chỗ: TV, bốn lá cờ trên kệ sách, ba khung ảnh trên tường, hai khung ảnh trên kệ sách và chiếc cúp (luôn là ảnh đầu tiên).",
+   "rows": [
+    [
+     {
+      "slot": "banner",
+      "label": "Lời chúc trên dải băng",
+      "value": "Chúc mừng sinh nhật Bố",
+      "max": 30
+     }
+    ]
+   ]
+  }
+ ]
+}

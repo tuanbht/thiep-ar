@@ -1,0 +1,72 @@
+{
+ "label": "Sinh nhật Bé (3D: tiệc sinh nhật, tàu hỏa chở ảnh, mở quà, bánh kem và nến số tuổi)",
+ "preset": {
+  "title": "Sinh nhật Bé",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có một bữa tiệc sinh nhật đang chờ con.",
+  "to": "Gửi con yêu,",
+  "body": [
+   "Chúc mừng sinh nhật con! Bố mẹ chúc con tuổi mới thật khỏe, ăn ngoan, ngủ ngon và lúc nào cũng cười thật tươi như hôm nay.",
+   "Có con, nhà mình ngày nào cũng vui như một bữa tiệc. Con lớn thêm một tuổi rồi, nhưng với bố mẹ, con mãi là em bé yêu nhất."
+  ],
+  "from": "Thương con thật nhiều, bố mẹ"
+ },
+ "groups": [
+  {
+   "title": "Tên của con",
+   "note": "Tên hoặc biệt danh bố mẹ vẫn gọi con, ví dụ Bé Na, Bin, Su Su. Tên được thêm vào cuối dải băng chúc mừng khi con thổi nến.",
+   "rows": [
+    [
+     {
+      "slot": "name",
+      "label": "Tên hoặc biệt danh",
+      "value": "Bé Na",
+      "max": 14
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Tuổi trên cây nến",
+   "note": "Số trên cây nến, ví dụ 6. Một hoặc hai chữ số là đẹp nhất; nếu bạn viết chữ, cây nến sẽ hiện đúng chữ đó.",
+   "rows": [
+    [
+     {
+      "slot": "age",
+      "label": "Con tròn mấy tuổi?",
+      "value": "6",
+      "max": 2,
+      "narrow": true
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Tấm biển trên đầu tàu",
+   "note": "Tấm biển dựng trên đầu tàu hỏa, khi tàu chở bốn tấm ảnh của con chạy vòng quanh. Ngắn gọn là đẹp nhất; chữ dài sẽ tự nhỏ lại.",
+   "rows": [
+    [
+     {
+      "slot": "train",
+      "label": "Lời trên tấm biển",
+      "value": "Tàu sinh nhật của Bé",
+      "max": 28
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Dải băng chúc mừng",
+   "note": "Dải băng bay lên khi con thổi tắt nến, tên của con được thêm vào cuối, ví dụ: Chúc mừng sinh nhật Bé Na! Ảnh của bạn hiện ở 12 chỗ: bốn toa tàu, bốn lá cờ trên dây, hộp quà lò xo, hai quả bóng bay và ngôi sao cuối (luôn là ảnh đầu tiên bạn chọn).",
+   "rows": [
+    [
+     {
+      "slot": "banner",
+      "label": "Lời chúc trên dải băng",
+      "value": "Chúc mừng sinh nhật",
+      "max": 28
+     }
+    ]
+   ]
+  }
+ ]
+}

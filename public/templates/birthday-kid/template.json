@@ -1,0 +1,86 @@
+{
+  "name": "Sinh nhật Bé",
+  "kind": "3d",
+  "theme": "blush",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "set.js",
+    "story.js"
+  ],
+  "height": 0.88,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "reveal": null,
+  "notes": "A birthday card for a young child from the parents: a playroom party in four chapters, Bé alone (the shared kid, templates/_models/kid.glb, fitted at H .26). The room is set.js: a wooden floor with a soft round rug, a toy railway round the rug's edge, a painted wall with a rainbow and two windows onto a garden, bunting between two candy poles, a play tent with balloons, letter blocks spelling BÉ YÊU, a ball, the little party table with the cake in a round box, the pile of presents with a jack-in-the-box on a step, two confetti cannons. 1 Tiệc bắt đầu!: he runs in, jumps for joy in a burst of confetti while the bunting pops up flag by flag, and waves; a party hat drops onto his head. 2 Chuyến tàu kỷ niệm: \"Tu tu!\" (his hat jumps), the wooden train puffs round him with a photo standing in each of its four wagons, turned to the phone, and the card's words (train) on the engine's sign; he cheers and dances. 3 Mở quà: he picks up the present on the step, the lid pops and a jack-in-the-box springs out with a photo for a face; he jumps and drops it; two presents on the pile open by themselves and let out balloons carrying photos; he claps. 4 Bánh kem & điều ước: the cake's box flies off, the number candle (age: chunky 3D digits, other words on a little board) lights with a sparkler's fizz that dies down to a flame; he goes behind the table, takes a breath and blows it out; the confetti cannons pop, the banner rises (banner + name) and the first photo shines in a star. The train keeps running from chapter 2 to the end (it waits, out from behind him, while he blows the candle). Photos on twelve surfaces: four wagons, four pennants, the jack's face, two balloons, the star (always the first photo). A tap on him: a hop and confetti; on the engine: a toot. Sound: the shared birthday set (templates/_sounds): the party Happy Birthday throughout; toot as the train sets off (softer on a later lap, and on a tap), a horn on his jump, the cannons and a tap on him, pop for each flag, lid and cannon, boing for the hat and the jack, whoosh for the cake's box, the sparkler's crackle as the candle lights, blow, sparkle as the star comes, then applause for his clap and the finale. The moves are story.js; the act is templates/_acts/lovestory.js.",
+  "models": {
+    "kid": "../_models/kid.glb"
+  },
+  "sound": {
+    "music": "../_sounds/birthday.mp3",
+    "soft": "../_sounds/birthday-soft.mp3",
+    "volume": 0.5,
+    "effects": {
+      "toot": "../_sounds/toot.mp3",
+      "horn": "../_sounds/horn.mp3",
+      "pop": "../_sounds/pop.mp3",
+      "boing": "../_sounds/boing.mp3",
+      "applause": "../_sounds/applause.mp3",
+      "whoosh": "../_sounds/whoosh.mp3",
+      "blow": "../_sounds/blow.mp3",
+      "sparkle": "../_sounds/sparkle.mp3",
+      "sparkler": "../_sounds/sparkler.mp3",
+      "shutter": "../_sounds/shutter.mp3"
+    }
+  },
+  "credits": [
+    {
+      "model": "Child (Bé)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/child/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
+    },
+    {
+      "model": "Instrument samples for the music (FreePats)",
+      "author": "FreePats contributors",
+      "license": "CC0 1.0",
+      "url": "http://freepats.zenvoid.org/"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    }
+  ],
+  "categories": [
+    "birthday",
+    "family",
+    "fun"
+  ],
+  "tags": [
+    "sinh nhật",
+    "bé",
+    "con",
+    "trẻ em",
+    "tiệc sinh nhật",
+    "tàu hỏa",
+    "mở quà",
+    "hộp quà lò xo",
+    "bánh kem",
+    "nến số",
+    "bóng bay",
+    "cờ dây"
+  ],
+  "photos": 12
+}

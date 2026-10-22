@@ -1,0 +1,479 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Sinh nhật Bé: the print</title>
+<link rel="stylesheet" href="/node_modules/@fontsource/pacifico/400.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/600.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/800.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/be-vietnam-pro/900.css">
+<link rel="stylesheet" href="/node_modules/@fontsource/patrick-hand/400.css">
+<style>
+/* The printed card = the tracking image. "Sinh nhật Bé" as a kids' party playmat seen from above: a plum frame with
+   marquee bulbs and running words; a growth chart down the left edge ("Bé cao thế này rồi!"); bunting across the top;
+   in the middle a wooden train track round the words "Chúc mừng sinh nhật", the toy train on it with a polaroid in each
+   wagon and steam puffing; the cake inside the loop with a number candle that asks "?" (the act answers with the age);
+   round it the play tent, letter blocks spelling BÉ YÊU, a ball, the pile of gifts with a jack-in-the-box springing out,
+   balloons, party hats, a party popper, and stars, confetti and streamers on every bit of floor left. Every shape is
+   inked in plum so the tracker finds edges everywhere; nothing is mirrored or tiled, and all randomness is seeded, so
+   every render is the same picture. Nothing trademarked: the train, the jester and the toys are generic. */
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:800px;overflow:hidden;background:#3b2a4a}
+svg{display:block}
+</style></head><body>
+<svg id="card" width="1280" height="800" viewBox="0 0 1280 800" xmlns="http://www.w3.org/2000/svg"></svg>
+<script>
+const rng = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; const r = rng(911);
+const C = { plum: '#3b2a4a', plum2: '#5e4a72', film: '#2e2140', pink: '#f6c9d6', blush: '#fdeaf0', rose: '#ee9cb4', velvet: '#d9577a',
+  wine: '#a93a5e', red: '#e5484d', cream: '#fff4e6', paper: '#fffbf4', gold: '#ffd27a', butter: '#ffe9b8', mint: '#bfe6d8', mint2: '#86cdb4',
+  sky: '#c7e4f6', sky2: '#7cbde6', lilac: '#d8c8ec', lilac2: '#b49ad8', peach: '#ffc9a3', orange: '#ff9f6b', wood: '#e9c9a3', wood2: '#d4a878',
+  wood3: '#a87850', white: '#ffffff' };
+const F = { logo: 'Pacifico', sans: 'Be Vietnam Pro', note: 'Patrick Hand' };
+const n1 = v => Math.round(v * 10) / 10;
+const pick = a => a[(r() * a.length) | 0];
+const rad = d => d * Math.PI / 180;
+const pt = (cx, cy, rr, deg) => [n1(cx + Math.cos(rad(deg)) * rr), n1(cy + Math.sin(rad(deg)) * rr)];
+const tf = (x, y, a = 0, s = 1) => `translate(${n1(x)} ${n1(y)})${a ? ` rotate(${n1(a)})` : ''}${s !== 1 ? ` scale(${s})` : ''}`;
+const g = (x, y, a, s, inner) => `<g transform="${tf(x, y, a, s)}">${inner}</g>`;
+const ink = (sw = 2, c = C.plum) => `stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"`;
+const T = (x, y, str, o = {}) => `<text x="${n1(x)}" y="${n1(y)}" font-family="${o.f || F.sans}" font-weight="${o.w || 800}" font-size="${o.s || 14}"` +
+  `${o.ls ? ` letter-spacing="${o.ls}"` : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''} fill="${o.fill || C.plum}"` +
+  `${o.stroke ? ` stroke="${o.stroke}" stroke-width="${o.sw || 4}" paint-order="stroke" stroke-linejoin="round"` : ''}>${str}</text>`;
+const measure = (str, font) => { const c = measure.c || (measure.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; };
+const fit = (str, weight, family, size, w) => Math.min(size, n1(w / measure(str, `${weight} 100px "${family}"`) * 100));
+
+/* what the scatter keeps clear of: boxes and circles */
+const BOX = [], ROUND = [];
+const keep = (x0, y0, x1, y1) => BOX.push([x0, y0, x1, y1]);
+const keepRound = (cx, cy, rr) => ROUND.push([cx, cy, rr]);
+const blocked = (x, y, m = 0) => BOX.some(([a, b, c, d]) => x > a - m && x < c + m && y > b - m && y < d + m) ||
+  ROUND.some(([cx, cy, rr]) => Math.hypot(x - cx, y - cy) < rr + m);
+
+/* ---- small shapes ---- */
+const heart = (z, fill, sw = 1.8, c = C.plum) => `<path d="M0 ${n1(z * .38)} C${n1(-z * .95)} ${n1(-z * .18)} ${n1(-z * .48)} ${n1(-z * .9)} 0 ${n1(-z * .42)} C${n1(z * .48)} ${n1(-z * .9)} ${n1(z * .95)} ${n1(-z * .18)} 0 ${n1(z * .38)}Z" fill="${fill}" ${ink(sw, c)}/>`;
+const sparkle = (z, fill, sw = 1.4) => `<path d="M0 ${n1(-z)} Q${n1(z * .14)} ${n1(-z * .14)} ${n1(z)} 0 Q${n1(z * .14)} ${n1(z * .14)} 0 ${n1(z)} Q${n1(-z * .14)} ${n1(z * .14)} ${n1(-z)} 0 Q${n1(-z * .14)} ${n1(-z * .14)} 0 ${n1(-z)}Z" fill="${fill}" ${ink(sw)}/>`;
+const star5 = (z, fill, sw = 1.4, c = C.plum) => { let d = ''; for (let i = 0; i < 10; i++) { const rr = i % 2 ? z * .45 : z * (.9 + r() * .2), [x, y] = pt(0, 0, rr, -90 + i * 36); d += `${i ? 'L' : 'M'}${x} ${y}`; } return `<path d="${d}Z" fill="${fill}" ${ink(sw, c)}/>`; };
+const note = (z, fill) => `<ellipse rx="${n1(z * .42)}" ry="${n1(z * .3)}" transform="rotate(-22)" fill="${fill}" ${ink(1.4)}/>` +
+  `<path d="M${n1(z * .36)} ${n1(-z * .1)} V${n1(-z * 1.25)} q${n1(z * .34)} ${n1(z * .22)} ${n1(z * .52)} ${n1(z * .56)}" fill="none" ${ink(1.8)}/>`;
+/** a cloud of bumps: steam, a puff (z: its radius, n: how many bumps) */
+function puff(z, n, fill, sw = 1.5) {
+  const p = [];
+  for (let i = 0; i < n; i++) p.push(pt(0, 0, z * (.78 + r() * .3), i / n * 360 + (r() - .5) * 22));
+  let d = `M${p[0][0]} ${p[0][1]}`;
+  for (let i = 1; i <= n; i++) { const [x, y] = p[i % n], [px, py] = p[i - 1], ch = n1(Math.hypot(x - px, y - py) * .62); d += ` A${ch} ${ch} 0 0 1 ${x} ${y}`; }
+  return `<path d="${d}Z" fill="${fill}" ${ink(sw)}/>`;
+}
+/** a strip of tape with torn ends, centred on 0 0 */
+function tape(w, h, fill, sw = 1.2) {
+  let d = `M${n1(-w / 2)} ${n1(-h / 2)} L${n1(w / 2)} ${n1(-h / 2)}`;
+  for (let i = 1; i <= 4; i++) d += ` L${n1(w / 2 + (i % 2 ? 2.4 : 0))} ${n1(-h / 2 + h * i / 4)}`;
+  d += ` L${n1(-w / 2)} ${n1(h / 2)}`;
+  for (let i = 1; i <= 4; i++) d += ` L${n1(-w / 2 - (i % 2 ? 2.4 : 0))} ${n1(h / 2 - h * i / 4)}`;
+  return `<path d="${d}Z" fill="${fill}" ${ink(sw)}/>`;
+}
+const bulb = (rr, lit = true) => (lit ? `<circle r="${n1(rr * 1.9)}" fill="${C.butter}" opacity=".5"/>` : '') +
+  `<circle r="${n1(rr)}" fill="${lit ? C.gold : C.rose}" ${ink(1.2)}/><circle cx="${n1(-rr * .35)}" cy="${n1(-rr * .35)}" r="${n1(rr * .3)}" fill="#fff" opacity=".85"/>`;
+/** a polaroid with a doodle in it, centred on 0 0 (z: its width) */
+const polaroid = (z, photo, inner = '') => `<rect x="${n1(-z / 2)}" y="${n1(-z * .58)}" width="${n1(z)}" height="${n1(z * 1.16)}" rx="1.5" fill="${C.white}" ${ink(1.4)}/>` +
+  `<rect x="${n1(-z * .4)}" y="${n1(-z * .47)}" width="${n1(z * .8)}" height="${n1(z * .76)}" fill="${photo}" ${ink(1)}/>` + inner;
+/** a child in a photo: a round head with curls, a smile, shoulders */
+const kidDoodle = (z, shirt) => `<path d="M${n1(-z * .28)} ${n1(z * .3)} Q0 ${n1(z * .02)} ${n1(z * .28)} ${n1(z * .3)}Z" fill="${shirt}" ${ink(.9)}/>` +
+  `<circle cy="${n1(-z * .06)}" r="${n1(z * .17)}" fill="${C.peach}" ${ink(.9)}/>` + puff(z * .12, 6, C.wood3, .8).replace('<path', `<path transform="translate(0 ${n1(-z * .2)})"`) +
+  `<path d="M${n1(-z * .07)} ${n1(-z * .01)} Q0 ${n1(z * .06)} ${n1(z * .07)} ${n1(-z * .01)}" fill="none" ${ink(.9)}/>`;
+const confettiBit = (k, fill) => k < .3 ? `<rect x="-5" y="-2" width="10" height="4" rx="1" fill="${fill}" ${ink(1)}/>` :
+  k < .55 ? `<circle r="3.4" fill="${fill}" ${ink(1)}/>` : k < .8 ? `<path d="M-7 0 q3.5 -5 7 0 t7 0" fill="none" ${ink(2.6, fill)}/>` : `<path d="M0 -5 L4.6 3 L-4.6 3Z" fill="${fill}" ${ink(1)}/>`;
+
+/* ---- the toys and the party, drawn round 0 0 ---- */
+function balloon(z, fill, label = '', tie = 60) {                       // a balloon with a shine, its knot and a curly string
+  let s = `<path d="M0 ${n1(z * .62)} q${n1(z * .18)} ${n1(tie * .3)} 0 ${n1(tie * .55)} t0 ${n1(tie * .45)}" fill="none" ${ink(1.6)}/>`;
+  s += `<path d="M0 ${n1(-z * .62)} C${n1(z * .62)} ${n1(-z * .62)} ${n1(z * .58)} ${n1(z * .3)} 0 ${n1(z * .6)} C${n1(-z * .58)} ${n1(z * .3)} ${n1(-z * .62)} ${n1(-z * .62)} 0 ${n1(-z * .62)}Z" fill="${fill}" ${ink(2.2)}/>`;
+  s += `<path d="M${n1(-z * .08)} ${n1(z * .58)} L${n1(z * .08)} ${n1(z * .58)} L${n1(z * .1)} ${n1(z * .7)} L${n1(-z * .1)} ${n1(z * .7)}Z" fill="${fill}" ${ink(1.6)}/>`;
+  s += `<path d="M${n1(-z * .3)} ${n1(-z * .3)} Q${n1(-z * .26)} ${n1(-z * .48)} ${n1(-z * .1)} ${n1(-z * .5)}" fill="none" stroke="#fff" stroke-width="${n1(z * .07)}" stroke-linecap="round" opacity=".75"/>`;
+  if (label) s += T(0, z * .2, label, { s: n1(z * .62), w: 900, anchor: 'middle', fill: C.cream, stroke: C.plum, sw: 3 });
+  return s;
+}
+function giftBox(w, h, fill, band, pattern = 'dots') {                  // a wrapped present, front view, its bow on top
+  let s = `<rect x="${n1(-w / 2)}" y="${n1(-h)}" width="${n1(w)}" height="${n1(h)}" rx="3" fill="${fill}" ${ink(2.2)}/>`;
+  if (pattern === 'dots') for (let i = 0; i < Math.round(w * h / 260); i++) s += `<circle cx="${n1(-w / 2 + 6 + r() * (w - 12))}" cy="${n1(-h + 14 + r() * (h - 20))}" r="${n1(1.8 + r() * 1.6)}" fill="${C.cream}"/>`;
+  else if (pattern === 'stripes') for (let x = -w / 2 + 8; x < w / 2 - 3; x += 12) s += `<path d="M${n1(x)} ${n1(-h + 12)} L${n1(x + 6)} -2" stroke="${C.cream}" stroke-width="3" opacity=".8"/>`;
+  else if (pattern === 'stars') for (let i = 0; i < Math.round(w * h / 500); i++) s += g(-w / 2 + 8 + r() * (w - 16), -h + 16 + r() * (h - 22), r() * 40, 1, star5(4 + r() * 2, C.butter, 1));
+  s += `<rect x="${n1(-w / 2 - 3)}" y="${n1(-h - 2)}" width="${n1(w + 6)}" height="${n1(Math.min(14, h * .22))}" rx="3" fill="${fill}" ${ink(2)}/>`;
+  s += `<rect x="${n1(-w * .08)}" y="${n1(-h - 2)}" width="${n1(w * .16)}" height="${n1(h + 2)}" fill="${band}" ${ink(1.6)}/>`;
+  const b = Math.min(w, 60) * .3;
+  s += `<path d="M0 ${n1(-h - 2)} C${n1(-b * 1.6)} ${n1(-h - b * 1.3)} ${n1(-b * 1.8)} ${n1(-h + b * .2)} 0 ${n1(-h - 2)}Z" fill="${band}" ${ink(1.8)}/>`;
+  s += `<path d="M0 ${n1(-h - 2)} C${n1(b * 1.6)} ${n1(-h - b * 1.3)} ${n1(b * 1.8)} ${n1(-h + b * .2)} 0 ${n1(-h - 2)}Z" fill="${band}" ${ink(1.8)}/>`;
+  s += `<circle cy="${n1(-h - 2)}" r="${n1(b * .32)}" fill="${band}" ${ink(1.6)}/>`;
+  return s;
+}
+function jack(z) {                                                      // a jack-in-the-box springing out of its box, a smiley jester
+  let s = giftBox(z, z * .8, C.sky2, C.gold, 'stars').replace(/<path d="M0 [^"]*C[^"]*Z" fill="[^"]*" [^>]*\/>/g, '').replace(/<circle cy="[^"]*" r="[^"]*" fill="#ffd27a"[^>]*\/>/, '');
+  s += `<path d="M${n1(-z * .5)} ${n1(-z * .82)} L${n1(-z * .82)} ${n1(-z * 1.18)} L${n1(-z * .4)} ${n1(-z * 1.24)} L${n1(-z * .12)} ${n1(-z * .86)}Z" fill="${C.sky2}" ${ink(2)}/>`;
+  let d = `M0 ${n1(-z * .82)}`; for (let i = 1; i <= 7; i++) d += ` L${i % 2 ? n1(z * .17) : n1(-z * .17)} ${n1(-z * .82 - i * z * .085)}`;
+  s += `<path d="${d}" fill="none" ${ink(4.2)}/><path d="${d}" fill="none" ${ink(1.8, C.gold)}/>`;
+  const hy = -z * 1.66;
+  s += `<path d="M${n1(-z * .34)} ${n1(hy + z * .26)} L${n1(-z * .2)} ${n1(hy + z * .4)} L0 ${n1(hy + z * .3)} L${n1(z * .2)} ${n1(hy + z * .4)} L${n1(z * .34)} ${n1(hy + z * .26)} L0 ${n1(hy + z * .18)}Z" fill="${C.velvet}" ${ink(1.8)}/>`;
+  s += `<circle cy="${n1(hy)}" r="${n1(z * .27)}" fill="${C.cream}" ${ink(2.2)}/>`;
+  s += `<circle cx="${n1(-z * .09)}" cy="${n1(hy - z * .04)}" r="${n1(z * .035)}" fill="${C.plum}"/><circle cx="${n1(z * .09)}" cy="${n1(hy - z * .04)}" r="${n1(z * .035)}" fill="${C.plum}"/>`;
+  s += `<path d="M${n1(-z * .13)} ${n1(hy + z * .06)} Q0 ${n1(hy + z * .2)} ${n1(z * .13)} ${n1(hy + z * .06)}" fill="${C.red}" ${ink(1.6)}/>`;
+  s += `<circle cx="${n1(-z * .17)}" cy="${n1(hy + z * .06)}" r="${n1(z * .04)}" fill="${C.rose}"/><circle cx="${n1(z * .17)}" cy="${n1(hy + z * .06)}" r="${n1(z * .04)}" fill="${C.rose}"/>`;
+  s += `<path d="M${n1(-z * .26)} ${n1(hy - z * .12)} L${n1(-z * .46)} ${n1(hy - z * .44)} L${n1(-z * .1)} ${n1(hy - z * .24)} L0 ${n1(hy - z * .56)} L${n1(z * .1)} ${n1(hy - z * .24)} L${n1(z * .46)} ${n1(hy - z * .44)} L${n1(z * .26)} ${n1(hy - z * .12)}Z" fill="${C.gold}" ${ink(1.8)}/>`;
+  for (const [x, y, c] of [[-.46, -.44, C.red], [0, -.56, C.mint2], [.46, -.44, C.velvet]]) s += `<circle cx="${n1(x * z)}" cy="${n1(hy + y * z)}" r="${n1(z * .05)}" fill="${c}" ${ink(1.2)}/>`;
+  s += `<path d="M${n1(z * .38)} ${n1(hy - z * .02)} q${n1(z * .1)} ${n1(-z * .06)} ${n1(z * .18)} 0 M${n1(z * .4)} ${n1(hy + z * .1)} q${n1(z * .12)} 0 ${n1(z * .2)} ${n1(z * .06)}" fill="none" ${ink(1.8, C.velvet)}/>`;
+  return s;
+}
+function tent(z) {                                                      // a striped play tent with its door open and a flag
+  const h = z * 1.06, w = z;
+  let s = `<path d="M${n1(-w * .1)} ${n1(-h - z * .12)} L${n1(w * .14)} ${n1(-h + z * .06)} M${n1(w * .1)} ${n1(-h - z * .12)} L${n1(-w * .14)} ${n1(-h + z * .06)}" ${ink(3.2, C.wood3)}/>`;
+  s += `<path d="M0 ${n1(-h)} L${n1(w / 2)} 0 L${n1(-w / 2)} 0Z" fill="${C.cream}" ${ink(2.4)}/>`;
+  s += `<defs><clipPath id="tentc"><path d="M0 ${n1(-h)} L${n1(w / 2)} 0 L${n1(-w / 2)} 0Z"/></clipPath></defs><g clip-path="url(#tentc)">`;
+  for (let i = -5; i <= 5; i += 2) s += `<path d="M0 ${n1(-h)} L${n1(i * w * .1)} 0 L${n1((i + 1) * w * .1)} 0Z" fill="${C.rose}"/>`;
+  s += `<path d="M${n1(-w / 2)} ${n1(-h * .3)} H${n1(w / 2)}" stroke="${C.gold}" stroke-width="${n1(z * .07)}"/>`;
+  s += `</g><path d="M0 ${n1(-h)} L${n1(w / 2)} 0 L${n1(-w / 2)} 0Z" fill="none" ${ink(2.4)}/>`;
+  s += `<path d="M0 ${n1(-h * .6)} L${n1(w * .2)} 0 L${n1(-w * .2)} 0Z" fill="${C.plum2}" ${ink(2)}/>`;
+  s += `<path d="M0 ${n1(-h * .6)} Q${n1(-w * .1)} ${n1(-h * .3)} ${n1(-w * .3)} ${n1(-h * .05)} L${n1(-w * .2)} 0Z" fill="${C.velvet}" ${ink(1.8)}/>`;
+  s += g(-w * .24, -h * .06, 0, 1, star5(z * .05, C.gold, 1.2));
+  s += `<path d="M0 ${n1(-h - z * .12)} V${n1(-h - z * .36)}" ${ink(2)}/><path d="M0 ${n1(-h - z * .36)} L${n1(z * .2)} ${n1(-h - z * .29)} L0 ${n1(-h - z * .22)}Z" fill="${C.gold}" ${ink(1.6)}/>`;
+  return s;
+}
+function block(z, letter, fill, ink2 = C.plum) {                        // a wooden letter block, a little 3D
+  const d = z * .2;
+  let s = `<path d="M${n1(-z / 2)} ${n1(-z / 2)} L${n1(-z / 2 + d)} ${n1(-z / 2 - d)} L${n1(z / 2 + d)} ${n1(-z / 2 - d)} L${n1(z / 2)} ${n1(-z / 2)}Z" fill="${C.wood}" ${ink(1.8)}/>`;
+  s += `<path d="M${n1(z / 2)} ${n1(-z / 2)} L${n1(z / 2 + d)} ${n1(-z / 2 - d)} L${n1(z / 2 + d)} ${n1(z / 2 - d)} L${n1(z / 2)} ${n1(z / 2)}Z" fill="${C.wood2}" ${ink(1.8)}/>`;
+  s += `<rect x="${n1(-z / 2)}" y="${n1(-z / 2)}" width="${n1(z)}" height="${n1(z)}" rx="3" fill="${fill}" ${ink(2.2)}/>`;
+  s += `<rect x="${n1(-z * .38)}" y="${n1(-z * .38)}" width="${n1(z * .76)}" height="${n1(z * .76)}" rx="3" fill="none" stroke="${C.cream}" stroke-width="1.6" stroke-dasharray="3 3"/>`;
+  return s + T(0, z * .22, letter, { s: n1(z * .62), w: 900, anchor: 'middle', fill: ink2 });
+}
+function ball(z) {                                                      // a beach ball in six colours
+  let s = `<circle r="${n1(z / 2)}" fill="${C.cream}" ${ink(2.2)}/>`;
+  const cols = [C.red, C.gold, C.sky2, C.mint2, C.velvet, C.orange];
+  for (let i = 0; i < 6; i += 2) s += `<path d="M0 0 L${pt(0, 0, z / 2, i * 60 - 90).join(' ')} A${n1(z / 2)} ${n1(z / 2)} 0 0 1 ${pt(0, 0, z / 2, i * 60 - 30).join(' ')}Z" fill="${cols[i]}" ${ink(1.4)}/>`;
+  for (let i = 1; i < 6; i += 2) s += `<path d="M0 0 L${pt(0, 0, z / 2, i * 60 - 90).join(' ')} A${n1(z / 2)} ${n1(z / 2)} 0 0 1 ${pt(0, 0, z / 2, i * 60 - 30).join(' ')}Z" fill="${cols[i]}" opacity=".9" ${ink(1.4)}/>`;
+  return s + `<circle r="${n1(z * .1)}" fill="${C.cream}" ${ink(1.4)}/><path d="M${n1(-z * .3)} ${n1(-z * .2)} q${n1(z * .06)} ${n1(-z * .12)} ${n1(z * .18)} ${n1(-z * .16)}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>`;
+}
+function partyHat(z, fill, stripe) {                                    // a cone hat with stripes and a pompom
+  let s = `<path d="M0 ${n1(-z)} L${n1(z * .36)} 0 L${n1(-z * .36)} 0Z" fill="${fill}" ${ink(2)}/>`;
+  for (const k of [.3, .55, .8]) s += `<path d="M${n1(-z * .36 * k)} ${n1(-z + z * k)} L${n1(z * .36 * k)} ${n1(-z + z * k)}" stroke="${stripe}" stroke-width="${n1(z * .09)}"/>`;
+  s += `<path d="M0 ${n1(-z)} L${n1(z * .36)} 0 L${n1(-z * .36)} 0Z" fill="none" ${ink(2)}/>`;
+  s += `<ellipse cy="0" rx="${n1(z * .38)}" ry="${n1(z * .07)}" fill="${stripe}" ${ink(1.6)}/>`;
+  return s + g(0, -z, 0, 1, puff(z * .12, 7, C.cream, 1.3));
+}
+function popper(z) {                                                    // a party popper going off: streamers and confetti
+  let s = '';
+  const cols = [C.red, C.gold, C.mint2, C.sky2, C.velvet, C.lilac2];
+  for (let i = 0; i < 6; i++) { const a = -70 + i * 26, [x, y] = pt(0, -z * .55, z * (.9 + r() * .4), a - 90); s += `<path d="M0 ${n1(-z * .5)} Q${n1(x * .4 + (r() - .5) * 20)} ${n1(-z * .5 + (y + z * .55) * .5)} ${x} ${y}" fill="none" ${ink(3.2, cols[i])}/>`; }
+  for (let i = 0; i < 9; i++) { const [x, y] = pt(0, -z * .6, z * (.5 + r() * .9), -160 + r() * 140); s += g(x, y, r() * 180, 1, confettiBit(r(), pick(cols))); }
+  s += `<path d="M${n1(-z * .16)} ${n1(-z * .5)} L${n1(z * .16)} ${n1(-z * .5)} L${n1(z * .05)} 0 L${n1(-z * .05)} 0Z" fill="${C.gold}" ${ink(2)}/>`;
+  s += `<path d="M${n1(-z * .12)} ${n1(-z * .34)} L${n1(z * .12)} ${n1(-z * .34)} M${n1(-z * .09)} ${n1(-z * .18)} L${n1(z * .09)} ${n1(-z * .18)}" ${ink(2.4, C.velvet)}/>`;
+  return s + `<ellipse cy="${n1(-z * .5)}" rx="${n1(z * .16)}" ry="${n1(z * .04)}" fill="${C.plum2}" ${ink(1.4)}/>`;
+}
+function cake(z) {                                                      // two tiers, drips, cherries and the "?" number candle
+  const w0 = z, h0 = z * .34, w1 = z * .66, h1 = z * .3, y0 = 0, y1 = -h0, y2 = -h0 - h1;
+  let s = `<ellipse cy="${n1(z * .03)}" rx="${n1(z * .62)}" ry="${n1(z * .07)}" fill="${C.paper}" ${ink(2)}/>`;
+  s += `<rect x="${n1(-w0 / 2)}" y="${n1(y1)}" width="${n1(w0)}" height="${n1(h0)}" rx="6" fill="${C.pink}" ${ink(2.4)}/>`;
+  let d = `M${n1(-w0 / 2)} ${n1(y1 + 6)}`; for (let i = 0; i <= 10; i++) { const x = -w0 / 2 + w0 * i / 10, k = i % 2 ? h0 * (.35 + r() * .25) : h0 * .12; d += ` L${n1(x)} ${n1(y1 + k)}`; }
+  s += `<path d="${d} L${n1(w0 / 2)} ${n1(y1)} L${n1(-w0 / 2)} ${n1(y1)}Z" fill="${C.cream}" ${ink(1.8)}/>`;
+  for (let i = 0; i < 7; i++) s += g(-w0 / 2 + 16 + i * (w0 - 32) / 6, y1 + h0 * .7, 0, 1, heart(z * .07, C.velvet, 1.2));
+  s += `<rect x="${n1(-w1 / 2)}" y="${n1(y2)}" width="${n1(w1)}" height="${n1(h1)}" rx="6" fill="${C.lilac}" ${ink(2.4)}/>`;
+  d = `M${n1(-w1 / 2)} ${n1(y2 + 6)}`; for (let i = 0; i <= 8; i++) { const x = -w1 / 2 + w1 * i / 8, k = i % 2 ? h1 * (.35 + r() * .25) : h1 * .12; d += ` L${n1(x)} ${n1(y2 + k)}`; }
+  s += `<path d="${d} L${n1(w1 / 2)} ${n1(y2)} L${n1(-w1 / 2)} ${n1(y2)}Z" fill="${C.paper}" ${ink(1.8)}/>`;
+  for (let i = 0; i < 12; i++) s += `<rect x="${n1(-w1 / 2 + 8 + r() * (w1 - 16))}" y="${n1(y2 + h1 * .5 + r() * h1 * .38)}" width="6.5" height="2.4" rx="1.2" fill="${pick([C.red, C.gold, C.mint2, C.sky2, C.velvet])}"/>`;
+  for (const x of [-.26, -.09, .09, .26]) s += `<circle cx="${n1(x * w1 * 1.4)}" cy="${n1(y2 - 4)}" r="${n1(z * .045)}" fill="${C.red}" ${ink(1.6)}/><path d="M${n1(x * w1 * 1.4)} ${n1(y2 - 4 - z * .045)} q2 -6 6 -8" fill="none" ${ink(1.4, C.mint2)}/>`;
+  /* the number candle: a big striped "?" with a wick and a flame */
+  const q = `<path d="M${n1(-z * .1)} ${n1(-z * .24)} Q${n1(-z * .1)} ${n1(-z * .36)} 0 ${n1(-z * .36)} Q${n1(z * .12)} ${n1(-z * .36)} ${n1(z * .11)} ${n1(-z * .25)} Q${n1(z * .1)} ${n1(-z * .17)} ${n1(z * .02)} ${n1(-z * .13)} Q0 ${n1(-z * .11)} 0 ${n1(-z * .06)}" fill="none" ${ink(z * .085)}/>`;
+  const q2 = q.replace(/stroke="#3b2a4a" stroke-width="[^"]*"/, `stroke="${C.sky2}" stroke-width="${n1(z * .06)}"`);
+  const q3 = q.replace(/stroke="#3b2a4a" stroke-width="[^"]*"/, `stroke="#fff" stroke-width="${n1(z * .018)}" stroke-dasharray="4 6"`);
+  s += g(0, y2, 0, 1, q + q2 + q3 + `<circle cy="${n1(z * .01)}" r="${n1(z * .045)}" fill="${C.sky2}" ${ink(2)}/>` +
+    `<path d="M0 ${n1(-z * .36)} V${n1(-z * .41)}" ${ink(1.6)}/><path d="M0 ${n1(-z * .54)} Q${n1(z * .055)} ${n1(-z * .46)} 0 ${n1(-z * .41)} Q${n1(-z * .055)} ${n1(-z * .46)} 0 ${n1(-z * .54)}Z" fill="${C.gold}" ${ink(1.6)}/>` +
+    `<path d="M0 ${n1(-z * .5)} Q${n1(z * .025)} ${n1(-z * .455)} 0 ${n1(-z * .43)} Q${n1(-z * .025)} ${n1(-z * .455)} 0 ${n1(-z * .5)}Z" fill="${C.orange}"/>`);
+  return s;
+}
+function cupcake(z, frost, cup) {                                       // a cupcake in a ridged paper cup, a cherry on top
+  let s = `<path d="M${n1(-z * .36)} ${n1(-z * .3)} L${n1(z * .36)} ${n1(-z * .3)} L${n1(z * .26)} ${n1(z * .3)} L${n1(-z * .26)} ${n1(z * .3)}Z" fill="${cup}" ${ink(2)}/>`;
+  for (let i = -2; i <= 2; i++) s += `<path d="M${n1(i * z * .13)} ${n1(-z * .28)} L${n1(i * z * .095)} ${n1(z * .28)}" ${ink(1.2)}/>`;
+  s += `<path d="M${n1(-z * .42)} ${n1(-z * .28)} Q${n1(-z * .5)} ${n1(-z * .5)} ${n1(-z * .26)} ${n1(-z * .52)} Q${n1(-z * .2)} ${n1(-z * .78)} 0 ${n1(-z * .74)} Q${n1(z * .2)} ${n1(-z * .78)} ${n1(z * .26)} ${n1(-z * .52)} Q${n1(z * .5)} ${n1(-z * .5)} ${n1(z * .42)} ${n1(-z * .28)}Z" fill="${frost}" ${ink(2)}/>`;
+  for (let i = 0; i < 6; i++) s += `<rect x="${n1(-z * .3 + r() * z * .56)}" y="${n1(-z * .62 + r() * z * .28)}" width="5" height="2" rx="1" fill="${pick([C.red, C.gold, C.sky2, C.mint2])}" transform="rotate(${(r() * 90 - 45) | 0})"/>`;
+  return s + `<circle cy="${n1(-z * .82)}" r="${n1(z * .1)}" fill="${C.red}" ${ink(1.5)}/>`;
+}
+function lollipop(z, fill) {                                            // a swirl lollipop on a stick, with a bow
+  let s = `<path d="M0 ${n1(z * .3)} V${n1(z * 1.1)}" ${ink(4.4)}/><path d="M0 ${n1(z * .3)} V${n1(z * 1.1)}" ${ink(2, C.paper)}/>`;
+  s += `<circle r="${n1(z * .46)}" fill="${C.cream}" ${ink(2.2)}/>`;
+  let d = 'M0 0'; for (let a = 0; a < 900; a += 20) { const [x, y] = pt(0, 0, z * .44 * a / 900, a); d += ` L${x} ${y}`; }
+  s += `<path d="${d}" fill="none" ${ink(z * .1, fill)}/>`;
+  return s + `<path d="M0 ${n1(z * .5)} l-8 -5 v10Z M0 ${n1(z * .5)} l8 -5 v10Z" fill="${C.velvet}" ${ink(1.2)}/>`;
+}
+function candy(z, fill) {                                               // a sweet in a twisted wrapper
+  return `<path d="M${n1(-z * .3)} 0 L${n1(-z * .62)} ${n1(-z * .2)} L${n1(-z * .56)} 0 L${n1(-z * .62)} ${n1(z * .2)}Z M${n1(z * .3)} 0 L${n1(z * .62)} ${n1(-z * .2)} L${n1(z * .56)} 0 L${n1(z * .62)} ${n1(z * .2)}Z" fill="${fill}" ${ink(1.5)}/>` +
+    `<ellipse rx="${n1(z * .34)}" ry="${n1(z * .22)}" fill="${fill}" ${ink(1.8)}/><path d="M${n1(-z * .16)} ${n1(-z * .18)} L${n1(-z * .04)} ${n1(z * .2)} M${n1(z * .06)} ${n1(-z * .2)} L${n1(z * .18)} ${n1(z * .16)}" ${ink(2, C.cream)}/>`;
+}
+function pinwheel(z, cols) {                                            // a paper pinwheel (chong chóng) on a stick
+  let s = `<path d="M0 0 V${n1(z * 1.2)}" ${ink(4)}/><path d="M0 0 V${n1(z * 1.2)}" ${ink(1.8, C.wood2)}/>`;
+  for (let i = 0; i < 4; i++) s += g(0, 0, i * 90 + 15, 1, `<path d="M0 0 L${n1(z * .5)} ${n1(-z * .06)} Q${n1(z * .5)} ${n1(-z * .48)} ${n1(z * .1)} ${n1(-z * .46)}Z" fill="${cols[i % cols.length]}" ${ink(1.8)}/>`);
+  return s + `<circle r="${n1(z * .07)}" fill="${C.gold}" ${ink(1.4)}/>`;
+}
+function duck(z) {                                                      // a bath duck
+  let s = `<path d="M${n1(-z * .5)} ${n1(-z * .08)} Q${n1(-z * .52)} ${n1(z * .32)} ${n1(-z * .05)} ${n1(z * .32)} L${n1(z * .32)} ${n1(z * .32)} Q${n1(z * .56)} ${n1(z * .28)} ${n1(z * .46)} ${n1(-z * .04)} Q${n1(z * .1)} ${n1(z * .04)} ${n1(-z * .1)} ${n1(-z * .12)} Q${n1(-z * .3)} ${n1(z * .02)} ${n1(-z * .5)} ${n1(-z * .08)}Z" fill="${C.gold}" ${ink(2.2)}/>`;
+  s += `<circle cx="${n1(z * .12)}" cy="${n1(-z * .28)}" r="${n1(z * .24)}" fill="${C.gold}" ${ink(2.2)}/>`;
+  s += `<path d="M${n1(z * .32)} ${n1(-z * .3)} Q${n1(z * .58)} ${n1(-z * .32)} ${n1(z * .56)} ${n1(-z * .2)} Q${n1(z * .46)} ${n1(-z * .16)} ${n1(z * .32)} ${n1(-z * .2)}Z" fill="${C.orange}" ${ink(1.6)}/>`;
+  s += `<circle cx="${n1(z * .18)}" cy="${n1(-z * .34)}" r="${n1(z * .04)}" fill="${C.plum}"/><path d="M${n1(-z * .18)} ${n1(z * .06)} Q${n1(0)} ${n1(z * .18)} ${n1(z * .2)} ${n1(z * .06)}" fill="none" ${ink(1.6)}/>`;
+  return s;
+}
+function drum(z) {                                                      // a toy drum with its sticks
+  let s = `<path d="M${n1(-z * .5)} ${n1(-z * .2)} V${n1(z * .26)} Q0 ${n1(z * .46)} ${n1(z * .5)} ${n1(z * .26)} V${n1(-z * .2)}" fill="${C.red}" ${ink(2.2)}/>`;
+  for (let i = 0; i < 6; i++) { const x = -z * .5 + i * z * .2; s += `<path d="M${n1(x)} ${n1(-z * .12)} L${n1(x + z * .1)} ${n1(z * .3)} L${n1(x + z * .2)} ${n1(-z * .12)}" fill="none" ${ink(1.6, C.gold)}/>`; }
+  s += `<ellipse cy="${n1(-z * .2)}" rx="${n1(z * .5)}" ry="${n1(z * .16)}" fill="${C.cream}" ${ink(2.2)}/>`;
+  return s + `<path d="M${n1(-z * .1)} ${n1(-z * .22)} L${n1(-z * .52)} ${n1(-z * .7)} M${n1(z * .14)} ${n1(-z * .24)} L${n1(z * .6)} ${n1(-z * .62)}" ${ink(3, C.wood3)}/><circle cx="${n1(-z * .52)}" cy="${n1(-z * .7)}" r="${n1(z * .06)}" fill="${C.gold}" ${ink(1.2)}/><circle cx="${n1(z * .6)}" cy="${n1(-z * .62)}" r="${n1(z * .06)}" fill="${C.gold}" ${ink(1.2)}/>`;
+}
+function iceCream(z) {                                                  // a cone with two scoops
+  let s = `<path d="M${n1(-z * .26)} ${n1(-z * .1)} L${n1(z * .26)} ${n1(-z * .1)} L0 ${n1(z * .6)}Z" fill="${C.wood}" ${ink(2)}/>`;
+  s += `<path d="M${n1(-z * .16)} 0 L${n1(z * .1)} ${n1(z * .34)} M${n1(z * .16)} 0 L${n1(-z * .1)} ${n1(z * .34)}" ${ink(1.2, C.wood3)}/>`;
+  s += g(0, -z * .2, 0, 1, puff(z * .26, 7, C.mint, 1.8)) + g(0, -z * .52, 0, 1, puff(z * .22, 7, C.pink, 1.8));
+  return s + `<circle cy="${n1(-z * .78)}" r="${n1(z * .07)}" fill="${C.red}" ${ink(1.3)}/>`;
+}
+function bubble(w, h, str, tail = .2) {                                 // a speech bubble with a tail at the bottom left
+  let s = `<path d="M${n1(-w / 2 + 14)} ${n1(-h / 2)} H${n1(w / 2 - 14)} Q${n1(w / 2)} ${n1(-h / 2)} ${n1(w / 2)} ${n1(-h / 2 + 14)} V${n1(h / 2 - 14)} Q${n1(w / 2)} ${n1(h / 2)} ${n1(w / 2 - 14)} ${n1(h / 2)}` +
+    ` H${n1(-w / 2 + w * tail + 18)} L${n1(-w / 2 + w * tail - 6)} ${n1(h / 2 + 18)} L${n1(-w / 2 + w * tail + 4)} ${n1(h / 2)} H${n1(-w / 2 + 14)} Q${n1(-w / 2)} ${n1(h / 2)} ${n1(-w / 2)} ${n1(h / 2 - 14)} V${n1(-h / 2 + 14)} Q${n1(-w / 2)} ${n1(-h / 2)} ${n1(-w / 2 + 14)} ${n1(-h / 2)}Z" fill="${C.paper}" ${ink(2.2)}/>`;
+  return s + T(0, 7, str, { f: F.note, w: 400, s: fit(str, 400, F.note, 24, w - 24), anchor: 'middle', fill: C.velvet });
+}
+/* ---- the train: an engine and open wagons along +x, wheels at y 0 ---- */
+function engine(z) {
+  let s = '';
+  s += `<path d="M${n1(z * .48)} ${n1(-z * .05)} L${n1(z * .62)} ${n1(-z * .05)} L${n1(z * .5)} ${n1(-z * .2)}Z" fill="${C.gold}" ${ink(1.8)}/>`;
+  s += `<rect x="${n1(-z * .5)}" y="${n1(-z * .2)}" width="${n1(z)}" height="${n1(z * .12)}" rx="3" fill="${C.plum2}" ${ink(2)}/>`;
+  s += `<rect x="${n1(-z * .06)}" y="${n1(-z * .46)}" width="${n1(z * .54)}" height="${n1(z * .27)}" rx="${n1(z * .12)}" fill="${C.red}" ${ink(2.2)}/>`;
+  for (const x of [.1, .26]) s += `<path d="M${n1(z * x)} ${n1(-z * .46)} V${n1(-z * .19)}" ${ink(1.6, C.wine)}/>`;
+  s += `<path d="M${n1(z * .3)} ${n1(-z * .46)} L${n1(z * .26)} ${n1(-z * .7)} L${n1(z * .46)} ${n1(-z * .7)} L${n1(z * .42)} ${n1(-z * .46)}Z" fill="${C.plum}" ${ink(2)}/>`;
+  s += `<rect x="${n1(z * .23)}" y="${n1(-z * .78)}" width="${n1(z * .26)}" height="${n1(z * .09)}" rx="3" fill="${C.gold}" ${ink(1.8)}/>`;
+  s += `<rect x="${n1(-z * .48)}" y="${n1(-z * .7)}" width="${n1(z * .44)}" height="${n1(z * .51)}" rx="4" fill="${C.sky2}" ${ink(2.2)}/>`;
+  s += `<rect x="${n1(-z * .4)}" y="${n1(-z * .62)}" width="${n1(z * .28)}" height="${n1(z * .2)}" rx="4" fill="${C.butter}" ${ink(1.8)}/>`;
+  s += `<path d="M${n1(-z * .56)} ${n1(-z * .7)} H${n1(0)} L${n1(-z * .04)} ${n1(-z * .82)} H${n1(-z * .52)}Z" fill="${C.velvet}" ${ink(2)}/>`;
+  s += g(-z * .26, -z * .3, 0, 1, heart(z * .13, C.velvet, 1.2, C.plum));
+  s += `<circle cx="${n1(z * .52)}" cy="${n1(-z * .34)}" r="${n1(z * .06)}" fill="${C.butter}" ${ink(1.6)}/>`;
+  for (const [x, rr] of [[-.3, .13], [.04, .1], [.3, .1]]) s += `<circle cx="${n1(z * x)}" cy="${n1(-z * rr)}" r="${n1(z * rr)}" fill="${C.velvet}" ${ink(2)}/><circle cx="${n1(z * x)}" cy="${n1(-z * rr)}" r="${n1(z * rr * .35)}" fill="${C.cream}" ${ink(1.2)}/>`;
+  s += `<path d="M${n1(-z * .3)} ${n1(-z * .13)} L${n1(z * .3)} ${n1(-z * .1)}" ${ink(2.4, C.gold)}/>`;
+  return s;
+}
+function wagon(z, fill, photoFill, inner) {
+  let s = `<rect x="${n1(-z * .46)}" y="${n1(-z * .38)}" width="${n1(z * .92)}" height="${n1(z * .26)}" rx="4" fill="${fill}" ${ink(2.2)}/>`;
+  s += `<path d="M${n1(-z * .46)} ${n1(-z * .3)} H${n1(z * .46)}" ${ink(1.4, C.cream)}/>`;
+  s += g(0, -z * .7, (r() - .5) * 10, 1, polaroid(z * .5, photoFill, inner));
+  for (const x of [-.26, .26]) s += `<circle cx="${n1(z * x)}" cy="${n1(-z * .1)}" r="${n1(z * .1)}" fill="${C.plum2}" ${ink(2)}/><circle cx="${n1(z * x)}" cy="${n1(-z * .1)}" r="${n1(z * .035)}" fill="${C.gold}"/>`;
+  s += `<rect x="${n1(-z * .56)}" y="${n1(-z * .2)}" width="${n1(z * .1)}" height="${n1(z * .05)}" rx="2" fill="${C.plum}"/>`;
+  return s;
+}
+
+/* ---- the frame: plum, its marquee bulbs, words on each side ---- */
+function frame() {
+  let s = `<rect width="1280" height="800" fill="${C.plum}"/>`;
+  const font = `800 11.5px "${F.sans}"`, words = [
+    [676, 19, 0, 'CHÚC MỪNG SINH NHẬT BÉ  ·  TIỆC CỦA BÉ  ·  TÀU SINH NHẬT  ·  MỞ QUÀ  ·  THỔI NẾN  ·  ƯỚC ĐIỀU THẬT XINH'],
+    [676, 789, 0, 'ĐẶT THIỆP NẰM PHẲNG  ·  LAY THE CARD FLAT  ·  KEEP IT IN VIEW  ·  No. 0906  ·  BÉ LỚN THÊM MỘT TUỔI'],
+    [1265, 400, 90, 'ĂN NGOAN  ·  CHÓNG LỚN  ·  VUI THẬT VUI  ·  CƯỜI THẬT TƯƠI']];
+  const half = words.map(([, , , str]) => (measure(str, font) + str.length * 3) / 2 + 16);
+  const free = (x, y) => words.every(([wx, wy, a], i) => a ? !(Math.abs(x - wx) < 16 && Math.abs(y - wy) < half[i]) : !(Math.abs(y - wy) < 16 && Math.abs(x - wx) < half[i]));
+  const run = (x0, y0, x1, y1) => {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    for (let t = 12 + r() * 10; t < len - 12; t += 25 + r() * 16) {
+      const x = x0 + (x1 - x0) * t / len, y = y0 + (y1 - y0) * t / len;
+      if (free(x, y)) s += g(x, y, 0, 1, bulb(4.3 + r() * 1.5, r() > .14));
+    }
+  };
+  run(130, 15, 1265, 15); run(130, 785, 1265, 785); run(1265, 34, 1265, 766);
+  words.forEach(([x, y, a, str]) => { s += g(x, y, a, 1, T(0, a ? 4 : 0, str, { s: 11.5, ls: 3, anchor: 'middle', fill: C.cream })); });
+  s += `<rect x="30" y="30" width="1220" height="740" rx="14" fill="${C.blush}" ${ink(2.6, C.film)}/>`;
+  for (let i = 0; i < 1300; i++) {                                     // the playmat: confetti chips, each its own size and turn
+    const x = 36 + r() * 1208, y = 36 + r() * 728, z = 1.6 + r() * 3.8, k = 3 + (r() * 3 | 0);
+    let d = '';
+    for (let j = 0; j < k; j++) { const [px, py] = pt(x, y, z * (.6 + r() * .5), j / k * 360 + r() * 50); d += `${j ? 'L' : 'M'}${px} ${py}`; }
+    s += `<path d="${d}Z" fill="${pick([C.pink, C.pink, C.rose, C.cream, C.mint, C.sky, C.lilac, C.gold, C.white, C.peach])}"/>`;
+  }
+  s += `<rect x="42" y="42" width="1196" height="716" rx="10" fill="none" stroke="${C.velvet}" stroke-width="1.6" stroke-dasharray="12 7"/>`;
+  return s;
+}
+
+/* ---- the growth chart down the left edge: "Bé cao thế này rồi!" ---- */
+function ruler() {
+  const x0 = 46, w = 64, top = 50, bot = 752;
+  keep(0, 0, 124, 800);
+  let s = `<g transform="rotate(-1 ${x0 + w / 2} 400)"><rect x="${x0}" y="${top}" width="${w}" height="${bot - top}" rx="10" fill="${C.paper}" ${ink(2.4)}/>`;
+  const segs = [C.rose, C.gold, C.mint, C.sky, C.lilac, C.peach, C.pink];
+  const n = 7, sh = (bot - top - 64) / n;
+  for (let i = 0; i < n; i++) s += `<rect x="${x0 + 30}" y="${n1(top + 56 + i * sh)}" width="${w - 36}" height="${n1(sh)}" fill="${segs[i]}" ${ink(1.4)}/>`;
+  for (let k = 0; k <= 70; k++) {
+    const y = top + 56 + k * (bot - top - 64) / 70, long = k % 10 === 0, mid = k % 5 === 0;
+    s += `<path d="M${x0 + 4} ${n1(y)} H${x0 + (long ? 26 : mid ? 18 : 12)}" ${ink(long ? 2.2 : 1.3)}/>`;
+    if (long) s += T(x0 + 47, y + 5, String(130 - k), { s: 13, w: 900, anchor: 'middle', fill: C.plum });
+  }
+  s += `<rect x="${x0 + 6}" y="${top + 8}" width="${w - 12}" height="40" rx="8" fill="${C.velvet}" ${ink(1.8)}/>` + T(x0 + w / 2, top + 25, 'BÉ CAO', { s: 11, w: 900, ls: 1, anchor: 'middle', fill: C.cream }) + T(x0 + w / 2, top + 40, 'THẾ NÀY', { s: 10, w: 900, ls: .6, anchor: 'middle', fill: C.cream });
+  const yb = top + 56 + 22 * (bot - top - 64) / 70;
+  s += `<path d="M${x0 + 2} ${n1(yb)} H${x0 + w + 8}" ${ink(3, C.red)}/>` + g(x0 + w + 4, yb, 0, 1, star5(12, C.gold, 1.6));
+  s += `</g>`;
+  return s;
+}
+
+/* ---- the bunting across the top ---- */
+function bunting() {
+  const x0 = 140, x1 = 1240, y = 56, sag = 30, n = 22;
+  const at = t => [x0 + (x1 - x0) * t, y + sag * 4 * t * (1 - t)];
+  let d = `M${x0} ${y}`; for (let i = 1; i <= 30; i++) { const [x, yy] = at(i / 30); d += ` L${n1(x)} ${n1(yy)}`; }
+  let s = `<path d="${d}" fill="none" ${ink(2)}/>`;
+  const cols = [C.velvet, C.gold, C.mint2, C.sky2, C.lilac2, C.orange, C.rose];
+  for (let i = 0; i < n; i++) {
+    const t = (i + .5) / n, [x, yy] = at(t), w = 34, h = 38, c = cols[i % cols.length];
+    let f = `<path d="M${-w / 2} 0 L${w / 2} 0 L0 ${h}Z" fill="${c}" ${ink(1.8)}/>`;
+    const k = i % 4;
+    if (k === 0) f += g(0, 12, 0, 1, star5(7, C.cream, 1.1));
+    else if (k === 1) f += [[-6, 8], [6, 8], [0, 18]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="2.6" fill="${C.cream}"/>`).join('');
+    else if (k === 2) f += g(0, 12, 0, 1, heart(12, C.cream, 1));
+    else f += `<path d="M-11 6 L11 6 M-7 14 L7 14" stroke="${C.cream}" stroke-width="3"/>`;
+    s += g(x, yy, (r() - .5) * 8, 1, f);
+  }
+  keep(130, 40, 1250, 104);
+  return s;
+}
+
+/* ---- the train track round the middle, the train on it ---- */
+const OX = 690, OY = 418, ORX = 388, ORY = 262;
+function track() {
+  let s = '';
+  ROUND.push([OX, OY, 0]);
+  const P = (t, dr = 0) => [OX + (ORX + dr) * Math.cos(t), OY + (ORY + dr * ORY / ORX) * Math.sin(t)];
+  for (let k = 0; k < 150; k++) {                                       // sleepers, a little uneven
+    const t = k / 150 * Math.PI * 2, [x, y] = P(t), a = Math.atan2(ORY * Math.cos(t) * ORX, -ORX * Math.sin(t) * ORY) * 180 / Math.PI;
+    s += g(x, y, a + 90 + (r() - .5) * 4, 1, `<rect x="-17" y="-4" width="34" height="8" rx="2" fill="${pick([C.wood, C.wood2, C.wood])}" ${ink(1.4)}/>`);
+  }
+  for (const dr of [-11, 11]) {
+    let d = ''; for (let k = 0; k <= 160; k++) { const [x, y] = P(k / 160 * Math.PI * 2, dr); d += `${k ? 'L' : 'M'}${n1(x)} ${n1(y)}`; }
+    s += `<path d="${d}Z" fill="none" ${ink(5.4)}/><path d="${d}Z" fill="none" ${ink(2.4, '#c9c3d6')}/>`;
+  }
+  return s;
+}
+function train() {
+  const cars = [[engine, 0], [C.gold, C.sky, 'kid'], [C.mint2, C.pink, 'heart'], [C.sky2, C.butter, 'star'], [C.lilac2, C.mint, 'balloon']];
+  let s = '', t = Math.PI * .67, chimney = null;
+  const P = t => [OX + ORX * Math.cos(t), OY + ORY * Math.sin(t)];
+  const len = t => Math.hypot(ORX * Math.sin(t), ORY * Math.cos(t));
+  const parts = [];
+  cars.forEach(([kind, photo, doodle], i) => {
+    const [x, y] = P(t), a = Math.atan2(ORY * Math.cos(t), -ORX * Math.sin(t)) * 180 / Math.PI;   // facing the way the train goes (t falling)
+    const inner = doodle === 'kid' ? kidDoodle(36, C.gold) : doodle === 'heart' ? heart(22, C.velvet, 1.3) : doodle === 'star' ? star5(14, C.gold, 1.3) :
+      g(0, -2, 0, 1, balloon(18, C.red, '', 10));
+    const z = i ? 92 : 118;
+    parts.push(g(x, y, a + 180, 1, g(0, 8, 0, 1, i ? wagon(z, kind, photo, inner) : engine(z))));
+    if (!i) { const b = rad(a + 180), cx = z * .36, cy = 8 - z * .8; chimney = [x + Math.cos(b) * cx - Math.sin(b) * cy, y + Math.sin(b) * cx + Math.cos(b) * cy]; }
+    keepRound(x, y - 30, 58);
+    t += (i ? 108 : 116) / len(t);
+  });
+  const [ex, ey] = chimney;
+  s += parts.reverse().join('');
+  s += g(ex, ey - 22, 0, 1, puff(22, 7, C.paper)) + g(ex - 34, ey - 58, 0, 1, puff(17, 6, C.paper)) + g(ex - 74, ey - 80, 0, 1, puff(13, 6, C.paper));
+  s += g(ex - 104, ey - 18, -6, 1, `<path d="M-38 -16 H38 Q46 -16 46 -8 V8 Q46 16 38 16 H24 L34 28 L12 16 H-38 Q-46 16 -46 8 V-8 Q-46 -16 -38 -16Z" fill="${C.cream}" ${ink(1.8)}/>` + T(0, 6, 'Tu tu!', { f: F.note, w: 400, s: 19, anchor: 'middle', fill: C.red }));
+  keepRound(ex - 40, ey - 44, 70);
+  return s;
+}
+
+/* ---- the words in the middle ---- */
+function title() {
+  let s = '';
+  const k1 = fit('Chúc mừng', 400, F.logo, 84, 430), k2 = fit('sinh nhật', 400, F.logo, 96, 470);
+  const sticker = (x, y, str, size, fill) => T(x + 4, y + 5, str, { f: F.logo, w: 400, s: size, fill: C.plum, stroke: C.plum, sw: 12, anchor: 'middle' }) +
+    T(x, y, str, { f: F.logo, w: 400, s: size, fill, stroke: C.cream, sw: 12, anchor: 'middle' }) + T(x, y, str, { f: F.logo, w: 400, s: size, fill, stroke: C.plum, sw: 2.6, anchor: 'middle' });
+  s += sticker(OX - 34, 252, 'Chúc mừng', k1, C.velvet);
+  s += sticker(OX + 26, 346, 'sinh nhật', k2, C.sky2);
+  s += g(OX + 250, 196, 14, 1, star5(26, C.gold, 2.2)) + g(OX - 268, 300, -10, 1, heart(30, C.red, 2.2)) + g(OX + 268, 330, 0, 1, sparkle(14, C.mint, 1.6)) + g(OX - 250, 190, 0, 1, sparkle(11, C.butter, 1.5));
+  const rw = 250, ry = 386;
+  s += `<path d="M${OX - rw / 2 - 26} ${ry - 8} L${OX - rw / 2 + 6} ${ry - 8} L${OX - rw / 2 + 6} ${ry + 24} L${OX - rw / 2 - 26} ${ry + 24} L${OX - rw / 2 - 14} ${ry + 8}Z" fill="${C.gold}" ${ink(2)}/>`;
+  s += `<path d="M${OX + rw / 2 + 26} ${ry - 8} L${OX + rw / 2 - 6} ${ry - 8} L${OX + rw / 2 - 6} ${ry + 24} L${OX + rw / 2 + 26} ${ry + 24} L${OX + rw / 2 + 14} ${ry + 8}Z" fill="${C.gold}" ${ink(2)}/>`;
+  s += `<path d="M${OX - rw / 2} ${ry - 16} Q${OX} ${ry - 24} ${OX + rw / 2} ${ry - 16} L${OX + rw / 2} ${ry + 16} Q${OX} ${ry + 8} ${OX - rw / 2} ${ry + 16}Z" fill="${C.plum}" ${ink(2.4)}/>`;
+  s += T(OX, ry + 6, 'TIỆC CỦA BÉ YÊU', { s: 17, w: 900, ls: 4, anchor: 'middle', fill: C.cream });
+  keep(OX - 300, 170, OX + 290, 410);
+  return s;
+}
+
+/* ---- the cake inside the loop, the candle asking, hats and a popper by it ---- */
+function cakeCorner() {
+  let s = g(OX - 10, 612, 0, 1, cake(176));
+  s += g(OX + 132, 470, 0, 1, bubble(196, 52, 'Bé mấy tuổi rồi nhỉ?', .1));
+  s += g(OX - 166, 600, -12, 1, partyHat(64, C.mint2, C.gold)) + g(OX - 214, 622, 10, 1, partyHat(50, C.gold, C.velvet));
+  s += g(OX + 160, 628, 18, 1, popper(70));
+  keep(OX - 250, 440, OX + 240, 640);
+  return s;
+}
+
+/* ---- the play tent and the blocks, left; the gifts and the jack-in-the-box, right; balloons in both ---- */
+function leftSide() {
+  let s = g(222, 330, 0, 1, tent(170));
+  s += g(176, 112 + 58, -8, 1, balloon(40, C.velvet, '', 70)) + g(238, 132 + 50, 6, 1, balloon(34, C.gold, '', 60));
+  const blocks = [['Y', C.velvet, 160, 664], ['Ê', C.mint2, 218, 668], ['U', C.lilac2, 276, 662], ['B', C.sky2, 190, 608], ['É', C.gold, 248, 610]];
+  blocks.forEach(([l, c, x, y], i) => { s += g(x, y, (r() - .5) * 8, 1, block(54, l, c, i % 2 ? C.plum : C.cream)); });
+  s += g(160, 728, 0, 1, ball(46)) + g(300, 724, 0, 1, duck(50));
+  s += g(160, 400, -8, 1, pinwheel(54, [C.velvet, C.gold, C.sky2, C.mint2])) + g(218, 452, 10, 1, pinwheel(44, [C.lilac2, C.orange, C.mint2, C.red]));
+  s += g(290, 470, 0, 1, drum(56));
+  keep(134, 196, 310, 334); keepRound(176, 170, 28); keepRound(238, 182, 24);
+  keep(128, 368, 192, 468); keep(192, 426, 244, 506); keep(256, 428, 326, 498);
+  keep(130, 572, 312, 700); keepRound(160, 728, 25); keep(272, 704, 330, 742);
+  return s;
+}
+function insideLoop() {                                                 // inside the track, by the cake: cupcakes, sweets, an ice cream
+  let s = g(486, 492, -6, 1, cupcake(50, C.pink, C.sky2)) + g(548, 534, 4, 1, cupcake(42, C.mint, C.gold));
+  s += g(590, 452, -14, 1, lollipop(30, C.velvet)) + g(430, 560, 18, 1, candy(36, C.gold)) + g(600, 640, -10, 1, candy(30, C.sky2));
+  s += g(958, 528, 8, 1, iceCream(58)) + g(1012, 470, 0, 1, lollipop(26, C.mint2)) + g(1004, 590, -20, 1, candy(34, C.velvet)) + g(906, 610, 12, 1, candy(28, C.lilac2));
+  keep(340, 460, 600, 640); keep(880, 420, 1050, 640);
+  return s;
+}
+function rightSide() {
+  let s = '';
+  s += g(1118, 640, 0, 1, giftBox(118, 84, C.velvet, C.gold, 'dots'));
+  s += g(1196, 662, 0, 1, giftBox(66, 58, C.mint2, C.red, 'stripes'));
+  s += g(1110, 556, 4, 1, giftBox(86, 62, C.lilac2, C.cream, 'stars'));
+  s += g(1018, 690, -6, 1, jack(72));
+  s += g(1134, 196, 8, 1, balloon(46, C.sky2, '', 80)) + g(1194, 240, -4, 1, balloon(38, C.red, '', 70)) + g(1078, 262, 2, 1, balloon(36, C.mint2, '', 60));
+  s += g(1196, 392, -14, 1, partyHat(58, C.velvet, C.butter)) + g(1124, 420, 0, 1, cupcake(46, C.lilac, C.velvet)) + g(1210, 470, 16, 1, candy(34, C.mint2));
+  keepRound(1134, 196, 32); keepRound(1194, 240, 27); keepRound(1078, 262, 26);
+  keep(1172, 326, 1222, 398); keep(1100, 376, 1148, 436); keep(1188, 458, 1232, 482);
+  keep(1056, 490, 1180, 644); keep(1060, 520, 1156, 560); keep(1160, 590, 1232, 664); keep(980, 528, 1058, 692);
+  return s;
+}
+
+/* ---- the instruction on a ribbon, bottom ---- */
+function ribbon() {
+  const cx = OX, cy = 750, w = 430, h = 30;
+  keep(cx - w / 2 - 30, cy - h / 2 - 6, cx + w / 2 + 30, cy + h / 2 + 6);
+  const x0 = cx - w / 2, x1 = cx + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, f = 22;
+  let s = `<path d="M${x0 - f} ${y0 + 6} L${x0 + 6} ${y0 + 6} L${x0 + 6} ${y1 + 6} L${x0 - f} ${y1 + 6} L${x0 - f + 10} ${cy + 6}Z" fill="${C.velvet}" ${ink(2)}/>`;
+  s += `<path d="M${x1 + f} ${y0 + 6} L${x1 - 6} ${y0 + 6} L${x1 - 6} ${y1 + 6} L${x1 + f} ${y1 + 6} L${x1 + f - 10} ${cy + 6}Z" fill="${C.gold}" ${ink(2)}/>`;
+  s += `<path d="M${x0} ${y0} Q${cx} ${y0 - 7} ${x1} ${y0} L${x1} ${y1} Q${cx} ${y1 - 7} ${x0} ${y1}Z" fill="${C.plum}" ${ink(2.4)}/>`;
+  return s + T(cx, cy + 5, 'Đặt thiệp nằm phẳng, hướng điện thoại vào đây', { s: 14.5, w: 800, anchor: 'middle', fill: C.cream });
+}
+
+/* ---- the truss plates at the top corners ---- */
+function corners() {
+  return [[38, 12], [1242, 12]].map(([x, y]) => g(x, y, 0, 1, `<rect x="-17" y="-17" width="34" height="34" rx="4" fill="${C.plum2}" ${ink(2, C.cream)}/>` +
+    [[-11, -11], [11, -11], [-11, 11], [11, 11]].map(([a, b]) => `<circle cx="${a}" cy="${b}" r="2.4" fill="${C.gold}"/>`).join('') + `<circle r="8" fill="${C.film}" ${ink(1.6, C.gold)}/>`)).join('');
+}
+
+/* ---- stars, sparkles, confetti, notes and the odd heart wherever there is floor left ---- */
+function scatter() {
+  let s = '';
+  const placed = [];
+  const cols = [C.velvet, C.gold, C.mint2, C.sky2, C.lilac2, C.orange, C.red];
+  for (let i = 0; i < 20000 && placed.length < 560; i++) {
+    const x = 132 + r() * 1110, y = 104 + r() * 656;
+    if (blocked(x, y, 7) || placed.some(([px, py]) => Math.hypot(px - x, py - y) < 18)) continue;
+    placed.push([x, y]);
+    const k = r(), a = (r() * 60 - 30) | 0;
+    if (k < .22) s += g(x, y, a, 1, sparkle(5 + r() * 5, pick([C.gold, C.butter, C.mint, C.cream, C.sky])));
+    else if (k < .38) s += g(x, y, a, 1, star5(5 + r() * 4, pick([C.gold, C.butter, C.lilac, C.sky])));
+    else if (k < .46) s += g(x, y, a, 1, note(9 + r() * 6, pick([C.velvet, C.plum2, C.mint2, C.gold])));
+    else if (k < .76) s += g(x, y, a * 3, 1, confettiBit(r(), pick(cols)));
+    else if (k < .8) s += g(x, y, a, 1, heart(9 + r() * 6, pick([C.velvet, C.rose, C.red])));
+    else if (k < .92) s += `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(2.4 + r() * 2.6)}" fill="${pick(cols)}"/>`;
+    else s += g(x, y, a * 2, 1, tape(14 + r() * 10, 6, pick([C.mint, C.gold, C.rose, C.sky])));
+  }
+  return s;
+}
+
+const FACES = [`400 84px "${F.logo}"`, `400 20px "${F.note}"`, `600 14px "${F.sans}"`, `800 14px "${F.sans}"`, `900 14px "${F.sans}"`];
+Promise.all(FACES.map(f => document.fonts.load(f, 'Chúc mừng sinh nhật Bé mấy tuổi rồi nhỉ? TIỆC CỦA BÉ YÊU Đặt thiệp nằm phẳng — ữ ơ ư ạ ả ấ ỏ Ê É'))).then(() => {
+  const parts = [frame(), ruler(), track(), bunting(), title(), cakeCorner(), insideLoop(), leftSide(), rightSide(), train(), ribbon(), corners()];
+  document.getElementById('card').innerHTML = parts.join('') + scatter();
+  return document.fonts.ready;
+}).then(() => { window.__ready = true; });
+</script>
+</body></html>

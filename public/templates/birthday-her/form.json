@@ -1,0 +1,58 @@
+{
+ "label": "Sinh nhật nàng (3D: sân thượng đêm, bóng bay mang ảnh, bánh kem và điều ước)",
+ "preset": {
+  "title": "Sinh nhật nàng",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Có một bất ngờ sinh nhật đang chờ em.",
+  "to": "Gửi cô gái của anh,",
+  "body": [
+   "Chúc mừng sinh nhật em! Cảm ơn em đã đến và làm mọi ngày của anh sáng bừng lên, như những bóng đèn trên sân thượng tối nay.",
+   "Tuổi mới, anh chúc em luôn khỏe, luôn cười thật tươi, và mọi điều em ước đều thành sự thật. Phần còn lại cứ để anh lo."
+  ],
+  "from": "Yêu em, anh"
+ },
+ "groups": [
+  {
+   "title": "Tấm biển ở cầu thang",
+   "note": "Tấm biển gỗ cạnh cửa lên sân thượng ở cảnh đầu, có một tấm polaroid ảnh của bạn dán phía trên. Một lời mời ngắn, hai ba dòng là đẹp nhất; chữ dài sẽ tự nhỏ lại.",
+   "rows": [
+    [
+     {
+      "slot": "stairs",
+      "label": "Lời trên tấm biển",
+      "value": "Lên sân thượng nhé, có bất ngờ cho em!",
+      "max": 50,
+      "multiline": true
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Thẻ điều ước",
+   "note": "Tấm thẻ hiện phía trên bánh kem khi cô ấy chắp tay ước, rồi ở lại đến hết cảnh. Một câu thật ngắn, ngọt ngào hay dí dỏm đều hợp.",
+   "rows": [
+    [
+     {
+      "slot": "wish",
+      "label": "Lời trên thẻ điều ước",
+      "value": "Ước đi em, anh lo phần còn lại!",
+      "max": 40
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Dải băng cuối",
+   "note": "Lời chúc trên dải băng ở cảnh cuối, ngay dưới khung trái tim có ảnh đầu tiên của bạn. Ảnh của bạn hiện ở 15 chỗ: sáu quả bóng bay, sáu tấm polaroid trên dây đèn, khung ảnh lớn dựa lan can, tấm polaroid trên biển cầu thang và khung trái tim.",
+   "rows": [
+    [
+     {
+      "slot": "banner",
+      "label": "Lời chúc trên dải băng",
+      "value": "Chúc em tuổi mới rực rỡ",
+      "max": 32
+     }
+    ]
+   ]
+  }
+ ]
+}
