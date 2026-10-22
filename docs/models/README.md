@@ -77,10 +77,10 @@ Each file's glTF scene `extras` carry two things:
 
   | Clip                | Boy   | Girl  |
   | ------------------- | ----- | ----- |
-  | `Walking_A`         | 0.684 | 0.594 |
-  | `Walking_Backwards` | 0.684 | 0.594 |
-  | `Running_A`         | 0.744 | 0.651 |
-  | `Running_B`         | 0.483 | 0.424 |
+  | `Walking_A`         | 0.684 | 0.629 |
+  | `Walking_Backwards` | 0.684 | 0.629 |
+  | `Running_A`         | 0.744 | 0.689 |
+  | `Running_B`         | 0.483 | 0.448 |
 
   The kit applies these in `play()`. So keep writing speeds as `distance / seconds / (.1 * H / .3)`.
 
@@ -115,16 +115,51 @@ Each file's glTF scene `extras` carry two things:
 - **Chibi-height scenery** (railings, a ship's bow, seats, a bike) sits at the adults' knees: resize or raise it.
 - **The bones are in centimetres.** A prop parented straight onto a bone and placed in card widths lands about 100× off.
   Use `model.hold(prop, slot)`, which keeps the prop's stage size, or divide by the bone's world scale.
-- **Clip facts:** `Throw` lets go about 0.33 s in, `Cheer` raises only the left arm, and `Use_Item` gives with the left
-  hand (a right-hand prop would be handed over by an empty hand), and `Jump_Full_Short` lands in a crouch about 41 cm deep.
+- **Clip facts:** `Throw` lets go about 0.33 s in. `Cheer` raises only the left arm, and on most of them barely to the
+  shoulder: pose a two-armed cheer with `aim`. `Use_Item` gives with the left hand (a right-hand prop would be handed
+  over by an empty hand), and so does `Interact` (a switch or a door handle goes on their left). `Jump_Full_Short` lands
+  in a crouch about 41 cm deep.
+- **Crossfades:** fading out of `Walking_A` dips a toe 1–2 cm under the floor for a moment; fade in from `Idle` over
+  about 0.15 s.
+- **A stop holds the story's clock at the next chapter's start.** While a card waits at stop 0 of a 7 s chapter, the
+  story time is already 7.0, so anything keyed on `g >= 7` fires before the tap. Key what starts a chapter on the
+  chapter, not on the clock.
 - **Leftover KayKit code:** recolouring that paints squares on the clothes, and hats or flowers sized for KayKit's big
   heads. Remove the first; refit the second.
+
+## The family
+
+More of Grab3D's characters, prepared the same way (about 25k triangles, a 1024 px WebP, the same 34 clips under the same
+names, hand slots, `aliases` and `pace` in their extras), for the birthday cards:
+
+| File          | Who                                                                            | Fit at the boy's height × |
+| ------------- | ------------------------------------------------------------------------------ | ------------------------- |
+| `grandpa.glb` | Ông: Grab3D "Elderly Man" (flat cap, round glasses, white moustache, cardigan) | 0.972 (1.75 m)            |
+| `dad.glb`     | Bố: Grab3D "Businessman" (dark beard, navy three-piece suit, orange tie)       | 1.000 (1.80 m)            |
+| `mom.glb`     | Mẹ: Grab3D "Nurse" (hair bun, magenta scrubs, stethoscope, ID badge)           | 0.933 (1.68 m)            |
+| `kid.glb`     | Bé: Grab3D "Child", a boy (curly auburn hair, yellow raincoat, red boots)      | 0.720 (1.30 m)            |
+
+- **Grandpa moves gently:** his walk is a calmer, slightly stooped one; both runs are shuffling jogs; `Dance_A` is half
+  speed and smaller and `Dance_B` a soft sway; the jump is an 8 cm hop; getting down and up is 1.3–1.55× slower. His
+  `pace` goes above 1 (his legs turn faster to cover a normal distance), so give him slower moves.
+- **Chairs:** seat tops at file scale, and how far the hips settle behind where they stood: grandpa 0.39 m / 0.29 m, dad
+  0.46 m / 0.29 m, mom 0.40 m / 0.21 m, kid 0.31 m / 0.18 m.
+- **Fingers:** none of the four came with finger bones; five per hand were added, named like the couple's, so fists
+  close and hand slots work.
+- **Clap** meets palm to palm on dad and mom. In their `Kneel` the hand slot rests on the palm: lift a box by half its
+  height along the slot's −z.
+- **Mom lies down** with her head tipped forward, so her bun doesn't hold it off the floor.
+- **Rough:** as on the couple (`Walking_Backwards`, `Idle_FoldArms`, the held floor and lying idles), and the kid's
+  lying clips, which lie on his backpack.
 
 ## Licences
 
 - **Grab3D Casual Man and Casual Woman: CC0 1.0.** "To the extent possible under law, Grab3D has waived all copyright
   and related or neighboring rights to the 3D models, textures and images in this package." They were made with an AI
   image-to-3D tool (Meshy). Sources: https://grab3d.com/models/characters/man/ and https://grab3d.com/models/characters/woman/.
+- **Grab3D Elderly Man, Businessman, Nurse and Child: CC0 1.0** (the same terms). Sources:
+  https://grab3d.com/models/characters/elderly-man/, https://grab3d.com/models/characters/businessman/,
+  https://grab3d.com/models/characters/nurse/ and https://grab3d.com/models/characters/child/.
 - **Quaternius Universal Animation Library 1 and 2 (Standard): CC0 1.0.** Sources:
   https://quaternius.itch.io/universal-animation-library and https://quaternius.itch.io/universal-animation-library-2.
   Quaternius's site moved to a new licence on 28 August 2026; these copies were released as CC0 and stay CC0.
