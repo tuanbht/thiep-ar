@@ -1,47 +1,68 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { sessionId, track } from "../events";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const sent = () =>
+  ((window as unknown as { dataLayer?: IArguments[] }).dataLayer ?? [])
+    .map((a) => Array.from(a))
+    .filter((c) => c[0] === "event");
+
+const load = async () => {
+  vi.resetModules();
+  return import("../events");
+};
+
+beforeEach(() => {
+  delete (window as unknown as { dataLayer?: unknown }).dataLayer;
+  delete (window as unknown as { gtag?: unknown }).gtag;
+  localStorage.clear();
+  vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST123");
+});
 afterEach(() => {
-  vi.unstubAllGlobals();
-  sessionStorage.clear();
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
 });
 
 describe("counting what visitors do", () => {
-  it("keeps one session id per tab", () => {
-    const a = sessionId();
-    expect(a).toMatch(/^[0-9a-f-]{36}$/);
-    expect(sessionId()).toBe(a);
-  });
-
-  it("posts the event with the session id, and never throws", async () => {
-    const fetch = vi
-      .fn()
-      .mockResolvedValue(new Response(null, { status: 204 }));
-    vi.stubGlobal("fetch", fetch);
-    track({ name: "product_view", productId: "mochi" });
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/events",
-      expect.objectContaining({ method: "POST", keepalive: true }),
-    );
-    expect(JSON.parse(fetch.mock.calls[0][1].body)).toEqual({
-      name: "product_view",
+  it("sends the event to Google Analytics with its product", async () => {
+    const { track } = await load();
+    track({
+      name: "chapter_reached",
       productId: "mochi",
-      sessionId: sessionId(),
+      props: { chapter: 1 },
     });
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
-    expect(() => track({ name: "preview_open" })).not.toThrow();
-    vi.stubGlobal("fetch", () => {
-      throw new Error("no fetch");
-    });
-    expect(() => track({ name: "preview_open" })).not.toThrow();
+    expect(sent()).toEqual([
+      [
+        "event",
+        "chapter_reached",
+        expect.objectContaining({ product_id: "mochi", chapter: 1 }),
+      ],
+    ]);
   });
 
-  it("still names a session when storage is blocked", () => {
+  it("leaves the product out when there is none", async () => {
+    const { track } = await load();
+    track({ name: "photo_uploaded" });
+    expect(sent()[0][2]).not.toHaveProperty("product_id");
+  });
+
+  it("counts a once-only event once in this browser, even when storage is blocked", async () => {
+    const { trackOnce } = await load();
+    trackOnce("paid:o1", { name: "order_paid", productId: "mochi" });
+    trackOnce("paid:o1", { name: "order_paid", productId: "mochi" });
+    expect(sent()).toHaveLength(1);
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("blocked");
     });
-    expect(sessionId()).toBe("no-storage");
-    vi.restoreAllMocks();
+    expect(() =>
+      trackOnce("paid:o2", { name: "order_paid", productId: "mochi" }),
+    ).not.toThrow();
+    expect(sent()).toHaveLength(2);
+  });
+
+  it("marks nothing as counted without Google Analytics, so turning it on later still counts", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "");
+    const { trackOnce } = await load();
+    trackOnce("paid:o3", { name: "order_paid" });
+    expect(localStorage.length).toBe(0);
   });
 });

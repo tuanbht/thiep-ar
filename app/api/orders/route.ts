@@ -3,7 +3,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createOrderRequestSchema } from "@/lib/api/dto";
 import { InvalidInput } from "@/lib/orders/errors";
-import { issuesOf, originOf, readJson, route } from "@/lib/server/api";
+import { issuesOf, readJson, route } from "@/lib/server/api";
 import { orderCookieName, orderCookieOptions } from "@/lib/server/order-cookie";
 import { getServices } from "@/lib/server/services";
 
@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       if (!parsed.success) throw new InvalidInput(issuesOf(parsed.error));
       const { response, accessToken } = await getServices().orders.createOrder(
         parsed.data,
-        originOf(req),
       );
       const res = NextResponse.json(response, {
         status: 201,

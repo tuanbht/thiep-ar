@@ -18,7 +18,6 @@ const { POST: createOrder } = await import("../orders/route");
 const { GET: getOrder } = await import("../orders/[orderId]/route");
 const { POST: pay } = await import("../orders/[orderId]/pay/route");
 const { POST: upload } = await import("../uploads/route");
-const { POST: sendEvent } = await import("../events/route");
 
 const SITE = "http://localhost:3000";
 let ip = 0;
@@ -26,11 +25,8 @@ let ip = 0;
 let me = "";
 beforeEach(() => {
   me = `10.0.0.${++ip}`;
-  const s = makeService();
-  kit.orders = s.orders;
-  repo = s.repo;
+  kit.orders = makeService().orders;
 });
-let repo: ReturnType<typeof makeService>["repo"];
 
 function request(
   path: string,
@@ -96,7 +92,6 @@ describe("POST /api/orders", () => {
     );
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("Tiêu đề chưa hợp lệ.");
-    expect(repo.events).toHaveLength(0);
   });
 
   it("refuses a body that is not JSON, or too large", async () => {
@@ -295,91 +290,5 @@ describe("POST /api/uploads", () => {
       }),
     );
     expect(res.status).toBe(413);
-  });
-});
-
-describe("POST /api/events", () => {
-  it("keeps an event with its gift, user agent and referrer (its origin only)", async () => {
-    const { body, cookie } = await placeOrder();
-    await pay(
-      request(`/api/orders/${body.orderId}/pay`, { cookie }),
-      params(body.orderId),
-    );
-    const slug = (await repo.getGiftCard(
-      (await repo.getOrder(body.orderId))!.giftCardId,
-    ))!.slug;
-    const res = await sendEvent(
-      request("/api/events", {
-        json: {
-          name: "card_found",
-          giftSlug: slug,
-          sessionId: "session-0001",
-          props: { chapter: 0 },
-        },
-        headers: {
-          "user-agent": "Mozilla/5.0 (iPhone)",
-          referer: `${SITE}/g/${slug}?token=secret`,
-        },
-      }),
-    );
-    expect(res.status).toBe(204);
-    expect(repo.events.at(-1)).toMatchObject({
-      name: "card_found",
-      sessionId: "session-0001",
-      giftCardId: expect.any(String),
-      props: { chapter: 0 },
-      userAgent: "Mozilla/5.0 (iPhone)",
-      referrer: new URL(SITE).origin,
-    });
-  });
-
-  it("refuses an event name it does not know, and too many props", async () => {
-    expect(
-      (
-        await sendEvent(
-          request("/api/events", { json: { name: "drop_table" } }),
-        )
-      ).status,
-    ).toBe(400);
-    const props = Object.fromEntries(
-      Array.from({ length: 21 }, (_, i) => [`k${i}`, i]),
-    );
-    expect(
-      (
-        await sendEvent(
-          request("/api/events", { json: { name: "product_view", props } }),
-        )
-      ).status,
-    ).toBe(400);
-  });
-
-  it("keeps an event for a link that is not a gift, without a gift", async () => {
-    expect(
-      (
-        await sendEvent(
-          request("/api/events", {
-            json: { name: "ar_start", giftSlug: "nonexistent" },
-          }),
-        )
-      ).status,
-    ).toBe(204);
-    expect(repo.events.at(-1)).toMatchObject({
-      name: "ar_start",
-      giftCardId: null,
-    });
-  });
-
-  it("refuses the events only the server records, so nobody can post a fake sale", async () => {
-    for (const name of [
-      "order_paid",
-      "order_created",
-      "payment_started",
-      "gift_open",
-      "photo_uploaded",
-    ])
-      expect(
-        (await sendEvent(request("/api/events", { json: { name } }))).status,
-        name,
-      ).toBe(400);
   });
 });

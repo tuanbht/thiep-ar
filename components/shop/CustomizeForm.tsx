@@ -237,6 +237,7 @@ export function CustomizeForm({
         };
         if (!res.ok || !json.checkoutUrl)
           throw new Error(json.error || S.product.orderFailed);
+        track({ name: "order_created", productId: product.id });
         if (json.orderId) draft.ordered(json.orderId);
         setLeaving(true);
         router.push(json.checkoutUrl);

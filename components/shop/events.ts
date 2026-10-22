@@ -1,31 +1,32 @@
-/* Counting what visitors do (POST /api/events), from the browser. Best effort by design: a lost event must never
-   get in the way of writing, paying or opening a card, so failures are dropped on purpose. */
-import type { EventRequest } from "@/lib/api/dto";
+/* Counting what visitors do, in Google Analytics (lib/analytics/ga.ts). Best effort by design: a lost event must
+   never get in the way of writing, paying or opening a card, so nothing here throws. */
+import {
+  gaId,
+  track as send,
+  type GaEventName,
+  type GaParams,
+} from "@/lib/analytics/ga";
 
-const KEY = "gc_session";
-
-/** One id per browser tab session, so a visit's events can be told apart without knowing who it is. */
-export function sessionId(): string {
-  try {
-    const have = sessionStorage.getItem(KEY);
-    if (have) return have;
-    const id = crypto.randomUUID();
-    sessionStorage.setItem(KEY, id);
-    return id;
-  } catch {
-    return "no-storage";
-  }
+export interface ShopEvent {
+  name: GaEventName;
+  productId?: string;
+  props?: GaParams;
 }
 
-export function track(event: Omit<EventRequest, "sessionId">): void {
+export function track({ name, productId, props }: ShopEvent): void {
+  send(name, productId ? { ...props, product_id: productId } : { ...props });
+}
+
+/** once in this browser for this key: an order's payment, seen again on a reload, is still one payment. Without
+    Google Analytics nothing is sent, so nothing is marked as sent either. */
+export function trackOnce(key: string, event: ShopEvent): void {
+  if (!gaId()) return;
+  const k = `gc_counted:${key}`;
   try {
-    fetch("/api/events", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...event, sessionId: sessionId() }),
-      keepalive: true,
-    }).catch(() => undefined);
+    if (localStorage.getItem(k)) return;
+    localStorage.setItem(k, "1");
   } catch {
-    /* no fetch (an old browser): nothing to count with */
+    /* no storage: count it anyway */
   }
+  track(event);
 }

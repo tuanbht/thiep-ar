@@ -23,10 +23,7 @@ const parse = (o: Record<string, unknown> = {}) =>
 
 async function bought(over: Parameters<typeof makeService>[0] = {}) {
   const kit = makeService(over);
-  const { response, accessToken } = await kit.orders.createOrder(
-    parse(),
-    ORIGIN,
-  );
+  const { response, accessToken } = await kit.orders.createOrder(parse());
   return { ...kit, ...response, accessToken };
 }
 
@@ -63,7 +60,6 @@ describe("OrdersService: buying a card", () => {
       "Nhân ngày 20/10, anh muốn nói...",
       "Yêu em.",
     ]);
-    expect(repo.events.map((e) => e.name)).toEqual(["order_created"]);
   });
 
   it("keeps the buyer's contact", async () => {
@@ -76,7 +72,6 @@ describe("OrdersService: buying a card", () => {
           phone: "0901 234 567",
         },
       }),
-      ORIGIN,
     );
     expect((await repo.getOrder(response.orderId))!.buyer).toEqual({
       name: "Tuấn",
@@ -88,14 +83,14 @@ describe("OrdersService: buying a card", () => {
   it("refuses a product that is not for sale, or whose template is gone", async () => {
     const { orders } = makeService();
     await expect(
-      orders.createOrder(parse({ productId: "retired" }), ORIGIN),
+      orders.createOrder(parse({ productId: "retired" })),
     ).rejects.toThrow(NotFound);
     await expect(
-      orders.createOrder(parse({ productId: "nope" }), ORIGIN),
+      orders.createOrder(parse({ productId: "nope" })),
     ).rejects.toThrow(NotFound);
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     await expect(
-      orders.createOrder(parse({ productId: "ghost" }), ORIGIN),
+      orders.createOrder(parse({ productId: "ghost" })),
     ).rejects.toThrow(NotFound);
     log.mockRestore();
   });
@@ -105,7 +100,6 @@ describe("OrdersService: buying a card", () => {
     await expect(
       orders.createOrder(
         parse({ content: { ...flowerOrder().content, slots: { sign0: "x" } } }),
-        ORIGIN,
       ),
     ).rejects.toThrow(InvalidInput);
   });
@@ -119,9 +113,9 @@ describe("OrdersService: buying a card", () => {
       return real(g);
     };
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await expect(kit.orders.createOrder(parse(), ORIGIN)).resolves.toBeTruthy();
+    await expect(kit.orders.createOrder(parse())).resolves.toBeTruthy();
     clashes = 99;
-    await expect(kit.orders.createOrder(parse(), ORIGIN)).rejects.toThrow(
+    await expect(kit.orders.createOrder(parse())).rejects.toThrow(
       UniqueViolation,
     );
     warn.mockRestore();
@@ -134,7 +128,7 @@ describe("OrdersService: buying a card", () => {
       calls++;
       throw new RepositoryError("the database is down");
     };
-    await expect(kit.orders.createOrder(parse(), ORIGIN)).rejects.toThrow(
+    await expect(kit.orders.createOrder(parse())).rejects.toThrow(
       "the database is down",
     );
     expect(calls).toBe(1);
@@ -192,11 +186,7 @@ describe("OrdersService: the order and paying it", () => {
     ))!;
     expect(gift.status).toBe("active");
     expect(view.giftUrl).toBe(`${ORIGIN}/g/${gift.slug}`);
-    expect(repo.events.map((e) => e.name)).toEqual([
-      "order_created",
-      "payment_started",
-      "order_paid",
-    ]);
+    expect(repo.paymentsOf(orderId)).toHaveLength(1);
   });
 
   it("puts the configured site address in the link, not the request's", async () => {
@@ -216,7 +206,7 @@ describe("OrdersService: the order and paying it", () => {
     expect(await orders.startPayment(orderId, accessToken, ORIGIN)).toEqual({
       redirect: `/orders/${orderId}`,
     });
-    expect(repo.events.filter((e) => e.name === "order_paid")).toHaveLength(1);
+    expect(repo.paymentsOf(orderId)).toHaveLength(1);
   });
 
   it("a provider confirming twice (a retried callback) counts once", async () => {
@@ -231,7 +221,7 @@ describe("OrdersService: the order and paying it", () => {
     };
     expect((await orders.confirmPayment(c)).alreadyPaid).toBe(false);
     expect((await orders.confirmPayment(c)).alreadyPaid).toBe(true);
-    expect(repo.events.filter((e) => e.name === "order_paid")).toHaveLength(1);
+    expect(repo.paymentsOf(orderId)).toHaveLength(1);
     await expect(
       orders.confirmPayment({ ...c, providerRef: "zp_2" }),
     ).rejects.toThrow(StateError);
@@ -331,7 +321,6 @@ describe("OrdersService: the gift", () => {
     });
     const { response, accessToken } = await kit.orders.createOrder(
       parse(flowerOrder()),
-      ORIGIN,
     );
     await kit.orders.startPayment(response.orderId, accessToken, ORIGIN);
     const slug = (await kit.repo.getGiftCard(
@@ -354,7 +343,6 @@ describe("OrdersService: the gift", () => {
     expect(await orders.getGift("short")).toBeNull();
     expect(await orders.getGift("../../etc/x")).toBeNull();
     expect(await orders.getGift("AAAAAAAAAA")).toBeNull();
-    expect(await orders.giftIdBySlug("nope!")).toBeNull();
   });
 
   it("gives each photo as a link that lasts an hour, leaves out one it cannot sign, and still opens", async () => {
@@ -367,7 +355,6 @@ describe("OrdersService: the gift", () => {
     const content = { ...flowerOrder().content, photoPaths: [a, b] };
     const { response, accessToken } = await kit.orders.createOrder(
       parse({ content }),
-      ORIGIN,
     );
     await kit.orders.startPayment(response.orderId, accessToken, ORIGIN);
     const slug = (await kit.repo.getGiftCard(
@@ -407,25 +394,20 @@ describe("OrdersService: the gift", () => {
     await expect(
       kit.orders.createOrder(
         parse({ content: { ...flowerOrder().content, photoPaths: [a, b] } }),
-        ORIGIN,
       ),
     ).rejects.toThrow(InvalidInput);
   });
 });
 
-describe("OrdersService: photos and events", () => {
+describe("OrdersService: photos", () => {
   it("keeps a JPEG, PNG or WebP and answers its path and a preview link", async () => {
-    const { orders, photos, repo } = makeService();
+    const { orders, photos } = makeService();
     const r = await orders.uploadPhoto(PNG);
     expect(r.photoPath).toMatch(/^drafts\/[0-9a-f-]{36}\.png$/);
     expect(r.previewUrl).toBe(
       `https://storage.test/${r.photoPath}?expires=3600`,
     );
     expect(photos.kept.get(r.photoPath)).toEqual(PNG);
-    expect(repo.events.at(-1)).toMatchObject({
-      name: "photo_uploaded",
-      props: { ext: "png", bytes: PNG.byteLength },
-    });
   });
 
   it("refuses what is not a photo, an empty file and a file over 5 MB", async () => {
@@ -439,17 +421,6 @@ describe("OrdersService: photos and events", () => {
     await expect(
       orders.uploadPhoto(new Uint8Array(5 * 1024 * 1024 + 1)),
     ).rejects.toThrow(TooLarge);
-  });
-
-  it("never lets a lost event break a purchase", async () => {
-    const kit = makeService();
-    kit.repo.recordEvent = async () => {
-      throw new RepositoryError("events table is down");
-    };
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    await expect(kit.orders.createOrder(parse(), ORIGIN)).resolves.toBeTruthy();
-    expect(log).toHaveBeenCalled();
-    log.mockRestore();
   });
 });
 
@@ -519,10 +490,9 @@ describe("OrdersService: paying by bank transfer (SePay)", () => {
       paidAt: "2026-10-20T03:05:00.000Z",
     });
     expect(view.giftUrl).toMatch(/\/g\/[A-Za-z0-9]{10}$/);
-    expect(repo.events.at(-1)).toMatchObject({
-      name: "order_paid",
-      props: { provider: "sepay", amountVnd: 49000 },
-    });
+    expect(repo.paymentsOf(orderId)).toMatchObject([
+      { provider: "sepay", amountVnd: 49000 },
+    ]);
   });
 
   it("asks SePay at most every few seconds per order, but at once when its webhook names the order", async () => {

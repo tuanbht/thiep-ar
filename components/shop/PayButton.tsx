@@ -5,6 +5,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { OrderView, PaymentQr } from "@/lib/api/dto";
+import { track } from "./events";
 import { formatVnd } from "./format";
 import { S } from "./strings";
 
@@ -13,9 +14,12 @@ const WAIT_MS = 20 * 60_000;
 
 export function PayButton({
   orderId,
+  productId,
   auto = false,
 }: {
   orderId: string;
+  /** what is being paid for, for the stats */
+  productId?: string;
   auto?: boolean;
 }) {
   const router = useRouter();
@@ -39,19 +43,29 @@ export function PayButton({
         error: string;
       }>;
       if (res.ok && json.qr) {
+        track({
+          name: "payment_started",
+          productId,
+          props: { method: "qr" },
+        });
         setQr(json.qr);
         setBusy(false);
         return;
       }
       if (!res.ok || !json.redirect)
         throw new Error(json.error || S.checkout.payFailed);
+      track({
+        name: "payment_started",
+        productId,
+        props: { method: "redirect" },
+      });
       if (json.redirect.startsWith("/")) router.push(json.redirect);
       else window.location.assign(json.redirect); // a payment gateway's own page
     } catch (e) {
       setError(e instanceof Error ? e.message : S.checkout.payFailed);
       setBusy(false);
     }
-  }, [orderId, router]);
+  }, [orderId, productId, router]);
 
   useEffect(() => {
     if (auto && !started.current) {

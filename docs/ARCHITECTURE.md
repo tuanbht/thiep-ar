@@ -41,7 +41,6 @@ same provider reference (a provider may call back more than once).
 | gift_cards         | the buyer's content (jsonb), slug (unique, unguessable), status draft/active/disabled                                               |
 | orders             | code, amount, status, buyer contact, access token hash, payment provider + ref, paid_at                                             |
 | payments           | every confirmed payment, with the provider's raw payload                                                                            |
-| events             | analytics: name, session, gift/order/product, props jsonb, user agent, referrer, time                                               |
 
 The database does not list the payment providers: `orders.payment_provider` and `payments.provider` take any lowercase
 id (`^[a-z][a-z0-9_]{1,31}$`). Which ones exist is the app's business (`PaymentProviderId`, `PAYMENT_PROVIDER`), so

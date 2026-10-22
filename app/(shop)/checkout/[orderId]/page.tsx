@@ -87,7 +87,11 @@ export default async function CheckoutPage({
                   </Link>
                 </p>
               ) : (
-                <PayButton orderId={view.id} auto={autoPay} />
+                <PayButton
+                  orderId={view.id}
+                  productId={view.product.id}
+                  auto={autoPay}
+                />
               )}
             </div>
           </div>

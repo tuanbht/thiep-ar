@@ -4,10 +4,9 @@
      GET  /api/orders/:id               (cookie)            -> 200 OrderView
      POST /api/orders/:id/pay           (cookie)            -> 200 PayResponse
      POST /api/uploads                  multipart "photo"   -> 201 UploadResponse
-     POST /api/events                   EventRequest        -> 204
    Errors: { error: string } with 400 (bad input), 403 (no access), 404, 409 (wrong state), 413, 429, 503. */
 import { z } from "zod";
-import { CLIENT_EVENT_NAMES, type OrderStatus } from "../domain/types";
+import type { OrderStatus } from "../domain/types";
 
 export const LIMITS = {
   title: 80,
@@ -122,27 +121,6 @@ export interface UploadResponse {
   /** a short-lived link to show the photo in the preview */
   previewUrl: string;
 }
-
-export const eventRequestSchema = z.object({
-  name: z.enum(CLIENT_EVENT_NAMES),
-  sessionId: z
-    .string()
-    .regex(/^[A-Za-z0-9_-]{8,64}$/)
-    .optional(),
-  giftSlug: z.string().max(32).optional(),
-  productId: z
-    .string()
-    .regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i)
-    .optional(),
-  props: z
-    .record(
-      z.string().max(40),
-      z.union([z.string().max(200), z.number(), z.boolean(), z.null()]),
-    )
-    .optional()
-    .refine((p) => !p || Object.keys(p).length <= 20, "at most 20 props"),
-});
-export type EventRequest = z.input<typeof eventRequestSchema>;
 
 export interface ApiError {
   error: string;

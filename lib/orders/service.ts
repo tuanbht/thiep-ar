@@ -22,7 +22,6 @@ import {
   type Repository,
 } from "../db/repository";
 import type {
-  AnalyticsEvent,
   GiftCard,
   Order,
   Product,
@@ -91,7 +90,6 @@ export class OrdersService {
 
   async createOrder(
     req: CreateOrderInput,
-    origin: string,
   ): Promise<{ response: CreateOrderResponse; accessToken: string }> {
     const product = await this.d.repo.getProduct(req.productId);
     if (!product || !product.active)
@@ -135,13 +133,6 @@ export class OrdersService {
         accessTokenHash: sha256Hex(accessToken),
       }),
     );
-    await this.recordEvent({
-      name: "order_created",
-      orderId: order.id,
-      giftCardId: gift.id,
-      productId: product.id,
-      props: { amountVnd: order.amountVnd, origin: safeOrigin(origin) },
-    });
     return {
       response: {
         orderId: order.id,
@@ -229,13 +220,6 @@ export class OrdersService {
     const product = await this.d.repo.getProduct(order.productId);
     if (!product) throw new NotFound("Mẫu thiệp này không còn bán.");
     const provider = this.d.makeProvider((c) => this.confirmPayment(c)); // PaymentUnavailable when none is configured
-    await this.recordEvent({
-      name: "payment_started",
-      orderId: order.id,
-      productId: product.id,
-      giftCardId: order.giftCardId,
-      props: { provider: provider.id },
-    });
     const start = await provider.start(order, product, {
       origin: this.d.siteUrl ?? origin,
     });
@@ -309,18 +293,8 @@ export class OrdersService {
   }
 
   /** the only way an order becomes paid (the test provider at once; SePay when its money is found) */
-  async confirmPayment(c: PaymentConfirmation): Promise<ConfirmedPayment> {
-    const r = await this.d.repo.confirmPayment(c);
-    if (!r.alreadyPaid) {
-      await this.recordEvent({
-        name: "order_paid",
-        orderId: r.order.id,
-        giftCardId: r.giftCard.id,
-        productId: r.order.productId,
-        props: { provider: c.provider, amountVnd: c.amountVnd },
-      });
-    }
-    return r;
+  confirmPayment(c: PaymentConfirmation): Promise<ConfirmedPayment> {
+    return this.d.repo.confirmPayment(c);
   }
 
   /* ── the gift ── */
@@ -378,12 +352,6 @@ export class OrdersService {
     };
   }
 
-  /** the id of an active or draft gift by its link, for events; null for anything else */
-  async giftIdBySlug(slug: string): Promise<string | null> {
-    if (!SLUG_RE.test(slug)) return null;
-    return (await this.d.repo.getGiftCardBySlug(slug))?.id ?? null;
-  }
-
   /* ── photos ── */
 
   async uploadPhoto(bytes: Uint8Array): Promise<UploadResponse> {
@@ -408,32 +376,9 @@ export class OrdersService {
       photoPath,
       PHOTO_LINK_SECONDS,
     );
-    await this.recordEvent({
-      name: "photo_uploaded",
-      props: { ext, bytes: photo.bytes.byteLength },
-    });
     return { photoPath, previewUrl };
   }
-
-  /* ── stats ── */
-
-  /** keeps an event; a failure is logged, never passed on (a lost event must not break a purchase) */
-  async recordEvent(e: AnalyticsEvent): Promise<void> {
-    try {
-      await this.d.repo.recordEvent(e);
-    } catch (err) {
-      console.error(`[orders] event ${e.name} was not recorded`, err);
-    }
-  }
 }
-
-const safeOrigin = (o: string) => {
-  try {
-    return new URL(o).origin;
-  } catch {
-    return null;
-  }
-};
 
 /** A gateway link the buyer may be sent to: https, on one of the provider's own hosts (never wherever a response said). */
 export function isGatewayUrl(url: string, hosts: readonly string[]): boolean {

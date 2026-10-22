@@ -35,7 +35,7 @@ and who owns which code.
 
 ## Data (Supabase)
 
-`supabase/migrations/` creates `products`, `gift_cards`, `orders`, `payments` and `events` (analytics), the private
+`supabase/migrations/` creates `products`, `gift_cards`, `orders` and `payments`, the private
 `gift-photos` bucket, and `confirm_order_payment`, the one function that marks an order paid, activates its gift card
 and records the payment in one transaction (and safely ignores a repeated callback). Row level security is on with no
 policies: only the server, with the secret key, reads or writes. Prices are in `products.price_vnd` (49 000 ₫ each to
@@ -49,16 +49,29 @@ Postgres full-text (`search_products()`): a card's name, tags, categories and bl
 (`unaccent`, so "tinh yeu" finds "Tình yêu") into an indexed `products.search` that triggers keep fresh; every word
 typed must begin a word of the card, the name counts most, and the words exactly as typed rank first.
 
-Events (`events` table) count the funnel and the gift's use. Browsers may report `product_view`, `customize_start`,
-`preview_open`, `checkout_start`, `ar_start`, `card_found`, `chapter_reached`, `letter_open` and `preview_mode`; only the
-server records `photo_uploaded`, `order_created`, `payment_started`, `order_paid` and `gift_open`, so nobody can post a
-fake sale. Referrers are kept as their origin only (a path may be a private gift or order link).
-
 Abandoned purchases are swept nightly: `GET /api/cron/cleanup` (with `Authorization: Bearer $CRON_SECRET`; `vercel.json`
 schedules it at 03:00 Vietnam time) deletes pending orders and draft cards older than a day, their photos, and photos
 uploaded for cards that were never ordered. Paid cards are never touched. Before rolling the app back to a build from
 before photo lists (a card's `photoPaths`), switch the cron off: that build reads only `photoPath`, so it would take
 the photos of cards kept as lists, paid ones too, for unused.
+
+## Analytics (Google Analytics 4)
+
+What visitors do is counted by Google Analytics, from the browser (`lib/analytics/ga.ts`, loaded by
+`components/analytics/GoogleAnalytics.tsx` in the root layout). Set `NEXT_PUBLIC_GA_ID` to the web stream's
+measurement ID (`G-…`); without it nothing loads and nothing is sent.
+
+- **Page views** are sent by the app, one per address reached. In GA, turn off Admin > Data streams > the web stream >
+  Enhanced measurement > Page views > "Page changes based on browser history events", or every navigation counts twice.
+- **Events:** `product_view`, `preview_open`, `customize_start`, `photo_uploaded`, `checkout_start`, `order_created`,
+  `payment_started`, `order_paid` (once per order in a browser, with `value` and `currency`), and on the gift
+  `gift_open`, `ar_start`, `card_found`, `chapter_reached`, `letter_open`, `preview_mode`. Each carries `product_id`
+  where there is one. Mark `order_paid` as a key event to see sales in GA's reports.
+- **Private links never reach Google:** a gift's slug and an order's id are cut out of every address GA sees
+  (`/g/[slug]`, `/orders/[orderId]`, `/checkout/[orderId]`), with a private page's title; queries keep only the shelf's
+  search (`q`, `c`) and campaign tags (`utm_*`, `gclid`); another site's address keeps its origin only.
+- GA is a browser's count, best effort and blockable: the `orders` and `payments` tables stay the record of what was
+  sold.
 
 ## Payments
 

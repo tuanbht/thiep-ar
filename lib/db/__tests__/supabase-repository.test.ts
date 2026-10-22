@@ -36,7 +36,6 @@ describe.skipIf(!configured)("Supabase", () => {
   const products = testProducts(run),
     categories = testCategories(run);
   const db = configured ? createAdminClient() : null!;
-  const sessions = new Set<string>(); // the events this run recorded, to delete afterwards
 
   repositoryContract("SupabaseRepository", async () => {
     const all = [products.first, products.second, products.hidden];
@@ -82,15 +81,6 @@ describe.skipIf(!configured)("Supabase", () => {
           .update({ status })
           .eq("id", orderId);
         if (e) throw new Error(e.message);
-      },
-      async countEvents(sessionId: string) {
-        sessions.add(sessionId);
-        const { count, error: e } = await db
-          .from("events")
-          .select("id", { count: "exact", head: true })
-          .eq("session_id", sessionId);
-        if (e) throw new Error(e.message);
-        return count ?? 0;
       },
     };
   });
@@ -192,13 +182,7 @@ describe.skipIf(!configured)("Supabase", () => {
       .select("id, gift_card_id")
       .in("product_id", ids);
     const orderIds = (orders ?? []).map((o) => o.id);
-    if (sessions.size)
-      await db
-        .from("events")
-        .delete()
-        .in("session_id", [...sessions]);
     if (orderIds.length) {
-      await db.from("events").delete().in("order_id", orderIds);
       await db.from("payments").delete().in("order_id", orderIds);
       await db.from("orders").delete().in("id", orderIds);
     }
@@ -208,7 +192,6 @@ describe.skipIf(!configured)("Supabase", () => {
       .in("product_id", ids);
     const giftIds = (gifts ?? []).map((g) => g.id);
     if (giftIds.length) {
-      await db.from("events").delete().in("gift_card_id", giftIds);
       await db.from("gift_cards").delete().in("id", giftIds);
     }
     await db.from("products").delete().in("id", ids); // their category links go with them

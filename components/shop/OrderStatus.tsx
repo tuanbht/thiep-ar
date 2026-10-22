@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { OrderView } from "@/lib/api/dto";
 import { releaseDraft } from "./draftStore";
+import { trackOnce } from "./events";
 import { formatDateTime, formatVnd } from "./format";
 import { GiftLink } from "./GiftLink";
 import { S } from "./strings";
@@ -18,8 +19,14 @@ export function OrderStatus({ initial }: { initial: OrderView }) {
   const [round, setRound] = useState(0); // "check again" starts another two minutes of asking
 
   useEffect(() => {
-    if (view.status === "paid") releaseDraft(view.product.id, view.id);
-  }, [view.status, view.product.id, view.id]);
+    if (view.status !== "paid") return;
+    releaseDraft(view.product.id, view.id);
+    trackOnce(`paid:${view.id}`, {
+      name: "order_paid",
+      productId: view.product.id,
+      props: { value: view.amountVnd, currency: "VND" },
+    });
+  }, [view.status, view.product.id, view.id, view.amountVnd]);
 
   useEffect(() => {
     if (view.status !== "pending") return;

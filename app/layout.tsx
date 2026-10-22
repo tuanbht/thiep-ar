@@ -4,6 +4,7 @@ import { S } from "@/components/shop/strings";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 const barlow = Barlow_Condensed({
   weight: ["500", "700", "800"],
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         <Analytics />
         <SpeedInsights />
+        <GoogleAnalytics />
         {children}
       </body>
     </html>

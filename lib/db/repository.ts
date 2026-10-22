@@ -2,7 +2,6 @@
    production (lib/db/supabase-repository.ts), memory in tests (lib/db/memory-repository.ts). Every method throws
    RepositoryError on a storage failure; "not found" is null, never an error. */
 import type {
-  AnalyticsEvent,
   Buyer,
   GiftCard,
   GiftContent,
@@ -91,6 +90,4 @@ export interface Repository {
   /** atomically: the order becomes paid, its gift card active, and the payment is recorded. Idempotent for the same
       provider reference; StateError if the order is not pending (or paid by another payment) or the amount differs. */
   confirmPayment(input: PaymentConfirmation): Promise<ConfirmedPayment>;
-
-  recordEvent(event: AnalyticsEvent): Promise<void>;
 }

@@ -1,6 +1,7 @@
 /* The whole MVP workflow in a real browser: a buyer writes a flower-letter card, buys it, pays (test provider), gets the
    gift link; the recipient opens it on a phone whose camera films the printed card, plays every stop and reads the
-   letter. Then the database is checked: the order paid, the gift active, the events counted. Needs `pnpm db:start`. */
+   letter. Then the database is checked: the order paid, the gift active. Needs `pnpm db:start`. (What visitors do is
+   counted by Google Analytics, which this test leaves out: lib/analytics/ga.ts has its own tests.) */
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import { createClient } from "@supabase/supabase-js";
@@ -124,29 +125,6 @@ test("a buyer writes a card, pays, and the recipient opens it with the camera", 
   expect((card!.content as { letter: { from: string } }).letter.from).toBe(
     `Yêu em. ${mark}`,
   );
-  const counted = [
-    "order_created",
-    "payment_started",
-    "order_paid",
-    "gift_open",
-    "ar_start",
-    "card_found",
-    "letter_open",
-  ];
-  await expect
-    .poll(
-      async () => {
-        // the player posts its events as they happen: give the last a moment
-        const { data } = await db
-          .from("events")
-          .select("name")
-          .or(`order_id.eq.${orderId},gift_card_id.eq.${order!.gift_card_id}`);
-        const names = new Set((data ?? []).map((e) => e.name));
-        return counted.filter((n) => !names.has(n));
-      },
-      { timeout: 15_000 },
-    )
-    .toEqual([]);
 });
 
 test("an unpaid gift cannot be opened", async ({ page, request }) => {

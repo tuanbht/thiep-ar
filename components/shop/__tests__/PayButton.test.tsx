@@ -23,14 +23,23 @@ const QR = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status });
 
+/** the events sent to Google Analytics */
+const counted = () =>
+  ((window as { dataLayer?: IArguments[] }).dataLayer ?? [])
+    .map((a) => Array.from(a))
+    .filter((c) => c[0] === "event");
+
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   push.mockReset();
+  delete (window as { dataLayer?: unknown }).dataLayer;
+  vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST123");
 });
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("PayButton", () => {
@@ -44,8 +53,15 @@ describe("PayButton", () => {
           : json({ id: "o1", status: paid ? "paid" : "pending" }),
       ),
     );
-    render(<PayButton orderId="o1" auto />);
+    render(<PayButton orderId="o1" productId="mochi" auto />);
     expect(await screen.findByTestId("qr-payment")).toBeTruthy();
+    expect(counted()).toEqual([
+      [
+        "event",
+        "payment_started",
+        expect.objectContaining({ product_id: "mochi", method: "qr" }),
+      ],
+    ]);
     expect(
       screen
         .getByRole("img", { name: "Mã QR chuyển khoản cho đơn này" })
@@ -74,6 +90,9 @@ describe("PayButton", () => {
       fireEvent.click(screen.getByRole("button", { name: /Thanh toán/ }));
     });
     expect(push).toHaveBeenCalledWith("/orders/o1");
+    expect(counted().map((c) => [c[1], c[2].method])).toEqual([
+      ["payment_started", "redirect"],
+    ]);
   });
 
   it("says why when paying cannot start", async () => {
@@ -88,5 +107,6 @@ describe("PayButton", () => {
     expect((await screen.findByRole("alert")).textContent).toBe(
       "Thanh toán đang tạm ngưng.",
     );
+    expect(counted()).toEqual([]); // nothing started, nothing counted
   });
 });

@@ -37,32 +37,6 @@ export type Database = {
                   Relationships: [
                     
                   ]
-                },"events": {
-                  Row: {
-                    "gift_card_id": string | null,"id": number,"name": string,"occurred_at": string,"order_id": string | null,"product_id": string | null,"props": NonNullable<Json>,"referrer": string | null,"session_id": string | null,"user_agent": string | null
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "gift_card_id"?: string | null,"id"?: never,"name": string,"occurred_at"?: string,"order_id"?: string | null,"product_id"?: string | null,"props"?: NonNullable<Json>,"referrer"?: string | null,"session_id"?: string | null,"user_agent"?: string | null
-                  }
-                  Update: {
-                    "gift_card_id"?: string | null,"id"?: never,"name"?: string,"occurred_at"?: string,"order_id"?: string | null,"product_id"?: string | null,"props"?: NonNullable<Json>,"referrer"?: string | null,"session_id"?: string | null,"user_agent"?: string | null
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "events_gift_card_id_fkey"
-      columns: ["gift_card_id"]
-isOneToOne: false
-      referencedRelation: "gift_cards"
-      referencedColumns: ["id"]
-    },{
-      foreignKeyName: "events_order_id_fkey"
-      columns: ["order_id"]
-isOneToOne: false
-      referencedRelation: "orders"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"gift_cards": {
                   Row: {
                     "activated_at": string | null,"content": NonNullable<Json>,"created_at": string,"design": string | null,"id": string,"product_id": string,"slug": string,"status": Database["public"]['Enums']["gift_status"],"template": string,"updated_at": string

@@ -4,7 +4,6 @@
 import "server-only";
 import { z } from "zod";
 import type {
-  AnalyticsEvent,
   GiftCard,
   GiftContent,
   Order,
@@ -331,19 +330,5 @@ export class SupabaseRepository implements Repository {
       payment: toPayment(r.payment),
       alreadyPaid: !!r.already_paid,
     };
-  }
-
-  async recordEvent(e: AnalyticsEvent): Promise<void> {
-    const { error } = await this.db.from("events").insert({
-      name: e.name,
-      session_id: e.sessionId ?? null,
-      gift_card_id: e.giftCardId ?? null,
-      order_id: e.orderId ?? null,
-      product_id: e.productId ?? null,
-      props: jsonb(e.props ?? {}),
-      user_agent: e.userAgent?.slice(0, 512) ?? null,
-      referrer: e.referrer?.slice(0, 2048) ?? null,
-    });
-    if (error) fail(`event ${e.name}`, error);
   }
 }

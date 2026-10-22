@@ -35,18 +35,17 @@ afterEach(() => {
 });
 
 describe("the player wrappers", () => {
-  it("the gift page counts the player's moments against the gift", () => {
-    const fetch = vi
-      .fn()
-      .mockResolvedValue(new Response(null, { status: 204 }));
-    vi.stubGlobal("fetch", fetch);
-    render(<GiftClient card={card} slug="AbC123xyz0" />);
+  it("the gift page counts its opening and the player's moments against its card, never its link", () => {
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST123");
+    delete (window as { dataLayer?: unknown }).dataLayer;
+    render(<GiftClient card={card} productId="mochi" />);
     fireEvent.click(screen.getByRole("button", { name: "Gửi Hanna" }));
-    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({
-      name: "letter_open",
-      giftSlug: "AbC123xyz0",
-      props: { chapter: 1 },
-    });
+    const sent = (window as { dataLayer?: IArguments[] })
+      .dataLayer!.map((a) => Array.from(a))
+      .filter((c) => c[0] === "event");
+    expect(sent.map((c) => c[1])).toEqual(["gift_open", "letter_open"]);
+    expect(sent[1][2]).toMatchObject({ product_id: "mochi", chapter: 1 });
+    vi.unstubAllEnvs();
   });
 
   it("the preview frames the live player with its label", () => {

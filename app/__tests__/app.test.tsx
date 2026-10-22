@@ -2,19 +2,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const getGift = vi.fn(),
-  recordEvent = vi.fn();
-const later: Array<() => Promise<void>> = [];
+const getGift = vi.fn();
 vi.mock("@/lib/server/services", () => ({
-  getServices: () => ({ orders: { getGift, recordEvent } }),
-}));
-vi.mock("next/headers", () => ({
-  headers: async () => new Headers({ "user-agent": "phone", referer: "zalo" }),
-}));
-vi.mock("next/server", () => ({
-  after: (fn: () => Promise<void>) => {
-    later.push(fn);
-  },
+  getServices: () => ({ orders: { getGift } }),
 }));
 vi.mock("next/navigation", () => ({
   notFound: () => {
@@ -31,9 +21,9 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 vi.mock("@/components/shop/GiftClient", () => ({
-  GiftClient: ({ slug, card }: { slug: string; card: { title: string } }) => (
+  GiftClient: (p: { card: { title: string }; productId: string }) => (
     <p data-testid="gift">
-      {slug}:{card.title}
+      {p.productId}:{p.card.title}:{Object.keys(p).sort().join(",")}
     </p>
   ),
 }));
@@ -41,7 +31,6 @@ vi.mock("@/components/shop/GiftClient", () => ({
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-  later.length = 0;
 });
 
 const params = (slug: string) =>
@@ -51,7 +40,7 @@ const params = (slug: string) =>
   }) as PageProps<"/g/[slug]">;
 
 describe("the gift page", () => {
-  it("plays an active gift and counts its opening after the response", async () => {
+  it("plays an active gift, handing the player its card and product but never its link", async () => {
     const { default: GiftPage, generateMetadata } =
       await import("../g/[slug]/page");
     getGift.mockResolvedValue({
@@ -60,15 +49,9 @@ describe("the gift page", () => {
       card: { title: "Gửi Hanna" },
     });
     render(await GiftPage(params("AbC123xyz0")));
-    expect(screen.getByTestId("gift").textContent).toBe("AbC123xyz0:Gửi Hanna");
-    await Promise.all(later.map((f) => f()));
-    expect(recordEvent).toHaveBeenCalledWith({
-      name: "gift_open",
-      giftCardId: "g1",
-      productId: "mochi",
-      userAgent: "phone",
-      referrer: "zalo",
-    });
+    expect(screen.getByTestId("gift").textContent).toBe(
+      "mochi:Gửi Hanna:card,productId",
+    );
     expect(await generateMetadata(params("AbC123xyz0"))).toMatchObject({
       title: "Gửi Hanna",
       robots: { index: false },
@@ -113,7 +96,7 @@ describe("the gift page", () => {
     expect(meta.robots).toMatchObject({ index: false });
   });
 
-  it("is not found for a malformed slug or a gift that is not paid, and a failed count is only logged", async () => {
+  it("is not found for a malformed slug or a gift that is not paid", async () => {
     const { default: GiftPage } = await import("../g/[slug]/page");
     await expect(GiftPage(params("../etc"))).rejects.toThrow("NEXT_NOT_FOUND");
     expect(getGift).not.toHaveBeenCalled();
@@ -121,16 +104,6 @@ describe("the gift page", () => {
     await expect(GiftPage(params("Nope000000"))).rejects.toThrow(
       "NEXT_NOT_FOUND",
     );
-    getGift.mockResolvedValue({
-      giftCard: { id: "g1" },
-      product: { id: "mochi" },
-      card: { title: "x" },
-    });
-    recordEvent.mockRejectedValue(new Error("db down"));
-    const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    await GiftPage(params("AbC123xyz1"));
-    await Promise.all(later.map((f) => f()));
-    expect(err).toHaveBeenCalled();
   });
 });
 

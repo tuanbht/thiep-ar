@@ -141,6 +141,32 @@ describe("OrderStatus", () => {
     expect(localStorage.getItem("gc:draft:mochi")).toBeNull();
   });
 
+  it("counts a paid order once in this browser, however often it is opened", () => {
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST123");
+    delete (window as { dataLayer?: unknown }).dataLayer;
+    localStorage.clear();
+    const paid = view({ status: "paid", paidAt: "2026-10-16T03:05:00Z" });
+    render(<OrderStatus initial={view()} />).unmount(); // still waiting: nothing yet
+    render(<OrderStatus initial={paid} />).unmount();
+    render(<OrderStatus initial={paid} />).unmount(); // a reload
+    const sent = ((window as { dataLayer?: IArguments[] }).dataLayer ?? [])
+      .map((a) => Array.from(a))
+      .filter((c) => c[0] === "event");
+    expect(sent).toEqual([
+      [
+        "event",
+        "order_paid",
+        expect.objectContaining({
+          product_id: "mochi",
+          value: paid.amountVnd,
+          currency: "VND",
+        }),
+      ],
+    ]);
+    expect(JSON.stringify(sent)).not.toContain(paid.id); // never the order's own id
+    vi.unstubAllEnvs();
+  });
+
   it("shows the gift link, its QR code and how to send it once paid", async () => {
     render(
       <OrderStatus

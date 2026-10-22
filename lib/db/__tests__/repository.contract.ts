@@ -19,8 +19,6 @@ export interface RepoFixture {
   categories: { main: Category; spare: Category };
   /** test only: put an order into a status the Repository itself never sets (e.g. cancelled) */
   setOrderStatus(orderId: string, status: OrderStatus): Promise<void>;
-  /** test only: how many events were recorded for this session id */
-  countEvents(sessionId: string): Promise<number>;
 }
 
 /** Ids unique to one test run, so runs against a shared database never collide. */
@@ -395,23 +393,6 @@ export function repositoryContract(
       await confirm(a.order.id, ref);
       await expect(confirm(b.order.id, ref)).rejects.toBeInstanceOf(StateError);
       expect((await b.repo.getOrder(b.order.id))?.status).toBe("pending");
-    });
-
-    it("records events", async () => {
-      const { repo, gift, order } = await bought();
-      const session = `s-${slug()}`;
-      await repo.recordEvent({
-        name: "gift_open",
-        sessionId: session,
-        giftCardId: gift.id,
-        orderId: order.id,
-        productId: order.productId,
-        props: { mode: "ar", chapters: 2, framed: false, ref: null },
-        userAgent: "test",
-        referrer: null,
-      });
-      await repo.recordEvent({ name: "ar_start", sessionId: session });
-      expect(await fx.countEvents(session)).toBe(2);
     });
   });
 }

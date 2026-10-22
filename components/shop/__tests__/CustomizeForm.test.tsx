@@ -68,6 +68,8 @@ beforeEach(() => {
   desktop = true;
   push.mockReset();
   localStorage.clear();
+  delete (window as { dataLayer?: unknown }).dataLayer;
+  vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST123");
   vi.stubGlobal("matchMedia", (q: string) => ({
     matches: desktop,
     media: q,
@@ -78,8 +80,16 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   vi.useRealTimers();
 });
+
+/** the events sent to Google Analytics, by name */
+const counted = () =>
+  ((window as { dataLayer?: IArguments[] }).dataLayer ?? [])
+    .map((a) => Array.from(a))
+    .filter((c) => c[0] === "event")
+    .map((c) => c[1]);
 
 const calls = (fetch: ReturnType<typeof vi.fn>, url: string) =>
   fetch.mock.calls.filter((c) => c[0] === url);
@@ -98,10 +108,7 @@ describe("CustomizeForm", () => {
       target: { value: "Chúc mừng 20/10" },
     });
     expect(screen.getByTestId("preview").textContent).toBe("Chúc mừng 20/10");
-    const names = calls(fetch, "/api/events").map(
-      (c) => JSON.parse(c[1].body).name,
-    );
-    expect(names).toEqual(
+    expect(counted()).toEqual(
       expect.arrayContaining([
         "product_view",
         "preview_open",
@@ -165,6 +172,9 @@ describe("CustomizeForm", () => {
       },
     });
     expect(body).not.toHaveProperty("buyer"); // the shop no longer asks who is sending it
+    expect(counted()).toEqual(
+      expect.arrayContaining(["checkout_start", "order_created"]),
+    );
     expect(
       screen
         .getByRole("button", { name: /Đang tạo đơn/ })
@@ -196,6 +206,7 @@ describe("CustomizeForm", () => {
       ),
     ).toBe("alert");
     expect(push).not.toHaveBeenCalled();
+    expect(counted()).not.toContain("order_created"); // a refused order is no order
     expect(
       screen
         .getByRole("button", { name: /Mua thiệp/ })

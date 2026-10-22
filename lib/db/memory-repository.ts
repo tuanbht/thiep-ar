@@ -2,7 +2,6 @@
    (unique slugs and codes, confirmPayment atomic and idempotent); every value handed out is a copy. */
 import { randomUUID } from "node:crypto";
 import type {
-  AnalyticsEvent,
   Category,
   GiftCard,
   Order,
@@ -31,7 +30,6 @@ export class MemoryRepository implements Repository {
   private readonly gifts = new Map<string, GiftCard>();
   private readonly orders = new Map<string, Order>();
   private readonly payments: Payment[] = [];
-  readonly events: AnalyticsEvent[] = [];
 
   constructor(
     products: Product[] = [],
@@ -218,7 +216,8 @@ export class MemoryRepository implements Repository {
     };
   }
 
-  async recordEvent(event: AnalyticsEvent): Promise<void> {
-    this.events.push(copy(event));
+  /** for the tests: the payments recorded for an order */
+  paymentsOf(orderId: string): Payment[] {
+    return this.payments.filter((p) => p.orderId === orderId).map(copy);
   }
 }

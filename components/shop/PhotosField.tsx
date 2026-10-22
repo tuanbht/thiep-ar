@@ -5,6 +5,7 @@
    shows it again on Back). Under the photos: how this card uses them. */
 import { useEffect, useId, useRef, useState } from "react";
 import { LIMITS, type UploadResponse } from "@/lib/api/dto";
+import { track } from "./events";
 import { S } from "./strings";
 
 const TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -84,6 +85,7 @@ export function PhotosField({
         .catch(() => ({}))) as Partial<UploadResponse> & { error?: string };
       if (!res.ok || !json.photoPath)
         throw new Error(json.error || S.product.photoFailed);
+      track({ name: "photo_uploaded" });
       const path = json.photoPath;
       onChange((prev) =>
         prev.map((p) => (p.id === item.id ? { ...p, path } : p)),

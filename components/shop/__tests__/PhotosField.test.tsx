@@ -72,6 +72,8 @@ afterEach(() => {
 describe("PhotosField", () => {
   it("takes several photos at once, shows each at once and keeps where each was stored", async () => {
     vi.stubGlobal("fetch", answer());
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST123");
+    delete (window as { dataLayer?: unknown }).dataLayer;
     render(<Harness />);
     pick(
       file("a.jpg"),
@@ -84,6 +86,11 @@ describe("PhotosField", () => {
     expect(busy).toHaveBeenLastCalledWith(false);
     expect(new Set(seen.map((p) => p.path)).size).toBe(3);
     expect(screen.getByText(`3/${LIMITS.photos} ảnh`)).toBeTruthy();
+    const counted = ((window as { dataLayer?: IArguments[] }).dataLayer ?? [])
+      .map((a) => Array.from(a))
+      .filter((c) => c[0] === "event" && c[1] === "photo_uploaded");
+    expect(counted).toHaveLength(3); // one for each photo the server kept
+    vi.unstubAllEnvs();
   });
 
   it("names a photo it will not take and keeps the others", async () => {

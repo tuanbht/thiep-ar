@@ -26,7 +26,5 @@ repositoryContract("MemoryRepository", async () => {
       const o = orders.get(orderId);
       if (o) orders.set(orderId, { ...o, status });
     },
-    countEvents: async (sessionId: string) =>
-      repo.events.filter((e) => e.sessionId === sessionId).length,
   };
 });
