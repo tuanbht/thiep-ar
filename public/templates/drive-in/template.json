@@ -1,0 +1,159 @@
+{
+  "name": "Suất Chiếu Đặc Biệt",
+  "kind": "3d",
+  "scene": "../_acts/lovestory.js",
+  "story": [
+    "props.js",
+    "set.js",
+    "car.js",
+    "screen.js",
+    "story.js"
+  ],
+  "height": 0.9,
+  "aspect": 0.625,
+  "chapters": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "reveal": null,
+  "notes": "A drive-in cinema for two at night (docs/cards/drive-in/concept.md), the couple the shared templates/_models/boy.glb and girl.glb (fitted at H .24, her at .945 of it). The lot is set.js: plum gravel with painted bays under a night sky (a crescent moon, a far town), four street lights with string lights between them and a low one across the front, the photo booth on the left with the popcorn stand behind it (menu board with a photo, cotton candy), the gate sign at the back right (SUẤT CHIẾU ĐẶC BIỆT, the film's title on its letter board, a photo beside it), the projector on its podium at the front right, its beam over the car to the screen with dust in it. The big screen is screen.js: 1.25 card widths on a steel frame behind the card's far edge; each photo is drawn once onto a 16:9 canvas (a portrait whole over its own blurred copy), shots move only the texture's UV transform, letterbox bars are meshes, the subtitles and taglines small canvases, grain a tiling noise, and a spot light in front of the screen takes each photo's average colour. screen.js's reel() draws from kit.photoAt and kit.heroPhoto, and a tap on the screen opens the photo on it. The car is car.js (the convertible, the ticket with the first photo on its windshield, the radio, the popcorn box, a dark canvas top with a clear rear window that unfolds). 1 Đèn chiếu bật: the car rolls into the middle bay, the street lights come on, the projector clicks on and the screen counts down 5-4-3-2-1 to a heart; she points, he turns to her. 2 Trailer: SẮP CHIẾU and the title (slot title), four quick cuts of photos with the taglines (tag1-4); the popcorn, his sneaking hand, her slap, a laugh; it ends on the title (CHIẾU NGAY SAU ĐÂY). 3 Phim chính: every photo in turn with slow push-ins, letterbox bars and the subtitles (sub1-3), each photo's colour on the car and on them; she leans on his shoulder, his arm round her. 4 Mưa: rain and thunder, the gravel wet, two puddles showing the screen, the soft top unfolds over them, they look at each other. 5 Giải lao: GIẢI LAO and its clock; they hop out and run to the photo booth (she round the back of the car): four flashes, four poses, the strip of four photos slides out and she holds it up. 6 Còn tiếp…: HẾT turns into the closing words (slot ending) over the first photo in a heart; she tosses the strip up across the booth's front, they run back, stand in the car, she hugs him, the horn beeps, fireworks behind the screen. The main film runs on its own clock from chapter 3 (on through the stops), a photo every 1.6-2 s, so all ten show even when the taps come quickly. Taps: the car (horn, hearts), the popcorn, the projector (a flash and a 3-2-1), the screen and every photo (shown big). Photos on fourteen places and the screen. The props are the Grab3D GLBs in templates/_props, placed by props.js from their extras (its stand-ins only when a model is not listed); the act is templates/_acts/lovestory.js.",
+  "models": {
+    "boy": "../_models/boy.glb",
+    "girl": "../_models/girl.glb",
+    "convertible": "../_props/convertible.glb",
+    "projector": "../_props/film-projector.glb",
+    "light1": "../_props/street-light.glb",
+    "light2": "../_props/street-light.glb",
+    "light3": "../_props/street-light.glb",
+    "light4": "../_props/street-light.glb",
+    "candy": "../_props/cotton-candy.glb",
+    "booth": "../_props/phone-booth.glb",
+    "radio": "../_props/retro-radio.glb"
+  },
+  "credits": [
+    {
+      "model": "Casual Man and Casual Woman (the shared couple, templates/_models)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/characters/"
+    },
+    {
+      "model": "Universal Animation Library",
+      "author": "Quaternius",
+      "license": "CC0 1.0",
+      "url": "https://quaternius.com/"
+    },
+    {
+      "model": "1960s Convertible (templates/_props/convertible.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/vehicles/1960s-convertible/"
+    },
+    {
+      "model": "Old Film Projector (templates/_props/film-projector.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/electronics/film-projector/"
+    },
+    {
+      "model": "Street Light (templates/_props/street-light.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/city/street-light/"
+    },
+    {
+      "model": "Cotton Candy (templates/_props/cotton-candy.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/food/cotton-candy/"
+    },
+    {
+      "model": "Phone Booth, the photo booth (templates/_props/phone-booth.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/city/phone-booth/"
+    },
+    {
+      "model": "Retro Radio (templates/_props/retro-radio.glb)",
+      "author": "Grab3D",
+      "license": "CC0 1.0",
+      "url": "https://grab3d.com/models/electronics/retro-radio/"
+    },
+    {
+      "model": "Vibraphone and Knight upright piano for the music (VCSL)",
+      "author": "Versilian Studios",
+      "license": "CC0 1.0",
+      "url": "https://github.com/sgossner/VCSL"
+    },
+    {
+      "model": "Contrabass for the music (VSCO-2-CE)",
+      "author": "Versilian Studios",
+      "license": "CC0 1.0",
+      "url": "https://github.com/sgossner/VSCO-2-CE"
+    },
+    {
+      "model": "Sound effects",
+      "author": "Joseph Sardin (BigSoundBank)",
+      "license": "CC0 1.0",
+      "url": "https://bigsoundbank.com/licenses.html"
+    },
+    {
+      "model": "Playfair Display (the screen's titles, fonts/)",
+      "author": "Claus Eggers Sørensen",
+      "license": "OFL 1.1",
+      "url": "https://fonts.google.com/specimen/Playfair+Display"
+    }
+  ],
+  "categories": [
+    "love",
+    "couple",
+    "viral-scenes"
+  ],
+  "tags": [
+    "rạp phim ngoài trời",
+    "xem phim",
+    "xe mui trần",
+    "hẹn hò",
+    "bắp rang",
+    "buồng chụp ảnh",
+    "mưa",
+    "pháo hoa",
+    "màn ảnh lớn",
+    "kỷ niệm"
+  ],
+  "photos": 14,
+  "sound": {
+    "music": "sound/drive-in.mp3",
+    "soft": "sound/drive-in-soft.mp3",
+    "volume": 0.5,
+    "loops": {
+      "music": [
+        34.285714,
+        0.026122
+      ],
+      "soft": [
+        34.285714,
+        0.026122
+      ]
+    },
+    "effects": {
+      "projector": "../_sounds/projector.mp3",
+      "beep": "../_sounds/beep.mp3",
+      "car": "../_sounds/car.mp3",
+      "pop": "../_sounds/pop.mp3",
+      "rain": "../_sounds/rain.mp3",
+      "thunder": "../_sounds/thunder.mp3",
+      "softtop": "../_sounds/softtop.mp3",
+      "flash": "../_sounds/flash.mp3",
+      "strip": "../_sounds/strip.mp3",
+      "honk": "../_sounds/honk.mp3",
+      "firework": "../_sounds/firework.mp3",
+      "sparkle": "../_sounds/sparkle.mp3",
+      "shutter": "../_sounds/shutter.mp3"
+    }
+  }
+}

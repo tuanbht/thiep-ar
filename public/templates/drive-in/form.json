@@ -1,0 +1,111 @@
+{
+ "label": "Suất Chiếu Đặc Biệt (3D: rạp phim ngoài trời cho hai người, màn ảnh lớn chiếu ảnh của bạn như một bộ phim)",
+ "preset": {
+  "title": "Suất Chiếu Đặc Biệt",
+  "intro": "Đặt thiệp nằm yên, hướng điện thoại vào thiệp và chờ một chút nhé. Suất chiếu dành riêng cho em sắp bắt đầu.",
+  "to": "Gửi em,",
+  "body": [
+   "Có những bộ phim xem một lần là đủ, nhưng chuyện của hai đứa mình thì anh muốn xem đi xem lại mãi.",
+   "Cảm ơn em đã ngồi cạnh anh qua những cảnh vui, cảnh buồn, cả những cảnh trời đổ mưa. Phần tiếp theo, mình vẫn ngồi chung một xe, xem cùng nhau nhé."
+  ],
+  "from": "Người ngồi ghế bên cạnh em"
+ },
+ "groups": [
+  {
+   "title": "Tên bộ phim",
+   "note": "Tên phim của hai bạn hiện trên biển hiệu ở cổng, trên màn ảnh lúc trailer và trước phim chính. Một cái tên ngắn, đọc lên thấy thương là đẹp nhất.",
+   "rows": [
+    [
+     {
+      "slot": "title",
+      "label": "Tên bộ phim",
+      "value": "Chuyện Hai Đứa Mình",
+      "max": 28
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Trailer: bốn dòng giới thiệu",
+   "note": "Mỗi dòng hiện trên một cảnh cắt nhanh của trailer, đè lên một tấm ảnh của bạn. Viết như lời giới thiệu phim: ngắn, gợi tò mò; dòng dài sẽ tự nhỏ lại.",
+   "rows": [
+    [
+     {
+      "slot": "tag1",
+      "label": "Dòng 1",
+      "value": "Một ngày bình thường…",
+      "max": 32,
+      "narrow": true
+     },
+     {
+      "slot": "tag2",
+      "label": "Dòng 2",
+      "value": "…họ tìm thấy nhau",
+      "max": 32,
+      "narrow": true
+     }
+    ],
+    [
+     {
+      "slot": "tag3",
+      "label": "Dòng 3",
+      "value": "Cùng nhau đi qua mưa nắng",
+      "max": 32,
+      "narrow": true
+     },
+     {
+      "slot": "tag4",
+      "label": "Dòng 4",
+      "value": "Chuyện tình chưa có hồi kết",
+      "max": 32,
+      "narrow": true
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Phim chính: ba dòng phụ đề",
+   "note": "Phụ đề chạy dưới các tấm ảnh trong phim chính, mỗi dòng vài giây, như lời thoại của bộ phim. Mỗi dòng một câu thôi để chữ đủ to.",
+   "rows": [
+    [
+     {
+      "slot": "sub1",
+      "label": "Phụ đề 1",
+      "value": "Cảm ơn em đã đến bên anh.",
+      "max": 44
+     }
+    ],
+    [
+     {
+      "slot": "sub2",
+      "label": "Phụ đề 2",
+      "value": "Mỗi ngày có em là một thước phim đẹp.",
+      "max": 44
+     }
+    ],
+    [
+     {
+      "slot": "sub3",
+      "label": "Phụ đề 3",
+      "value": "Mình xem phim cùng nhau đến già nhé.",
+      "max": 44
+     }
+    ]
+   ]
+  },
+  {
+   "title": "Lời kết trên màn ảnh",
+   "note": "Cuối phim, chữ HẾT đổi thành lời này, dưới ảnh đầu tiên của bạn trong khung trái tim (ảnh đầu tiên cũng in trên vé kẹp kính xe). Ảnh của bạn còn hiện ở biển hiệu cổng, bảng thực đơn, dải ảnh 4 khung, trailer, vũng nước và cả bộ phim trên màn ảnh lớn.",
+   "rows": [
+    [
+     {
+      "slot": "ending",
+      "label": "Lời kết",
+      "value": "Còn tiếp… mãi mãi",
+      "max": 30
+     }
+    ]
+   ]
+  }
+ ]
+}
