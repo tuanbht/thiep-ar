@@ -161,6 +161,10 @@ Any Next.js host (Vercel works as is) plus a Supabase project: `supabase link`, 
 `CRON_SECRET` and, on Vercel, `TRUSTED_IP_HEADER=x-vercel-forwarded-for`. The camera needs HTTPS. Keep
 `ALLOW_TEST_PAYMENTS` off on a real shop.
 
+Search engines find the shop through `/robots.txt` and `/sitemap.xml` (`app/robots.ts`, `app/sitemap.ts`): the shelf,
+the about page and every card on sale with its picture, at `NEXT_PUBLIC_SITE_URL`; gift, order and checkout links are
+never listed. Submit `https://<site>/sitemap.xml` once in Google Search Console.
+
 ## Known limits (MVP)
 
 - Underpaid transfers are not matched (the order waits for the full amount); no refunds from the shop.
