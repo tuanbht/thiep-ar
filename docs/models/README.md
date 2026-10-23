@@ -152,6 +152,30 @@ names, hand slots, `aliases` and `pace` in their extras), for the birthday cards
 - **Rough:** as on the couple (`Walking_Backwards`, `Idle_FoldArms`, the held floor and lying idles), and the kid's
   lying clips, which lie on his backpack.
 
+## Props
+
+Grab3D objects shared by the cards, in `public/templates/_props/`: plain glTF with WebP textures, in metres, +Y up, front
+facing +Z, origin at the bottom centre (the street light: the pole's foot). Each file's scene `extras` carry `name`,
+`size` ([w, h, d] in metres) and named `points` ([x, y, z] in the file's own space) for placing people and effects.
+
+| File                 | What                                     | Size (m)           | Triangles | Points                                                                   |
+| -------------------- | ---------------------------------------- | ------------------ | --------- | ------------------------------------------------------------------------ |
+| `convertible.glb`    | 1960s convertible, left-hand drive       | 1.84 × 1.17 × 4.83 | 16,001    | `seatL`, `seatR`, `dash`, `windshieldTop`, `rear`, `steering`, `topFold` |
+| `film-projector.glb` | Old film projector on a tripod           | 0.76 × 1.59 × 0.80 | 13,792    | `lens`, `beamDir`, `reelFront`, `reelBack`                               |
+| `street-light.glb`   | Street light (rescaled from 8.16 m)      | 0.25 × 5.00 × 1.36 | 5,280     | `lamp`, `lampDown`                                                       |
+| `cotton-candy.glb`   | Cotton candy on a stand                  | 0.16 × 0.33 × 0.16 | 8,384     | `top`                                                                    |
+| `phone-booth.glb`    | Phone booth, red frame (the photo booth) | 1.07 × 2.30 × 1.07 | 7,040     | `door`, `inside`, `curtainTop`, `lamp`                                   |
+| `retro-radio.glb`    | Retro radio                              | 0.30 × 0.43 × 0.14 | 11,672    | `dial`, `speaker`                                                        |
+
+- **The convertible seats the couple** in `Sit_Chair_Idle` with no change: the boy at the wheel with his root at
+  (0.31, 0.126, 0.061), the girl at (−0.31, 0.122, 0.077); the cushion top is at 0.57 m. The clip drops their soles
+  below the 0.22 m sill, which shows only from under about 14° elevation; bending `LeftLeg` / `RightLeg` −55° about
+  local x hides it. It stays at Grab3D's real 4.83 m: at 4.5 m his elbow goes into the door.
+- **Parts that move:** the car's wheels are `wheel_fl` / `wheel_fr` / `wheel_rl` / `wheel_rr` (radius 0.32; turn
+  `rotation.x` by distance / 0.32 to roll forward); the projector's reels are `reel_front` / `reel_back` (turn about
+  local x). The projector's lens and the street light's lamp are emissive and can be switched; the booth's red frame is its
+  own flat material, so it repaints alone.
+
 ## Licences
 
 - **Grab3D Casual Man and Casual Woman: CC0 1.0.** "To the extent possible under law, Grab3D has waived all copyright
@@ -160,6 +184,11 @@ names, hand slots, `aliases` and `pace` in their extras), for the birthday cards
 - **Grab3D Elderly Man, Businessman, Nurse and Child: CC0 1.0** (the same terms). Sources:
   https://grab3d.com/models/characters/elderly-man/, https://grab3d.com/models/characters/businessman/,
   https://grab3d.com/models/characters/nurse/ and https://grab3d.com/models/characters/child/.
+- **Grab3D 1960s Convertible, Old Film Projector, Street Light, Cotton Candy, Phone Booth and Retro Radio: CC0 1.0**
+  ("CC0 1.0 · public domain" on each page). Sources: https://grab3d.com/models/vehicles/1960s-convertible/,
+  https://grab3d.com/models/electronics/film-projector/, https://grab3d.com/models/city/street-light/,
+  https://grab3d.com/models/food/cotton-candy/, https://grab3d.com/models/city/phone-booth/ and
+  https://grab3d.com/models/electronics/retro-radio/.
 - **Quaternius Universal Animation Library 1 and 2 (Standard): CC0 1.0.** Sources:
   https://quaternius.itch.io/universal-animation-library and https://quaternius.itch.io/universal-animation-library-2.
   Quaternius's site moved to a new licence on 28 August 2026; these copies were released as CC0 and stay CC0.

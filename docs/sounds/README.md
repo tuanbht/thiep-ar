@@ -1,6 +1,6 @@
 # Shared sounds
 
-The birthday cards share one set of sounds, kept once in `public/templates/_sounds/`. A phone that has played one
+The birthday cards (and others) share one set of sounds, kept once in `public/templates/_sounds/`. A phone that has played one
 birthday card already holds them for the next. A template names them in its `template.json` like its own files:
 
 ```json
@@ -43,21 +43,30 @@ these cards from CC0 instrument samples. They may be treated as CC0.
 
 Every effect is levelled to the same loudness (about −20.5 LUFS at its loudest moment), under the music.
 
-| File           | Sound                                        | Source (BigSoundBank, CC0)                                  |
-| -------------- | -------------------------------------------- | ----------------------------------------------------------- |
-| `blow.mp3`     | Blowing out candles, 0.44 s                  | https://bigsoundbank.com/blow-hard-1-s1602.html             |
-| `horn.mp3`     | A party horn (blower), 0.87 s                | https://bigsoundbank.com/party-horn-1-s1553.html            |
-| `toot.mp3`     | A train whistle, "toot, toot, tooot", 2.2 s  | https://bigsoundbank.com/train-whistle-foley-7-s3321.html   |
-| `firework.mp3` | One firework: launch, whistle, burst, 4.7 s  | https://bigsoundbank.com/fireworks-s0831.html (181.15 s in) |
-| `sparkler.mp3` | A sparkler's crackle, 2.5 s                  | https://bigsoundbank.com/sparkling-candle-1-s1278.html      |
-| `pop.mp3`      | A single pop                                 | https://bigsoundbank.com/pop-corn-corn-bursting-s0413.html  |
-| `sparkle.mp3`  | A glockenspiel glissando up                  | https://bigsoundbank.com/glockenspiel-s0920.html            |
-| `ting.mp3`     | A metallophone note                          | https://bigsoundbank.com/idea-2-s1399.html                  |
-| `applause.mp3` | A burst of applause                          | https://bigsoundbank.com/applause-150-people-s0019.html     |
-| `boing.mp3`    | A cartoon boing                              | https://bigsoundbank.com/boing-cartoon-8-s2284.html         |
-| `shutter.mp3`  | A camera shutter (played when a photo opens) | https://bigsoundbank.com/trigger-of-camera-1-s2394.html     |
-| `door.mp3`     | A creaking door opening                      | https://bigsoundbank.com/creaking-door-2-s3205.html         |
-| `whoosh.mp3`   | A quick swoosh, 0.47 s                       | https://bigsoundbank.com/whoosh-8-s1801.html                |
+| File            | Sound                                                    | Source (BigSoundBank, CC0)                                                     |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `blow.mp3`      | Blowing out candles, 0.44 s                              | https://bigsoundbank.com/blow-hard-1-s1602.html                                |
+| `horn.mp3`      | A party horn (blower), 0.87 s                            | https://bigsoundbank.com/party-horn-1-s1553.html                               |
+| `toot.mp3`      | A train whistle, "toot, toot, tooot", 2.2 s              | https://bigsoundbank.com/train-whistle-foley-7-s3321.html                      |
+| `firework.mp3`  | One firework: launch, whistle, burst, 4.7 s              | https://bigsoundbank.com/fireworks-s0831.html (181.15 s in)                    |
+| `sparkler.mp3`  | A sparkler's crackle, 2.5 s                              | https://bigsoundbank.com/sparkling-candle-1-s1278.html                         |
+| `pop.mp3`       | A single pop                                             | https://bigsoundbank.com/pop-corn-corn-bursting-s0413.html                     |
+| `sparkle.mp3`   | A glockenspiel glissando up                              | https://bigsoundbank.com/glockenspiel-s0920.html                               |
+| `ting.mp3`      | A metallophone note                                      | https://bigsoundbank.com/idea-2-s1399.html                                     |
+| `applause.mp3`  | A burst of applause                                      | https://bigsoundbank.com/applause-150-people-s0019.html                        |
+| `boing.mp3`     | A cartoon boing                                          | https://bigsoundbank.com/boing-cartoon-8-s2284.html                            |
+| `shutter.mp3`   | A camera shutter (played when a photo opens)             | https://bigsoundbank.com/trigger-of-camera-1-s2394.html                        |
+| `door.mp3`      | A creaking door opening                                  | https://bigsoundbank.com/creaking-door-2-s3205.html                            |
+| `whoosh.mp3`    | A quick swoosh, 0.47 s                                   | https://bigsoundbank.com/whoosh-8-s1801.html                                   |
+| `projector.mp3` | A film projector switching on and running up, 2.2 s      | https://bigsoundbank.com/8mm-projector-5-s2827.html                            |
+| `beep.mp3`      | A countdown-leader beep, 0.2 s                           | Synthesized in code                                                            |
+| `car.mp3`       | A car braking to a stop, with the handbrake, 2.9 s       | https://bigsoundbank.com/car-arrival-stop-departure-s0187.html                 |
+| `rain.mp3`      | Rain on a fabric roof, 7 s, fading in and out            | https://bigsoundbank.com/rain-and-storm-in-a-tent-s0820.html                   |
+| `thunder.mp3`   | Far thunder rolling, 3 s                                 | https://bigsoundbank.com/thunder-5-s3116.html                                  |
+| `softtop.mp3`   | Cloth unfolding, 0.9 s                                   | https://bigsoundbank.com/flag-4-s1790.html                                     |
+| `flash.mp3`     | A flashbulb charging and popping (pops at 0.52 s), 0.6 s | https://bigsoundbank.com/old-camera-trigger-s3022.html (the whine synthesized) |
+| `strip.mp3`     | A photo strip printing out, 1.4 s                        | https://bigsoundbank.com/old-calculator-ticket-1-s3264.html                    |
+| `honk.mp3`      | An old car horn, bíp bíp, 0.8 s                          | https://bigsoundbank.com/old-car-horn-2-s0255.html                             |
 
 Each BigSoundBank page states "CC0 (public domain): Free and royalty-free"; the site-wide licence page
 (https://bigsoundbank.com/licenses.html) adds that the sounds may be shared, changed and used commercially. Checked
