@@ -24,6 +24,7 @@
     "music": "../_sounds/birthday.mp3",
     "soft": "../_sounds/birthday-soft.mp3",
     "volume": 0.5,
+    "loops": { "music": [25.714286, 0.013061], "soft": [34.285714, 0.013061] },
     "effects": {
       "toot": "../_sounds/toot.mp3",
       "horn": "../_sounds/horn.mp3",

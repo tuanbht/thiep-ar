@@ -9,7 +9,7 @@
    order whose last one registers the story (helpers first: ["scenery.js", "story.js"]), "models": { name: "models/x.glb" }
    (the same file under two names gives two independent copies: loaded once, the second a clone sharing its geometry and
    textures), "credits": [{ model, author, license, url }], "sound": { music, soft (a second loop), volume (the music's, .5),
-   effects: { name: "sound/x.mp3" } } (MP3, CC0 only).
+   effects: { name: "sound/x.mp3" }, loops: { music: [exact seconds, where it starts in Apple's padded decode] } } (MP3, CC0).
 
    The story registers itself, loaded once by URL:
      (window.NM_STORIES = window.NM_STORIES || {})[document.currentScript.src] = kit => ({
@@ -31,12 +31,12 @@
    to .05 s, so there the story runs slower than the wall clock.
    kit: THREE, stage, card ({ width, depth }), clamp, lerp, seg, ease, rng, tween(t, keys), hop(t, every, height),
      words(slot, fallback), model(name), sign(opts), polaroid(opts: the card's photos, see below), photo(opts: the photos on a
-     frame, a screen, a print or a film frame), photoCount(), particles(opts: shapes heart, petal, glow, sparkle,
-     drop, star, leaf, note), glow(opts), picture(draw, opts), canvasTexture(w, h, draw), backdrop(draw, opts),
+     frame, a screen, a print or a film frame), photoCount(), photoAt(k), heroPhoto(), particles(opts: shapes heart, petal,
+     glow, sparkle, drop, star, leaf, note), glow(opts), picture(draw, opts), canvasTexture(w, h, draw), backdrop(draw, opts),
      lights ({ hemi, sun }: dim them for a night), heartPath(ctx, x, y, size), once(key), keep(x), onTap(object, fn): a tap on
-     the object (or anything in it) calls fn instead of playing on; an invisible stand-in that should still take taps has
-     userData.proxy = true. A tap on a photo (polaroid or photo surface) shows it big. sfx(name, { volume, rate }) plays an
-     effect, music(name) changes the loop ('music' or 'soft'); both are silent until the player enables sound inside a tap
+     the object (or anything in it) calls fn instead of playing on (fn may return { photo: photoAt(k) } to show it big); an
+     invisible stand-in that should still take taps has userData.proxy = true. A tap on a photo shows it big. sfx(name,
+     { volume, rate }) plays an effect, music(name) changes the loop ('music' or 'soft'); both are silent until the player enables sound inside a tap
      (iOS lets audio start only there), and the shop's preview never does.
      model(name).play(clip, { once, fade, speed, key }): called every frame; a new key plays the same clip again.
      Every draw callback (sign, polaroid, picture, canvasTexture, backdrop) runs again when the handwriting face arrives:
@@ -649,8 +649,9 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
   const buffers = {};
   function startMusic(name) {
     if (!actx || !buffers[name] || musicName === name) return;
-    const src = actx.createBufferSource(), g = actx.createGain();
-    src.buffer = buffers[name]; src.loop = true; g.gain.value = 0; src.connect(g); g.connect(musicBus); src.start();
+    const src = actx.createBufferSource(), g = actx.createGain(), b = (src.buffer = buffers[name]), lp = SOUND.loops?.[name];
+    src.loop = true; if (lp && b.duration > lp[0] + .01) [src.loopStart, src.loopEnd] = [lp[1], lp[1] + lp[0]];   // padded by a decoder that ignores the MP3's gapless header (Apple's)
+    g.gain.value = 0; src.connect(g); g.connect(musicBus); src.start();
     g.gain.setTargetAtTime(1, actx.currentTime, .35);
     if (musicNow) { musicNow.gain.gain.setTargetAtTime(0, actx.currentTime, .3); musicNow.src.stop(actx.currentTime + 1.5); }
     musicNow = { src, gain: g }; musicName = name;
@@ -686,10 +687,12 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
 
   /* ── the story ── */
   const fired = new Set();
+  /** the k-th photo in this play's order (shuffled each play), at its own aspect (≤ PHOTO_PX), or null: draw from it only */
+  const photoAt = k => { const n = photoImgs.length; return n ? photoImgs[((Math.round(k) % n) + n) % n] : null; };
   const kit = {
     THREE, stage, card: { width: 1, depth: tpl.aspect || .625 }, clamp, lerp, seg, ease, rng, tween, hop, keep, words,
-    model, sign, polaroid, photo, photoCount: () => photoImgs.length, particles, glow, picture, canvasTexture, backdrop, env,
-    lights: { hemi, sun }, heartPath, fitText, HAND,
+    model, sign, polaroid, photo, photoCount: () => photoImgs.length, photoAt, heroPhoto: () => heroImg || photoAt(0),
+    particles, glow, picture, canvasTexture, backdrop, env, lights: { hemi, sun }, heartPath, fitText, HAND,
     /** true the first time it is asked after the story (re)starts */
     once: key => (fired.has(key) ? false : (fired.add(key), true)),
     onTap: (object, fn) => { taps.set(object, { fn }); return object; },
@@ -768,8 +771,9 @@ window.NM_SCENE = ({ anchor, card, tpl, THREE, onStop, dir }) => {
           const t = taps.get(x);
           if (!t) continue;
           if (t.photo) { const src = t.photo(); if (src) sfx('shutter', { volume: .5 }); return src ? { photo: src } : null; }
-          try { t.fn(); } catch (e) { errors.push(e && e.message ? e.message : String(e)); }
-          return { handled: true };
+          let r = null; try { r = t.fn(); } catch (e) { errors.push(e && e.message ? e.message : String(e)); }
+          const pic = r?.photo == null ? null : typeof r.photo === 'number' ? photoAt(r.photo) : r.photo;   // it answered with a photo
+          return pic && urlOf.has(pic) ? (sfx('shutter', { volume: .5 }), { photo: urlOf.get(pic) }) : { handled: true };
         }
         return null;
       }

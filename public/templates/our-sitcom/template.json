@@ -70,6 +70,7 @@
     "music": "sound/music.mp3",
     "soft": "sound/music-soft.mp3",
     "volume": 0.55,
+    "loops": { "music": [36.571429, 0.013061], "soft": [27.428571, 0.013061] },
     "effects": {
       "clap": "sound/clap.mp3",
       "door": "sound/door.mp3",
