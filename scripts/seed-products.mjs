@@ -144,7 +144,7 @@ on conflict (id) do update set name = excluded.name, blurb = excluded.blurb, sor
 ${rows}
 on conflict (id) do update set
   template = excluded.template, design = excluded.design, name = excluded.name, blurb = excluded.blurb,
-  kind = excluded.kind, price_vnd = excluded.price_vnd, active = excluded.active, sort = excluded.sort, tags = excluded.tags;`);
+  kind = excluded.kind, price_vnd = excluded.price_vnd, sort = excluded.sort, tags = excluded.tags;`);
   parts.push(`-- each product's categories, as its template.json says
 delete from public.product_categories where product_id in (${list.map((p) => sql(p.id)).join(", ")});`);
   if (links.length)

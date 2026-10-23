@@ -64,7 +64,7 @@ insert into public.products (id, template, design, name, blurb, kind, price_vnd,
   ('two-windows', 'two-windows', null, 'Hai khung cửa', 'Hai khung cửa (two windows in two time zones; two clocks become one)', 'film', 49000, true, 490, array['yêu xa', 'múi giờ', 'đồng hồ', 'cửa sổ', 'nhớ nhung']::text[])
 on conflict (id) do update set
   template = excluded.template, design = excluded.design, name = excluded.name, blurb = excluded.blurb,
-  kind = excluded.kind, price_vnd = excluded.price_vnd, active = excluded.active, sort = excluded.sort, tags = excluded.tags;
+  kind = excluded.kind, price_vnd = excluded.price_vnd, sort = excluded.sort, tags = excluded.tags;
 
 -- each product's categories, as its template.json says
 delete from public.product_categories where product_id in ('flower-letter', 'astro-bun', 'birthday-dad', 'birthday-grandpa', 'birthday-her', 'birthday-kid', 'birthday-mom', 'biscuit', 'bouquet-surprise', 'broom-delivery', 'build-our-house', 'candlelight-dinner', 'chandelier-waltz', 'charleston', 'dawn-ride', 'flying-carpet', 'kiko', 'lantern-night', 'macarena', 'mochi', 'moon-meteors', 'noodle-kiss', 'our-little-home', 'our-sitcom', 'paper-planes', 'pip', 'rain-umbrella', 'robots-in-love', 'sakura-crossing', 'samba', 'ship-bow', 'sky-stroll', 'soldier-twist', 'starry-date', 'summer-fireworks', 'sunset-beach', 'twilight-dance', 'developing-photos', 'layers-of-wrapping', 'lift-off', 'meeting-halfway', 'one-candle-per-year', 'one-station-per-year', 'our-book', 'rain-clearing', 'something-growing', 'the-climb', 'the-route-so-far', 'two-windows');
